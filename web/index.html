@@ -1,0 +1,947 @@
+<title>별똥별 피하기 완성본</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gugi&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: single column, stage-first. Game canvas keeps its space-dark palette in both themes;
+   the reference below it follows the viewer's theme. */
+:root {
+  --bg: #F1F3FB;
+  --surface: #FFFFFF;
+  --surface-2: #E7EAF6;
+  --fg: #171a33;
+  --fg-dim: #545a7d;
+  --line: #D3D8EC;
+  --accent: #C2560C;        /* meteor amber, darkened for light ground */
+  --accent-soft: #FDEADA;
+  --cool: #1C6B8C;          /* star cyan */
+  --warn: #B3261E;
+  --ok: #1E6B3A;
+  --void: #0C0E24;          /* the stage itself — constant in both themes */
+  --void-2: #161a3d;
+  --font-display: "Gugi", "Black Han Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C0E24;
+    --surface: #151834;
+    --surface-2: #1E2246;
+    --fg: #EEF0FA;
+    --fg-dim: #A2A8CC;
+    --line: #2C3159;
+    --accent: #FF9B42;
+    --accent-soft: #3A2512;
+    --cool: #63D2F0;
+    --warn: #FF8B80;
+    --ok: #6BD898;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C0E24;
+  --surface: #151834;
+  --surface-2: #1E2246;
+  --fg: #EEF0FA;
+  --fg-dim: #A2A8CC;
+  --line: #2C3159;
+  --accent: #FF9B42;
+  --accent-soft: #3A2512;
+  --cool: #63D2F0;
+  --warn: #FF8B80;
+  --ok: #6BD898;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0;
+}
+.wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 7vw, 46px);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4.2vw, 26px);
+  line-height: 1.3;
+}
+h3 { font-size: 16px; font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.lede { color: var(--fg-dim); font-size: 16px; max-width: 62ch; }
+
+header.hero { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
+
+section { margin-top: 44px; display: flex; flex-direction: column; gap: 16px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; }
+
+/* ---------- stage ---------- */
+.stage-shell {
+  background: var(--void);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -28px rgba(8, 10, 32, 0.9);
+}
+.stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--void-2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #EEF0FA;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.stage-bar .k { color: #8E96C4; letter-spacing: 0.08em; }
+.stage-bar .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.stage-bar .v.score { color: #FF9B42; font-size: 15px; }
+.stage-bar .spacer { margin-left: auto; }
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  touch-action: none;
+  cursor: crosshair;
+}
+.stage-foot {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--void-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+button.btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #0C0E24;
+  background: #FF9B42;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+button.btn:hover { background: #FFB064; }
+button.btn.ghost {
+  background: transparent;
+  color: #C9CFEE;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+button.btn.ghost:hover { background: rgba(255, 255, 255, 0.07); }
+button.btn:focus-visible, input:focus-visible { outline: 2px solid #FF9B42; outline-offset: 2px; }
+.hint { color: #8E96C4; font-size: 12px; font-family: var(--font-mono); }
+
+/* ---------- tuning ---------- */
+.tuners { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.tuner {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tuner label { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+.tuner label .num {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.tuner input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+.tuner .blk { font-size: 11.5px; color: var(--fg-dim); font-family: var(--font-mono); }
+
+/* ---------- diagnosis ---------- */
+.diag { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.card.bad { border-left: 4px solid var(--warn); }
+.card .tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--warn);
+  font-weight: 600;
+}
+.card p { font-size: 14px; color: var(--fg-dim); }
+.card p strong { color: var(--fg); }
+
+/* ---------- entry blocks ---------- */
+.obj {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.obj-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.obj-head .name { font-weight: 700; font-size: 16px; }
+.obj-head .role { font-size: 12.5px; color: var(--fg-dim); }
+.script { display: flex; flex-direction: column; gap: 10px; }
+.script-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.stack { display: flex; flex-direction: column; gap: 3px; overflow-x: auto; padding-bottom: 2px; }
+.b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 5px 11px;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+.b.start  { background: #28B45F; border-radius: 7px 7px 7px 7px; font-weight: 700; }
+.b.flow   { background: #39B9D1; }
+.b.move   { background: #4A7FE0; }
+.b.look   { background: #B44AC0; }
+.b.judge  { background: #22449B; }
+.b.calc   { background: #E6A020; color: #231600; }
+.b.data   { background: #E0509C; }
+.b.func   { background: #B7643C; }
+.b.note   { background: transparent; color: var(--fg-dim); font-family: var(--font-mono); font-size: 11.5px; white-space: normal; padding-left: 2px; }
+.b .slot {
+  background: rgba(255, 255, 255, 0.92);
+  color: #171a33;
+  border-radius: 20px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.b.calc .slot { background: rgba(255, 255, 255, 0.95); }
+.i1 { margin-left: 16px; }
+.i2 { margin-left: 32px; }
+.i3 { margin-left: 48px; }
+.i4 { margin-left: 64px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; }
+.legend span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  color: #fff;
+}
+
+/* ---------- checklist / steps ---------- */
+ol.steps { margin: 0; padding-left: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 12px; }
+ol.steps li {
+  counter-increment: s;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+ol.steps li::before {
+  content: counter(s);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+ol.steps li div { min-width: 0; }
+ol.steps li .t { font-weight: 600; }
+ol.steps li .d { font-size: 13.5px; color: var(--fg-dim); }
+
+ul.trap { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+ul.trap li {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 10px;
+  font-size: 14px;
+  align-items: start;
+}
+ul.trap li::before { content: "▸"; color: var(--accent); font-size: 13px; line-height: 1.6; }
+ul.trap li strong { color: var(--fg); }
+ul.trap li span { color: var(--fg-dim); }
+
+table.params { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+table.params th, table.params td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+table.params th { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-dim); font-weight: 600; }
+table.params td.n { font-family: var(--font-mono); color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+
+footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--fg-dim); }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">엔트리 · 수행평가 완성 설계</div>
+  <h1>별똥별 피하기 완성본</h1>
+  <p class="lede">아래 게임이 지금 선생님 작품이 <em>되어야 하는</em> 상태입니다. 직접 플레이해서 숫자를 맞춰보고, 그 숫자를 그대로 엔트리 블록에 옮기면 끝납니다. 방향키 ←→ 로 움직이고, 벽에 닿으면 죽습니다.</p>
+</header>
+
+<div class="stage-shell">
+  <div class="stage-bar">
+    <span><span class="k">점수</span> <span class="v score" id="hud-score">0</span></span>
+    <span><span class="k">최고</span> <span class="v" id="hud-best">0</span></span>
+    <span><span class="k">화면 속 별똥별</span> <span class="v" id="hud-count">0</span></span>
+    <span class="spacer hint" id="hud-state">시작 대기</span>
+  </div>
+  <canvas id="stage" width="960" height="540" aria-label="별똥별 피하기 게임 화면"></canvas>
+  <div class="stage-foot">
+    <button class="btn" id="btn-start">▶ 시작하기</button>
+    <button class="btn ghost" id="btn-reset">숫자 기본값으로</button>
+    <span class="hint">← → 방향키 · 모바일은 화면 좌우 터치</span>
+  </div>
+</div>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">Tuning</div>
+    <h2>여기서 숫자를 맞추고, 엔트리에 그대로 적으세요</h2>
+    <p class="lede">아래 값은 엔트리 블록 안에 들어갈 숫자와 1:1로 같습니다. 움직이면 위 게임에 바로 반영됩니다.</p>
+  </div>
+  <div class="tuners">
+    <div class="tuner">
+      <label for="t-speed">별똥별 낙하 속도 <span class="num" id="v-speed">4</span></label>
+      <input type="range" id="t-speed" min="2" max="9" step="0.5" value="4">
+      <span class="blk">y 좌표를 −(이 값) 만큼 바꾸기</span>
+    </div>
+    <div class="tuner">
+      <label for="t-spawn">생성 간격(초) <span class="num" id="v-spawn">0.45</span></label>
+      <input type="range" id="t-spawn" min="0.1" max="1.2" step="0.05" value="0.45">
+      <span class="blk">(이 값) 초 기다리기</span>
+    </div>
+    <div class="tuner">
+      <label for="t-player">캐릭터 이동 속도 <span class="num" id="v-player">7</span></label>
+      <input type="range" id="t-player" min="3" max="14" step="1" value="7">
+      <span class="blk">x 좌표를 ±(이 값) 만큼 바꾸기</span>
+    </div>
+    <div class="tuner">
+      <label for="t-ramp">난이도 상승 <span class="num" id="v-ramp">켜짐</span></label>
+      <input type="range" id="t-ramp" min="0" max="1" step="1" value="1">
+      <span class="blk">10점마다 속도 +0.5 / 간격 −0.03</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">진단</div>
+    <h2>지금 작품이 고장난 이유는 딱 두 개</h2>
+  </div>
+  <div class="diag">
+    <div class="card bad">
+      <span class="tag">버그 1 · 별똥별이 한 번만</span>
+      <p><strong>바닥에 닿았을 때 다시 위로 올려주는 블록이 없습니다.</strong> 지금 <code>계속 반복하기</code> 안에는 “우주인에 닿았는가”만 있어서, 별똥별은 화면 아래로 내려간 뒤 영원히 −y 좌표로만 내려갑니다. 화면 밖에서 계속 떨어지고 있는 거라 멈춘 것처럼 보일 뿐입니다.</p>
+      <p><strong>또 하나:</strong> <code>별똥별위치리셋</code> 함수의 <code>y: 240</code>은 엔트리 무대 밖입니다. 무대 세로 범위는 <code>−135 ~ 135</code>라서 <code>y: 130</code>이 맞습니다. 240이면 떨어지기 시작할 때까지 공백이 생깁니다.</p>
+    </div>
+    <div class="card bad">
+      <span class="tag">버그 2 · 벽을 통과</span>
+      <p><strong>벽 충돌을 검사하는 블록 자체가 없습니다.</strong> 엔트리는 오브젝트가 무대 밖으로 나가도 막아주지 않습니다. “벽에 닿으면 죽기”를 원하면 반복문 안에서 직접 판정해야 합니다.</p>
+      <p><strong>함정:</strong> <code>벽에 닿았는가?</code>를 그냥 쓰면 바닥에 서 있는 우주인이 <em>아래쪽 벽</em>에 이미 닿아 있어서 시작하자마자 죽습니다. 좌·우만 골라서 판정하거나, 아래 조립표처럼 <code>x좌푯값</code>으로 비교하세요.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">가장 빠른 길</div>
+    <h2>3분 패치 — 지금 작품을 그대로 살리기</h2>
+    <p class="lede">복제본까지 안 가고, 별똥별 1개로 “계속 떨어지고 점수 오르고 벽에서 죽는” 상태까지는 블록 6개면 됩니다.</p>
+  </div>
+  <ol class="steps">
+    <li><div><span class="t">별똥별위치리셋 함수에서 <code>y: 240</code> → <code>y: 130</code></span><div class="d">무작위 수는 <code>−220 부터 220</code>으로. 캐릭터 크기만큼 여유를 둡니다.</div></div></li>
+    <li><div><span class="t">별똥별 반복문 맨 아래에 바닥 판정 추가</span><div class="d"><code>만일 〈자신의 y좌푯값 &lt; −130〉 이라면 → 점수에 1 만큼 더하기 + 별똥별위치리셋</code>. 이 한 덩어리가 “계속 떨어짐 + 점수 상승”을 동시에 해결합니다.</div></div></li>
+    <li><div><span class="t">우주인에 벽 판정 반복문 추가</span><div class="d"><code>만일 〈자신의 x좌푯값 &lt; −215〉 또는 〈자신의 x좌푯값 &gt; 215〉 이라면 → 게임오버 신호 보내기</code></div></div></li>
+    <li><div><span class="t">떠 있는 <code>떨어진횟수 값 &gt; 74</code> 블록은 삭제하거나 클리어 조건으로</span><div class="d">쓰려면 <code>만일 〈점수 값 &gt; 20〉 이라면 → "클리어!" 말하기 + 모든 코드 멈추기</code> 형태가 깔끔합니다.</div></div></li>
+    <li><div><span class="t">빈 <code>만일 〈참〉 이라면</code> 블록 제거</span><div class="d">조건이 항상 참이라 나중에 예상 못 한 분기를 만듭니다.</div></div></li>
+    <li><div><span class="t">별똥별을 여러 개로 늘리려면 아래 조립표의 복제본 버전으로</span><div class="d">오브젝트를 3~4개 복사해도 되지만, 복제본 쪽이 블록이 더 적고 난이도 조절도 쉽습니다.</div></div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">블록 조립표</div>
+    <h2>완성본 전체 — 오브젝트별로 그대로 따라 놓기</h2>
+    <p class="lede">색은 엔트리 카테고리 색과 같게 칠했습니다. 왼쪽 팔레트에서 같은 색을 찾으면 빨리 끝납니다.</p>
+  </div>
+
+  <div class="legend">
+    <span style="background:#28B45F">시작</span>
+    <span style="background:#39B9D1">흐름</span>
+    <span style="background:#4A7FE0">움직임</span>
+    <span style="background:#B44AC0">생김새</span>
+    <span style="background:#22449B">판단</span>
+    <span style="background:#E6A020;color:#231600">계산</span>
+    <span style="background:#E0509C">자료</span>
+    <span style="background:#B7643C">함수</span>
+  </div>
+
+  <div class="obj">
+    <div class="obj-head">
+      <span class="name">사전 준비</span>
+      <span class="role">변수 · 리스트 · 신호</span>
+    </div>
+    <ul class="trap">
+      <li><strong>변수</strong> <span><code>점수</code> (보이기), <code>속도</code> (숨기기), <code>생성간격</code> (숨기기)</span></li>
+      <li><strong>리스트</strong> <span><code>기록</code> — 게임이 끝날 때 점수를 쌓습니다</span></li>
+      <li><strong>신호</strong> <span><code>게임오버</code> — [속성] 탭에서 하나 만들어 두세요. 죽는 처리를 한 곳으로 모읍니다.</span></li>
+      <li><strong>기존 변수</strong> <span><code>떨어진횟수</code>는 안 써도 됩니다. 남기려면 바닥 판정에서 <code>1 만큼 더하기</code>로 같이 올리세요.</span></li>
+    </ul>
+  </div>
+
+  <div class="obj">
+    <div class="obj-head">
+      <span class="name">우주인(1)</span>
+      <span class="role">좌우 이동 + 벽에 닿으면 사망</span>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 A — 조종</div>
+      <div class="stack">
+        <span class="b start">▶ 시작하기 버튼을 클릭했을 때</span>
+        <span class="b move">x: <span class="slot">0</span> y: <span class="slot">-100</span> 위치로 이동하기</span>
+        <span class="b flow">계속 반복하기</span>
+        <span class="b flow i1">만일 <span class="slot">왼쪽 화살표 키가 눌러져 있는가?</span> 이라면</span>
+        <span class="b move i2">x 좌표를 <span class="slot">-7</span> 만큼 바꾸기</span>
+        <span class="b flow i1">만일 <span class="slot">오른쪽 화살표 키가 눌러져 있는가?</span> 이라면</span>
+        <span class="b move i2">x 좌표를 <span class="slot">7</span> 만큼 바꾸기</span>
+        <span class="b note">↑ “눌렀을 때” 이벤트가 아니라 반복문 안의 “눌러져 있는가?” 판단이어야 부드럽게 움직입니다.</span>
+      </div>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 B — 벽 충돌 (버그 2 해결)</div>
+      <div class="stack">
+        <span class="b start">▶ 시작하기 버튼을 클릭했을 때</span>
+        <span class="b flow">계속 반복하기</span>
+        <span class="b flow i1">만일 <span class="slot">〈자신의 x좌푯값 &lt; -215〉 또는 〈자신의 x좌푯값 &gt; 215〉</span> 이라면</span>
+        <span class="b look i2">"벽에 부딪혔다!" 을(를) 말하기</span>
+        <span class="b start i2">게임오버 신호 보내기</span>
+        <span class="b flow i2">자신의 코드 멈추기</span>
+        <span class="b note">판단 블록 조립: 〈 〈계산:자신의 x좌푯값〉 &lt; -215 〉 와 〈 〈계산:자신의 x좌푯값〉 &gt; 215 〉 를 “또는” 블록 양쪽에 끼웁니다.</span>
+        <span class="b note">대안 — 〈왼쪽 벽에 닿았는가?〉 또는 〈오른쪽 벽에 닿았는가?〉 도 같은 동작. 단 그냥 〈벽에 닿았는가?〉는 아래쪽 벽까지 포함해서 즉사합니다.</span>
+      </div>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 C — 사망 처리 (한 곳으로 모으기)</div>
+      <div class="stack">
+        <span class="b start">게임오버 신호를 받았을 때</span>
+        <span class="b data i1">기록 에 <span class="slot">점수 값</span> 항목 추가하기</span>
+        <span class="b look i1">"게임 오버! 점수 " 와(과) 점수 값 을 합치기 → 말하기</span>
+        <span class="b flow i1">모든 코드 멈추기</span>
+        <span class="b note">‘모든 코드 멈추기’는 반드시 맨 마지막. 위 블록들이 실행되기 전에 멈춰버립니다.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="obj">
+    <div class="obj-head">
+      <span class="name">별똥별(2)</span>
+      <span class="role">복제본으로 무한 생성 · 점수 · 난이도 상승</span>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 A — 생성기 (본체는 숨어서 복제본만 찍어냄)</div>
+      <div class="stack">
+        <span class="b start">▶ 시작하기 버튼을 클릭했을 때</span>
+        <span class="b data i1">점수 를 <span class="slot">0</span> (으)로 정하기</span>
+        <span class="b data i1">속도 를 <span class="slot">4</span> (으)로 정하기</span>
+        <span class="b data i1">생성간격 을 <span class="slot">0.45</span> (으)로 정하기</span>
+        <span class="b look i1">모양 숨기기</span>
+        <span class="b flow i1">계속 반복하기</span>
+        <span class="b start i2">자신의 복제본 만들기</span>
+        <span class="b flow i2"><span class="slot">생성간격 값</span> 초 기다리기</span>
+        <span class="b note">본체를 숨기면 복제본도 숨겨진 채 태어납니다 → 복제본 쪽에서 ‘모양 보이기’ 필수.</span>
+      </div>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 B — 복제본 한 개의 일생 (버그 1 해결)</div>
+      <div class="stack">
+        <span class="b start">복제본이 처음 생성되었을때</span>
+        <span class="b move i1">x: <span class="slot">-220 부터 220 사이의 무작위 수</span> y: <span class="slot">130</span> 위치로 이동하기</span>
+        <span class="b look i1">모양 보이기</span>
+        <span class="b flow i1">계속 반복하기</span>
+        <span class="b move i2">y 좌표를 <span class="slot">속도 값 × -1</span> 만큼 바꾸기</span>
+        <span class="b flow i2">만일 <span class="slot">우주인(1) 에 닿았는가?</span> 이라면</span>
+        <span class="b start i3">게임오버 신호 보내기</span>
+        <span class="b flow i3">자신의 코드 멈추기</span>
+        <span class="b flow i2">만일 <span class="slot">〈자신의 y좌푯값 &lt; -130〉</span> 이라면</span>
+        <span class="b data i3">점수 에 <span class="slot">1</span> 만큼 더하기</span>
+        <span class="b flow i3">이 복제본 삭제하기</span>
+        <span class="b note">‘이 복제본 삭제하기’가 없으면 복제본이 계속 쌓여 작품이 느려지다 멈춥니다. 가장 흔한 사고.</span>
+        <span class="b note">속도 값 × −1 은 [계산] 곱하기 블록에 〈속도 값〉과 −1 을 넣어 만듭니다. 변수 없이 쓰려면 그냥 −4 를 적어도 됩니다.</span>
+      </div>
+    </div>
+
+    <div class="script">
+      <div class="script-label">스크립트 C — 난이도 상승 (선택)</div>
+      <div class="stack">
+        <span class="b start">▶ 시작하기 버튼을 클릭했을 때</span>
+        <span class="b flow i1">계속 반복하기</span>
+        <span class="b flow i2">만일 <span class="slot">〈점수 값 &gt; 9〉</span> 이라면</span>
+        <span class="b data i3">속도 를 <span class="slot">4 + (점수 값 / 10) × 0.5</span> (으)로 정하기</span>
+        <span class="b data i3">생성간격 을 <span class="slot">0.45 - (점수 값 / 10) × 0.03</span> (으)로 정하기</span>
+        <span class="b note">더 쉬운 방법: 바닥 판정에서 점수가 10의 배수일 때만 ‘속도에 0.5 만큼 더하기’를 실행해도 같은 효과입니다.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="obj">
+    <div class="obj-head">
+      <span class="name">우주(2) · 배경</span>
+      <span class="role">건드릴 것 없음</span>
+    </div>
+    <ul class="trap">
+      <li><strong>충돌 판정에서 제외</strong> <span>배경은 ‘닿았는가’ 대상이 아니니 그대로 두면 됩니다.</span></li>
+      <li><strong>게임 시작 안내</strong> <span>배경에 <code>▶ 시작하기 버튼을 클릭했을 때 → "←→ 로 피하세요" 를 2초 동안 말하기</code> 정도만 붙이면 완성도가 올라갑니다.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">사고 다발 구간</div>
+    <h2>제출 전 체크리스트</h2>
+  </div>
+  <ul class="trap">
+    <li><strong>복제본 삭제 누락</strong> <span>— 바닥에 닿은 복제본은 반드시 <code>이 복제본 삭제하기</code>. 안 하면 수백 개가 쌓여 작품이 멈춥니다.</span></li>
+    <li><strong>모양 보이기 누락</strong> <span>— 본체를 숨겼으면 복제본 스크립트 맨 위에서 다시 보여야 합니다.</span></li>
+    <li><strong>무대 좌표 범위</strong> <span>— 엔트리 무대는 x <code>−240~240</code>, y <code>−135~135</code>. <code>y: 240</code> 같은 값은 화면 밖입니다.</span></li>
+    <li><strong>‘벽에 닿았는가?’ 즉사</strong> <span>— 바닥에 선 캐릭터는 아래쪽 벽에 이미 닿아 있습니다. 좌·우만 판정하세요.</span></li>
+    <li><strong>‘모든 코드 멈추기’ 위치</strong> <span>— 점수 기록·말하기보다 뒤에 와야 합니다.</span></li>
+    <li><strong>중복 사망 처리</strong> <span>— 충돌 판정을 별똥별과 우주인 양쪽에서 하면 기록이 두 번 쌓입니다. <code>게임오버</code> 신호 하나로 모으세요.</span></li>
+    <li><strong>변수 초기화</strong> <span>— <code>점수</code>는 시작할 때 0으로. 리스트 <code>기록</code>은 남겨두면 누적 기록이 됩니다.</span></li>
+    <li><strong>속도 체감</strong> <span>— <code>계속 반복하기</code>는 초당 약 60번 돕니다. <code>y −5</code>면 1초가 채 안 돼 바닥에 닿습니다. 위 게임에서 먼저 맞춰보세요.</span></li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">숫자 요약</div>
+    <h2>블록에 들어가는 값</h2>
+  </div>
+  <div class="tablewrap">
+    <table class="params">
+      <thead><tr><th>항목</th><th>값</th><th>들어가는 블록</th></tr></thead>
+      <tbody>
+        <tr><td>캐릭터 시작 위치</td><td class="n">x 0 / y −100</td><td>x: 0 y: −100 위치로 이동하기</td></tr>
+        <tr><td>캐릭터 이동량</td><td class="n">±7</td><td>x 좌표를 ±7 만큼 바꾸기</td></tr>
+        <tr><td>벽 사망 기준</td><td class="n">|x| &gt; 215</td><td>자신의 x좌푯값 비교</td></tr>
+        <tr><td>별똥별 생성 y</td><td class="n">130</td><td>y: 130 위치로 이동하기</td></tr>
+        <tr><td>별똥별 생성 x</td><td class="n">−220 ~ 220</td><td>무작위 수</td></tr>
+        <tr><td>낙하 속도</td><td class="n">−4 /프레임</td><td>y 좌표를 −4 만큼 바꾸기</td></tr>
+        <tr><td>생성 간격</td><td class="n">0.45초</td><td>0.45 초 기다리기</td></tr>
+        <tr><td>바닥 통과 기준</td><td class="n">y &lt; −130</td><td>자신의 y좌푯값 비교 → 점수 +1</td></tr>
+        <tr><td>난이도 상승</td><td class="n">10점마다</td><td>속도 +0.5 / 간격 −0.03</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  무대 규격·블록 이름은 playentry.org 기준입니다. 위 게임은 엔트리와 같은 좌표계(480×270)·같은 프레임 속도로 돌아가므로, 여기서 재미있게 느껴진 숫자가 엔트리에서도 그대로 재미있습니다.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- Entry 무대와 동일한 좌표계 ----
+  var STAGE_W = 480, STAGE_H = 270;      // x: -240..240, y: -135..135
+  var DEFAULTS = {
+    starSpeed: 4,        // y 좌표를 -4 만큼 바꾸기
+    spawnEvery: 0.45,    // 0.45 초 기다리기
+    playerSpeed: 7,      // x 좌표를 ±7 만큼 바꾸기
+    ramp: 1
+  };
+  var CONST = {
+    playerY: -100,
+    wallLimit: 215,      // |x| > 215 → 사망
+    spawnY: 130,
+    spawnX: 220,
+    killY: -130,
+    playerR: 13,
+    starR: 7
+  };
+
+  var P = Object.assign({}, DEFAULTS);
+
+  var canvas = document.getElementById("stage");
+  var ctx = canvas.getContext("2d");
+  var hudScore = document.getElementById("hud-score");
+  var hudBest = document.getElementById("hud-best");
+  var hudCount = document.getElementById("hud-count");
+  var hudState = document.getElementById("hud-state");
+  var btnStart = document.getElementById("btn-start");
+  var btnReset = document.getElementById("btn-reset");
+
+  var state = {
+    phase: "ready",      // ready | playing | over
+    score: 0,
+    best: 0,
+    playerX: 0,
+    stars: [],
+    spawnTimer: 0,
+    deathReason: ""
+  };
+
+  // 배경 별 (장식)
+  var bgStars = [];
+  for (var i = 0; i < 70; i++) {
+    bgStars.push({
+      x: Math.random() * STAGE_W - 240,
+      y: Math.random() * STAGE_H - 135,
+      r: Math.random() * 0.9 + 0.3,
+      a: Math.random() * 0.5 + 0.25
+    });
+  }
+
+  function readBest() {
+    try {
+      var v = window.localStorage.getItem("meteor-best");
+      if (v !== null) state.best = parseInt(v, 10) || 0;
+    } catch (e) { /* 저장소가 막혀 있어도 게임은 돈다 */ }
+  }
+  function writeBest() {
+    try { window.localStorage.setItem("meteor-best", String(state.best)); } catch (e) {}
+  }
+  readBest();
+
+  // ---- 입력 ----
+  var keys = { left: false, right: false };
+  window.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") { keys.left = true; e.preventDefault(); }
+    if (e.key === "ArrowRight") { keys.right = true; e.preventDefault(); }
+    if (e.key === " " || e.key === "Enter") {
+      if (state.phase !== "playing") { start(); e.preventDefault(); }
+    }
+  }, { passive: false });
+  window.addEventListener("keyup", function (e) {
+    if (e.key === "ArrowLeft") keys.left = false;
+    if (e.key === "ArrowRight") keys.right = false;
+  });
+
+  function touchFrom(ev) {
+    var rect = canvas.getBoundingClientRect();
+    var t = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+    if (t.clientX === undefined) return;
+    var rel = (t.clientX - rect.left) / rect.width;
+    keys.left = rel < 0.5;
+    keys.right = rel >= 0.5;
+  }
+  canvas.addEventListener("pointerdown", function (ev) {
+    if (state.phase !== "playing") { start(); return; }
+    touchFrom(ev);
+    canvas.setPointerCapture(ev.pointerId);
+  });
+  canvas.addEventListener("pointermove", function (ev) {
+    if (ev.buttons) touchFrom(ev);
+  });
+  canvas.addEventListener("pointerup", function () { keys.left = keys.right = false; });
+  canvas.addEventListener("pointercancel", function () { keys.left = keys.right = false; });
+
+  // ---- 튜너 ----
+  function bindTuner(id, key, out, fmt) {
+    var el = document.getElementById(id);
+    var label = document.getElementById(out);
+    function apply() {
+      P[key] = parseFloat(el.value);
+      label.textContent = fmt(P[key]);
+    }
+    el.addEventListener("input", apply);
+    apply();
+    return { el: el, apply: apply };
+  }
+  var tuners = [
+    bindTuner("t-speed", "starSpeed", "v-speed", function (v) { return v.toFixed(1).replace(/\.0$/, ""); }),
+    bindTuner("t-spawn", "spawnEvery", "v-spawn", function (v) { return v.toFixed(2); }),
+    bindTuner("t-player", "playerSpeed", "v-player", function (v) { return String(v); }),
+    bindTuner("t-ramp", "ramp", "v-ramp", function (v) { return v ? "켜짐" : "꺼짐"; })
+  ];
+  btnReset.addEventListener("click", function () {
+    tuners[0].el.value = DEFAULTS.starSpeed;
+    tuners[1].el.value = DEFAULTS.spawnEvery;
+    tuners[2].el.value = DEFAULTS.playerSpeed;
+    tuners[3].el.value = DEFAULTS.ramp;
+    tuners.forEach(function (t) { t.apply(); });
+  });
+
+  // ---- 난이도 곡선: 엔트리 스크립트 C와 같은 식 ----
+  function curSpeed() {
+    if (!P.ramp) return P.starSpeed;
+    return P.starSpeed + Math.floor(state.score / 10) * 0.5;
+  }
+  function curSpawn() {
+    if (!P.ramp) return P.spawnEvery;
+    return Math.max(0.12, P.spawnEvery - Math.floor(state.score / 10) * 0.03);
+  }
+
+  function start() {
+    state.phase = "playing";
+    state.score = 0;
+    state.playerX = 0;
+    state.stars = [];
+    state.spawnTimer = 0;
+    state.deathReason = "";
+    btnStart.textContent = "↻ 다시 시작";
+    hudState.textContent = "진행 중";
+  }
+
+  function gameOver(reason) {
+    if (state.phase !== "playing") return;
+    state.phase = "over";
+    state.deathReason = reason;
+    if (state.score > state.best) { state.best = state.score; writeBest(); }
+    hudState.textContent = reason;
+  }
+
+  // ---- 한 프레임 = 엔트리의 '계속 반복하기' 한 바퀴 ----
+  function step(dt) {
+    if (state.phase !== "playing") return;
+
+    // 우주인(1) 스크립트 A
+    if (keys.left) state.playerX -= P.playerSpeed;
+    if (keys.right) state.playerX += P.playerSpeed;
+
+    // 우주인(1) 스크립트 B — 벽 충돌
+    if (state.playerX < -CONST.wallLimit || state.playerX > CONST.wallLimit) {
+      state.playerX = Math.max(-238, Math.min(238, state.playerX));
+      gameOver("벽에 부딪혔습니다");
+      return;
+    }
+
+    // 별똥별(2) 스크립트 A — 생성기
+    state.spawnTimer += dt;
+    var gap = curSpawn();
+    while (state.spawnTimer >= gap) {
+      state.spawnTimer -= gap;
+      state.stars.push({
+        x: Math.random() * (CONST.spawnX * 2) - CONST.spawnX,
+        y: CONST.spawnY,
+        r: CONST.starR + Math.random() * 2.5
+      });
+    }
+
+    // 별똥별(2) 스크립트 B — 복제본의 일생
+    var speed = curSpeed();
+    for (var i = state.stars.length - 1; i >= 0; i--) {
+      var s = state.stars[i];
+      s.y -= speed;
+
+      var dx = s.x - state.playerX;
+      var dy = s.y - CONST.playerY;
+      if (Math.sqrt(dx * dx + dy * dy) < CONST.playerR + s.r) {
+        gameOver("별똥별에 맞았습니다");
+        return;
+      }
+      if (s.y < CONST.killY) {
+        state.score += 1;              // 점수에 1 만큼 더하기
+        state.stars.splice(i, 1);      // 이 복제본 삭제하기
+      }
+    }
+  }
+
+  // ---- 그리기 ----
+  function sx(x) { return x + 240; }
+  function sy(y) { return 135 - y; }
+
+  function drawPlayer(x) {
+    var px = sx(x), py = sy(CONST.playerY);
+    ctx.save();
+    ctx.translate(px, py);
+    // 몸통
+    ctx.fillStyle = "#E8ECFB";
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 9, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 팔
+    ctx.strokeStyle = "#E8ECFB";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-8, 3); ctx.lineTo(-14, 10);
+    ctx.moveTo(8, 3); ctx.lineTo(14, 10);
+    ctx.stroke();
+    // 헬멧
+    ctx.fillStyle = "#F7F9FF";
+    ctx.beginPath();
+    ctx.arc(0, -7, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#1F2B5C";
+    ctx.beginPath();
+    ctx.arc(0, -7, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.beginPath();
+    ctx.arc(-2, -9.5, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStar(s) {
+    var px = sx(s.x), py = sy(s.y);
+    var g = ctx.createLinearGradient(px, py - 34, px, py);
+    g.addColorStop(0, "rgba(255,155,66,0)");
+    g.addColorStop(1, "rgba(255,155,66,0.55)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(px - s.r * 0.5, py);
+    ctx.lineTo(px, py - 34);
+    ctx.lineTo(px + s.r * 0.5, py);
+    ctx.closePath();
+    ctx.fill();
+
+    var h = ctx.createRadialGradient(px, py, 0, px, py, s.r * 2.2);
+    h.addColorStop(0, "#FFF3E2");
+    h.addColorStop(0.35, "#FF9B42");
+    h.addColorStop(1, "rgba(255,155,66,0)");
+    ctx.fillStyle = h;
+    ctx.beginPath();
+    ctx.arc(px, py, s.r * 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawOverlay(title, sub) {
+    ctx.fillStyle = "rgba(12,14,36,0.72)";
+    ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#FF9B42";
+    ctx.font = "700 24px 'IBM Plex Sans KR', sans-serif";
+    ctx.fillText(title, 240, 128);
+    ctx.fillStyle = "#C9CFEE";
+    ctx.font = "500 13px 'IBM Plex Sans KR', sans-serif";
+    ctx.fillText(sub, 240, 152);
+    ctx.textAlign = "left";
+  }
+
+  function render() {
+    ctx.setTransform(canvas.width / STAGE_W, 0, 0, canvas.height / STAGE_H, 0, 0);
+    ctx.clearRect(0, 0, STAGE_W, STAGE_H);
+
+    // 우주(2) 배경
+    var sky = ctx.createLinearGradient(0, 0, 0, STAGE_H);
+    sky.addColorStop(0, "#0A0B22");
+    sky.addColorStop(0.6, "#121634");
+    sky.addColorStop(1, "#1B1140");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+
+    for (var i = 0; i < bgStars.length; i++) {
+      var b = bgStars[i];
+      ctx.fillStyle = "rgba(226,232,255," + b.a + ")";
+      ctx.beginPath();
+      ctx.arc(sx(b.x), sy(b.y), b.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 벽(사망선)
+    ctx.strokeStyle = "rgba(255,139,128,0.45)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(sx(-CONST.wallLimit), 0); ctx.lineTo(sx(-CONST.wallLimit), STAGE_H);
+    ctx.moveTo(sx(CONST.wallLimit), 0); ctx.lineTo(sx(CONST.wallLimit), STAGE_H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    for (var j = 0; j < state.stars.length; j++) drawStar(state.stars[j]);
+    drawPlayer(state.playerX);
+
+    if (state.phase === "ready") drawOverlay("별똥별 피하기", "시작하기 · 스페이스바 · 화면 터치");
+    if (state.phase === "over") drawOverlay(state.deathReason, "점수 " + state.score + " · 다시 하려면 스페이스바");
+  }
+
+  // ---- 루프 (엔트리와 같은 60fps 기준) ----
+  var last = performance.now();
+  var acc = 0;
+  var FRAME = 1 / 60;
+  function loop(now) {
+    var dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    acc += dt;
+    while (acc >= FRAME) {
+      step(FRAME);
+      acc -= FRAME;
+    }
+    hudScore.textContent = state.score;
+    hudBest.textContent = state.best;
+    hudCount.textContent = state.stars.length;
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  btnStart.addEventListener("click", start);
+
+  // 뷰어가 열어둔 페이지의 상태 보존
+  var hot = window.claude && window.claude.hot;
+  function boot(data) {
+    if (data && typeof data.best === "number") state.best = Math.max(state.best, data.best);
+    requestAnimationFrame(loop);
+  }
+  if (hot && hot.snapshot) hot.snapshot(function () { return { best: state.best }; });
+  if (hot && hot.ready) hot.ready(boot); else boot((hot && hot.data) || {});
+})();
+</script>
