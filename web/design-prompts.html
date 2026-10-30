@@ -1,0 +1,480 @@
+<title>낱말 용사 디자인 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single column of prompt cards, each with its own copy button.
+   Committed dark ink theme, matched to the game it designs for. */
+:root {
+  --bg: #11131A;
+  --surface: #1A1D27;
+  --surface-2: #232838;
+  --code: #0D0F16;
+  --line: #333950;
+  --fg: #ECEAE3;
+  --fg-dim: #969BB3;
+  --fg-faint: #656B85;
+  --accent: #D6453A;
+  --gold: #C9A227;
+  --jade: #4A9E8F;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.68; margin: 0;
+}
+.wrap {
+  max-width: 780px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 60px;
+}
+h1, h2, h3 { margin: 0; text-wrap: balance; font-family: var(--font-display); font-weight: 700; }
+h1 { font-size: clamp(28px, 6.4vw, 40px); line-height: 1.18; }
+h2 { font-size: clamp(18px, 3.8vw, 22px); }
+p { margin: 0; }
+a { color: var(--gold); }
+code {
+  font-family: var(--font-mono); font-size: .88em;
+  background: var(--surface-2); padding: 1px 6px; border-radius: 4px;
+}
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+}
+.lede { color: var(--fg-dim); max-width: 60ch; }
+header { display: flex; flex-direction: column; gap: 11px; margin-bottom: 26px; }
+
+.how {
+  background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; gap: 9px; font-size: 14px;
+}
+.how .h { font-weight: 700; color: var(--gold); font-size: 14px; }
+.how ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; }
+.how li::marker { color: var(--gold); font-family: var(--font-mono); font-size: 12px; }
+
+section { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; overflow: hidden;
+}
+.card.brief { border-color: #4A3E18; }
+.cardhead {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 15px 16px; flex-wrap: wrap;
+}
+.cardhead .n {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  color: var(--bg); background: var(--accent);
+  border-radius: 20px; padding: 2px 9px; flex: none; margin-top: 3px;
+}
+.card.brief .cardhead .n { background: var(--gold); }
+.cardhead .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cardhead .t { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.cardhead .d { font-size: 12.5px; color: var(--fg-dim); }
+.cardhead .spec {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-faint);
+  letter-spacing: .04em;
+}
+.copy {
+  font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 14px; cursor: pointer; flex: none; white-space: nowrap;
+}
+.copy:hover { background: #2C3246; }
+.copy.done { background: #15241F; border-color: var(--jade); color: var(--jade); }
+.copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+pre {
+  margin: 0; padding: 15px 16px;
+  background: var(--code); border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.72;
+  color: #D5D8E6; white-space: pre-wrap; word-break: break-word;
+  max-height: 340px; overflow-y: auto;
+}
+.card.open pre { max-height: none; }
+.more {
+  width: 100%; background: var(--surface-2); color: var(--fg-dim);
+  border: 0; border-top: 1px solid var(--line);
+  padding: 8px; font-size: 12px; font-family: var(--font-mono); cursor: pointer;
+}
+.more:hover { color: var(--fg); }
+
+.tip {
+  background: #15241F; border: 1px solid #2A5048;
+  border-radius: 11px; padding: 13px 15px; font-size: 13.5px;
+}
+.tip b { color: var(--jade); }
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+ul.plain li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; font-size: 14px; align-items: start; }
+ul.plain li::before { content: "▸"; color: var(--accent); font-size: 12px; line-height: 1.7; }
+ul.plain li span { color: var(--fg-dim); }
+ul.plain li b { color: var(--fg); }
+
+footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--fg-faint); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">낱말 용사 · 출시 준비</div>
+  <h1>디자인 프롬프트 7종</h1>
+  <p class="lede">클로드에 그대로 붙여넣으면 되는 프롬프트 모음입니다. 위에서부터 순서대로 쓰시면, 아이콘 하나하나가 따로 노는 일 없이 한 세계관으로 묶입니다.</p>
+</header>
+
+<div class="how">
+  <span class="h">쓰는 순서</span>
+  <ol>
+    <li><b>0번(공통 브리프)</b>을 새 대화 맨 처음에 한 번 붙여넣습니다. "준비됨"이라고 답할 겁니다.</li>
+    <li>같은 대화에서 <b>1~7번</b>을 필요한 것부터 붙여넣습니다.</li>
+    <li>대화를 새로 열면 <b>0번을 다시</b> 붙여넣어야 합니다. 그래야 색과 톤이 유지됩니다.</li>
+  </ol>
+</div>
+
+<section>
+  <div class="card brief" id="c0">
+    <div class="cardhead">
+      <span class="n">0</span>
+      <div class="meta">
+        <span class="t">공통 브리프</span>
+        <span class="d">가장 먼저 한 번. 이게 없으면 나머지가 제각각 나옵니다.</span>
+      </div>
+      <button class="copy" data-t="p0">복사</button>
+    </div>
+    <pre id="p0">나는 한국 안드로이드/iOS 스토어에 출시할 모바일 게임의 디자인을 준비하고 있어.
+아래 브리프를 기준으로 앞으로의 모든 작업을 진행해줘.
+
+[게임]
+- 이름: 낱말 용사
+- 장르: 한국어 낱말 퍼즐 × 방치형 RPG
+- 한 줄 요약: 낱말을 만들어 요괴를 퇴치하고, 붓과 먹을 수련해 더 강해진다
+- 핵심 루프: 글자 타일로 낱말 조합 → 데미지 → 보스 처치 → 재화 → 강화 → 다음 관문
+- 한 판 길이: 40초
+
+[타깃]
+- 주 타깃: 40~60대, 여성 비중 높음 (한국 낱말퀴즈 앱의 실제 주 사용층)
+- 부 타깃: 어휘력·두뇌 훈련에 관심 있는 30~50대
+- 중요: 귀엽고 카툰스러운 방치형 RPG 톤은 쓰지 않는다. 이 타깃이 바로 이탈한다.
+
+[비주얼 방향]
+- 콘셉트: 수묵(ink wash) 한국 전통. 밤의 먹색 위에 붉은 인장.
+- 질감: 한지 결, 먹 번짐, 갈필(마른 붓) 자국, 인주 도장
+- 금지: 네온, 사이버펑크, 3D 캐주얼, 서구권 판타지, 과하게 귀여운 캐릭터
+
+[컬러 토큰]
+- 먹(배경)        #11131A
+- 먹면(카드)      #1A1D27
+- 한지(본문)      #ECEAE3
+- 흐린 글(보조)    #969BB3
+- 인장 주홍(강조)  #D6453A
+- 금니(재화)      #C9A227
+- 청자(긍정)      #4A9E8F
+
+[타이포]
+- 제목·숫자: Gowun Batang (고운바탕, 세리프)
+- 본문·UI: IBM Plex Sans KR
+- 한글 가독성이 최우선이다. 40~60대가 보는 화면이다.
+
+[등장 요괴 5종]
+달걀귀신(卵) · 도깨비(鬼) · 구미호(狐) · 그슨대(影) · 저승사자(冥)
+
+확인했으면 "준비됨" 한 마디만 답하고 기다려줘.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>스토어 전환을 만드는 것</h2>
+  <p class="lede">설치 여부는 아이콘과 스크린샷 두 장에서 거의 결정됩니다. 여기에 시간을 가장 많이 쓰세요.</p>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">1</span>
+      <div class="meta">
+        <span class="t">앱 아이콘</span>
+        <span class="d">목록에서 경쟁작 옆에 놓였을 때 눈에 걸리는지가 전부입니다.</span>
+        <span class="spec">512 × 512 · 시안 6종</span>
+      </div>
+      <button class="copy" data-t="p1">복사</button>
+    </div>
+    <pre id="p1">디자인 아티팩트로 앱 아이콘 시안을 만들어줘.
+
+[규격] 512×512 정사각 아트보드 6개를 한 캔버스에 나란히
+[용도] Google Play / App Store 목록 아이콘
+
+[요구]
+- 6개를 서로 다른 접근으로: (1) 글자 타일 (2) 붓 한 획 (3) 인장·도장
+  (4) 요괴 실루엣 (5) 글자와 요괴의 결합 (6) 한지 위 먹글씨
+- 각 시안 아래에 어떤 접근인지 한 줄 캡션
+- 아이콘 안 한글은 최대 2글자. 그 이상은 작아지면 안 읽힌다
+- 모서리 둥글기는 OS가 알아서 깎으니 정사각 풀블리드로 그린다
+
+[경쟁작 회피]
+한국 낱말퀴즈 앱 상위권은 (a) 갓 쓴 선비·세종대왕 캐릭터
+(b) 십자말 격자 두 가지로 수렴한다. 둘 다 피하거나, 쓰더라도
+목록에서 한눈에 구분되게 만든다.
+
+[반드시 함께]
+각 시안을 실제 썸네일 크기(48×48, 96×96)로 축소한 미리보기를
+같은 캔버스 아래쪽에 나란히 배치해줘. 작게 줄였을 때 뭉개지는
+시안은 탈락이니, 그 판단이 가능해야 한다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">2</span>
+      <div class="meta">
+        <span class="t">스토어 스크린샷 5장</span>
+        <span class="d">1·2번째 장에서 설치가 결정됩니다. 나머지는 확인 사살입니다.</span>
+        <span class="spec">1080 × 1920 · 5장 세트</span>
+      </div>
+      <button class="copy" data-t="p2">복사</button>
+    </div>
+    <pre id="p2">디자인 아티팩트로 Google Play 스토어 스크린샷 5장 세트를 만들어줘.
+
+[규격] 1080×1920 세로 아트보드 5개
+[구조] 각 장 = 상단 카피(큰 글씨) + 게임 화면 목업 + 하단 여백
+
+[5장의 역할 — 이 순서가 전환율을 만든다]
+1. "낱말로 요괴를 벤다" — 전투 화면. 데미지 숫자가 크게 터지는 순간
+2. "하루 5분, 어휘력 훈련" — 타깃이 자기 이야기로 느끼는 장면
+3. "붓끝·먹물·인장을 수련한다" — 강화 화면. 성장 욕구
+4. "오늘의 전국 순위" — 랭킹 화면. 경쟁 동기
+5. "광고는 30초, 보상은 확실하게" — 경쟁작 최다 불만을 정면으로 치는 장
+
+[카피 규칙]
+- 한 장에 한 문장, 12자 이내
+- 40~60대가 1초 안에 읽히는 크기 (1080 기준 최소 72px)
+- 영어 금지
+
+[주의] 1·2번째 장에 가장 공들여줘. 스토어 목록에서는 이 두 장만 보인다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">3</span>
+      <div class="meta">
+        <span class="t">피처 그래픽</span>
+        <span class="d">가운데를 재생 버튼이 덮습니다. 모르고 만들면 다시 만듭니다.</span>
+        <span class="spec">1024 × 500 · 시안 3종</span>
+      </div>
+      <button class="copy" data-t="p3">복사</button>
+    </div>
+    <pre id="p3">디자인 아티팩트로 Google Play 피처 그래픽을 만들어줘.
+
+[규격] 1024×500 가로 아트보드 3개 시안
+[내용] 게임명 "낱말 용사" + 수묵 요괴 + 낱말 타일. 설명 문장은 넣지 않는다.
+
+[반드시 지킬 것]
+스토어가 이미지 정중앙에 재생 버튼을 덮어씌운다.
+중앙 30% 영역에는 글자나 핵심 요소를 두지 않는다.
+
+[함께] 세 시안 옆에, 휴대폰에서 실제로 보이는 폭(360px 상당)으로
+축소한 미리보기를 같이 배치해줘.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>게임 안쪽</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">4</span>
+      <div class="meta">
+        <span class="t">인게임 화면 3종</span>
+        <span class="d">전투 · 수련 · 기록. 타깃 손가락 기준으로 터치 영역을 키웁니다.</span>
+        <span class="spec">390 × 844 · 3화면</span>
+      </div>
+      <button class="copy" data-t="p4">복사</button>
+    </div>
+    <pre id="p4">디자인 아티팩트로 인게임 화면 3종을 만들어줘.
+
+[규격] 390×844 (iPhone 기준) 아트보드 3개
+
+[화면]
+1. 전투 — 상단: 보스·체력바·남은 시간 / 중단: 낱말 조합 슬롯
+   하단: 글자 타일 12개(6×2) / 최하단: 지우기·힌트·공격 버튼
+2. 수련 — 붓끝(공격력)·먹물(제한시간)·인장(연속 배수) 3개 항목,
+   각 항목에 현재 단계·효과·비용
+3. 기록 — 오늘 최고 / 이번 주 누적 / 최고 관문 + 전국 순위 10위까지
+
+[제약 — 타깃이 40~60대다]
+- 조작 요소는 전부 화면 하단 60%, 한 손 엄지가 닿는 범위에
+- 글자 타일 최소 52pt (일반 권장치 44pt보다 크게 잡는다)
+- 본문 최소 15px, 숫자는 Gowun Batang으로 크고 또렷하게
+- 다크 단일 테마. 라이트 모드는 만들지 않는다
+
+[함께] 각 화면 옆에 터치 영역을 반투명 사각형으로 표시한 버전을
+하나씩 더 그려줘. 손가락이 겹치는 구간을 눈으로 확인하려는 거다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">5</span>
+      <div class="meta">
+        <span class="t">요괴 캐릭터 시트</span>
+        <span class="d">무섭게 가면 타깃이 떠납니다. 해학으로 가야 합니다.</span>
+        <span class="spec">400 × 400 · 5종</span>
+      </div>
+      <button class="copy" data-t="p5">복사</button>
+    </div>
+    <pre id="p5">디자인 아티팩트로 요괴 5종 캐릭터 시트를 만들어줘.
+
+[규격] 한 캔버스에 400×400 아트보드 5개
+[대상] 달걀귀신(卵) · 도깨비(鬼) · 구미호(狐) · 그슨대(影) · 저승사자(冥)
+
+[스타일]
+- 수묵 붓질. 선은 적게, 여백은 넉넉히. 먹 번짐과 갈필 질감
+- 채색은 먹과 인장 주홍 두 가지만. 금니는 눈·뿔 같은 포인트로만
+- 무섭게 그리지 않는다. 타깃이 40~60대라 공포가 아니라 해학으로 간다
+- 한국 민화·탱화의 결. 일본 요괴풍, 중국 무협풍, 3D 렌더는 금지
+
+[각 요괴마다]
+- 기본 포즈 1컷
+- 피격 리액션 1컷 (같은 아트보드 안에 작게)
+- 이름과 난이도(1~5)를 캡션으로
+
+[난이도 순서] 달걀귀신 1 → 도깨비 2 → 구미호 3 → 그슨대 4 → 저승사자 5
+뒤로 갈수록 먹이 짙어지고 화면을 더 많이 차지하게 해줘.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">6</span>
+      <div class="meta">
+        <span class="t">디자인 시스템</span>
+        <span class="d">한 번 만들어두면 이후 모든 화면이 저절로 맞춰집니다.</span>
+        <span class="spec">토큰 · 컴포넌트</span>
+      </div>
+      <button class="copy" data-t="p6">복사</button>
+    </div>
+    <pre id="p6">디자인 시스템 아티팩트로 "낱말 용사" 디자인 시스템을 만들어줘.
+
+[포함할 것]
+- 컬러 토큰: 위 브리프의 7색. 각각 용도와 배경 대비비(WCAG)까지 적어줘
+- 타입 스케일: 제목·본문·숫자·캡션. Gowun Batang + IBM Plex Sans KR
+- 간격·모서리 토큰
+- 컴포넌트 (각각 기본·눌림·비활성 상태까지)
+  · 글자 타일
+  · 체력바
+  · 재화 칩 (냥·옥)
+  · 강화 행
+  · 기본 버튼 / 강조 버튼
+  · 전투 결과 카드
+- 접근성 규칙: 40~60대 기준 최소 글자 크기, 최소 터치 영역,
+  색만으로 정보를 전달하지 않기
+
+[목적] 이후 모든 화면·광고 디자인이 이 시스템을 참조하게 할 거다.
+그래서 "이럴 땐 이 토큰" 수준으로 판단 기준을 적어줘.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>출시 이후</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">7</span>
+      <div class="meta">
+        <span class="t">성과형 광고 소재</span>
+        <span class="d">후킹 각도를 넷으로 쪼개서, 어느 쪽이 먹히는지 숫자로 봅니다.</span>
+        <span class="spec">1080 × 1080 ×4 · 1080 × 1350 ×2</span>
+      </div>
+      <button class="copy" data-t="p7">복사</button>
+    </div>
+    <pre id="p7">디자인 아티팩트로 성과형 광고 소재를 만들어줘.
+
+[규격] 1080×1080 정사각 4개 + 1080×1350 세로 2개
+
+[각 소재의 후킹 각도 — 서로 다르게 가서 A/B로 거를 거다]
+1. 실력 과시형 — "이 낱말, 3초 안에 보이시나요?" (실제 타일 배치를 보여준다)
+2. 두뇌 훈련형 — "하루 5분, 어휘력 나이 측정"
+3. 불만 공략형 — "3분 광고, 없습니다"
+4. 성장형 — "붓 한 자루로 저승사자까지"
+5·6. 세로형: 1번과 2번의 세로 확장
+
+[제약]
+- 타깃이 40~60대다. 작은 글씨, 영어, 밈 톤 전부 금지
+- 실제 UI 기준으로 그린다. 게임에 없는 화면을 지어내지 않는다
+- 각 소재에 어떤 사용자 심리를 노린 건지 한 줄 메모를 붙여줘</pre>
+  </div>
+</section>
+
+<section>
+  <h2>프롬프트 쓰실 때</h2>
+  <div class="tip">
+    <b>한 번에 완성본을 기대하지 마세요.</b> 시안 6개를 받아서 2개를 고르고, 그 2개로 다시 6개를 뽑는 식이 훨씬 빠릅니다. "3번 시안의 붓질을 유지하고 글자만 바꿔서 4개 더" 처럼 이어 말하시면 됩니다.
+  </div>
+  <ul class="plain">
+    <li><b>거절당하면 각도를 바꾸세요.</b> <span>"경쟁작과 비슷하게"는 잘 안 통합니다. "같은 장르에서 흔한 두 가지를 피해서"로 말하면 됩니다.</span></li>
+    <li><b>색은 토큰으로 고정하세요.</b> <span>0번 브리프의 7색만 쓰라고 못 박으면 시안끼리 어긋나지 않습니다.</span></li>
+    <li><b>축소 미리보기를 꼭 요구하세요.</b> <span>아이콘·피처 그래픽은 실제로 작게 보입니다. 크게만 보고 고르면 반드시 다시 만듭니다.</span></li>
+    <li><b>1·2번부터 하세요.</b> <span>캐릭터 시트가 제일 재밌지만, 설치율을 움직이는 건 아이콘과 스크린샷 두 장입니다.</span></li>
+  </ul>
+</section>
+
+<footer>
+  색·폰트·요괴 설정은 <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 프로토타입</a>에서 실제로 쓰고 있는 값 그대로입니다. 프로토타입을 고치면 0번 브리프의 토큰도 같이 고쳐주세요.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = document.getElementById(btn.dataset.t);
+      if (!pre) return;
+      var text = pre.textContent;
+      var done = function () {
+        var old = btn.textContent;
+        btn.textContent = "복사됨";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = old; btn.classList.remove("done"); }, 1600);
+      };
+      try {
+        navigator.clipboard.writeText(text).then(done, function () { select(pre, btn); });
+      } catch (e) { select(pre, btn); }
+    });
+  });
+
+  // 클립보드가 막힌 뷰어에서는 대신 선택해 준다
+  function select(pre, btn) {
+    try {
+      var r = document.createRange();
+      r.selectNodeContents(pre);
+      var s = window.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+      btn.textContent = "직접 복사";
+      setTimeout(function () { btn.textContent = "복사"; }, 2200);
+    } catch (e) {}
+  }
+
+  // 긴 프롬프트는 접어두고, 눌러서 펼친다
+  document.querySelectorAll(".card").forEach(function (card) {
+    var pre = card.querySelector("pre");
+    if (!pre) return;
+    requestAnimationFrame(function () {
+      if (pre.scrollHeight <= pre.clientHeight + 4) return;
+      var b = document.createElement("button");
+      b.className = "more";
+      b.textContent = "전체 보기 ▾";
+      b.addEventListener("click", function () {
+        card.classList.toggle("open");
+        b.textContent = card.classList.contains("open") ? "접기 ▴" : "전체 보기 ▾";
+      });
+      card.appendChild(b);
+    });
+  });
+})();
+</script>
