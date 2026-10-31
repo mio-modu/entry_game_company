@@ -163,6 +163,27 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .btn:disabled { opacity: .4; cursor: default; }
 .btn.go { background: var(--accent); color: #fff; border-color: transparent; }
 .btn.go:disabled { background: var(--surface-2); color: var(--fg-faint); border-color: var(--line); }
+.btn.go.ask { background: var(--surface-2); color: var(--gold); border-color: #4A3E18; }
+
+.boardinfo {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-dim);
+  padding: 0 2px; margin-top: -2px;
+}
+.boardinfo b { color: var(--jade); font-weight: 600; }
+.mini {
+  background: transparent; color: var(--fg-dim);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 3px 11px; font-size: 11.5px; font-family: var(--font-mono);
+}
+.mini:hover { color: var(--fg); border-color: var(--fg-faint); }
+.toast {
+  position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); z-index: 40; max-width: 92vw;
+  background: #2E2412; color: var(--gold); border: 1px solid #4A3E18;
+  border-radius: 10px; padding: 10px 16px; font-size: 13px; text-align: center;
+  box-shadow: 0 10px 30px -12px #000;
+}
 .btn .sub { display: block; font-size: 10px; font-weight: 500; opacity: .75; font-family: var(--font-mono); }
 
 /* ---- panels ---- */
@@ -267,7 +288,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <div class="acts">
     <button class="btn" id="btnClear">지우기</button>
     <button class="btn" id="btnHint">힌트<span class="sub">옥 5</span></button>
-    <button class="btn go" id="btnGo" disabled>공격<span class="sub" id="goSub">낱말 없음</span></button>
+    <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><span class="sub" id="goSub">낱말 없음</span></button>
+  </div>
+
+  <div class="boardinfo">
+    <span id="poolCount">이 판의 낱말 —</span>
+    <button class="mini" id="btnShuffle">섞기</button>
   </div>
 
   <div class="panel">
@@ -282,6 +308,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <div class="rec"><div class="k">이번 주</div><div class="v mono" id="rWeek">0</div></div>
       <div class="rec j"><div class="k">최고 관문</div><div class="v mono" id="rStage">1</div></div>
     </div>
+    <p class="note" id="askedLine"></p>
     <p class="note">기록은 이 브라우저에만 저장됩니다. 실제 출시판에서는 이 자리가 <b>전국 일간·주간 랭킹</b>이 되고, 보상 수령이 재방문의 이유가 됩니다.</p>
   </div>
 
@@ -294,16 +321,33 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   "use strict";
 
   // ── 낱말 사전 (프로토타입용 상용 한국어 명사) ────────────────────────
+  // 상용판은 최소 3~5만 어휘가 필요하다. 아래는 그 방향을 체감하기 위한
+  // 300여 개 표본 — 108개였을 때와 거부 빈도가 얼마나 달라지는지 보려는 것.
   var DICT = (
-    "바다 하늘 구름 바람 나무 사람 가을 겨울 아침 저녁 노래 그림 시간 마음 사랑 " +
-    "친구 학교 아기 달빛 별빛 눈물 웃음 거울 종이 연필 책상 의자 창문 바위 모래 " +
-    "강물 호수 숲길 돌담 기와 장독 부엌 마루 이불 베개 수건 양말 신발 모자 가방 " +
-    "우산 등불 촛불 그늘 새벽 노을 안개 서리 이슬 무지 보리 콩밥 국수 만두 떡국 " +
-    "호랑이 다람쥐 무지개 코끼리 도깨비 구미호 개나리 진달래 아버지 어머니 할머니 " +
-    "소나무 보름달 자전거 운동화 손가락 고구마 양배추 미나리 도라지 두루미 기러기 " +
-    "제비꽃 민들레 봉선화 나팔꽃 원앙새 부엉이 올빼미 메뚜기 잠자리 개구리 거북이 " +
-    "바구니 소쿠리 항아리 보따리 지팡이 호롱불 풍경화 수묵화 서예가 대장간 " +
-    "해바라기 바이올린 호랑나비 할아버지 코스모스"
+    "가방 가족 가지 간장 감자 거리 거울 건물 겨울 경기 계단 계절 고기 고추 공기 공원 " +
+    "과일 교실 구름 구슬 국물 국수 그늘 그림 글씨 기름 기분 기차 김치 깃발 꼬리 " +
+    "나라 나무 나비 낙엽 날씨 냄새 노래 노을 농부 누나 눈물 느낌 다리 단추 달빛 당근 " +
+    "대답 대문 도시 도장 독서 돌담 동네 동생 두부 등불 딸기 땅콩 " +
+    "마당 마루 마음 마을 만두 말씀 머리 먹이 메모 명절 모래 모자 무대 무릎 문제 물건 미소 " +
+    "바다 바닥 바람 바위 반지 방법 배추 버섯 번개 벌레 베개 변화 별빛 병원 보리 보물 " +
+    "복도 봄날 부엌 분수 불빛 비누 비밀 빗물 " +
+    "사과 사랑 사람 산책 삼촌 상자 새벽 생각 서리 서울 선물 선생 설탕 성격 세상 소금 " +
+    "소리 손님 수건 수박 수업 숙제 순간 숲길 시간 시골 시장 식사 신발 실수 심장 " +
+    "아기 아침 안개 안경 약속 양말 어깨 어른 얼굴 여름 여행 연필 열쇠 영화 예절 오늘 " +
+    "오리 온도 외국 요리 용기 우산 우유 운동 웃음 위로 유리 음악 의자 이름 이불 인사 일기 입술 " +
+    "자두 자연 작가 잔디 장갑 저녁 전화 접시 정원 제비 조개 종이 주말 주소 줄기 중간 " +
+    "지갑 지도 지붕 진실 질문 짐승 " +
+    "창문 책상 천막 철도 청소 초록 추억 축제 출발 친구 침대 칠판 카페 쿠션 크기 탁자 태양 토끼 튀김 " +
+    "파도 편지 포도 표정 풀밭 풍경 피리 하늘 하루 학교 한글 항구 햇살 행복 향기 허리 " +
+    "호수 호흡 화분 환경 회사 후추 휴지 희망 " +
+    "가로수 개구리 개나리 거미줄 거북이 고구마 고양이 공무원 과수원 교과서 구두쇠 구미호 " +
+    "그림자 기러기 꾀꼬리 나그네 나팔꽃 냉장고 노래방 다람쥐 대나무 도깨비 도라지 돌고래 " +
+    "동백꽃 두루미 메뚜기 멧돼지 무지개 문방구 미나리 민들레 바가지 바구니 바닷가 박물관 " +
+    "밤하늘 보름달 복숭아 봉선화 부엉이 분홍색 사다리 사마귀 사진기 산딸기 삼각형 삼겹살 " +
+    "선인장 소나기 소나무 소쿠리 손가락 솔방울 스케치 시냇물 아버지 어머니 얼룩말 오솔길 " +
+    "올빼미 운동장 운동화 원앙새 유리창 이야기 자동차 자전거 잠자리 저고리 제비꽃 조약돌 " +
+    "주머니 지팡이 진달래 초가집 코끼리 토마토 파랑새 포도주 할머니 항아리 호랑이 " +
+    "해바라기 바이올린 호랑나비 할아버지 코스모스 무당벌레 도토리묵 민들레꽃 개똥벌레 이슬방울"
   ).split(" ").filter(function (w) { return w.length >= 2 && w.length <= 4; });
 
   var DSET = Object.create(null);
@@ -350,7 +394,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   var el = {};
   ["lv","gold","gem","stageNo","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
-   "slot","tiles","btnClear","btnHint","btnGo","goSub","ups","rToday","rWeek","rStage","floaters"
+   "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
+   "floaters","poolCount","btnShuffle","askedLine"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // ── 판 ──────────────────────────────────────────────────────────────
@@ -438,9 +483,53 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       });
     }
     var valid = w.length >= 2 && DSET[w];
+    // 사전에 없다고 막아 세우기만 하면 그 자리에서 별 하나가 떨어진다.
+    // 같은 버튼을 제보 창구로 바꿔, 불만이 그대로 어휘 데이터가 되게 한다.
+    var askable = !valid && w.length >= 2;
     el.slot.classList.toggle("ok", valid);
-    el.btnGo.disabled = !valid;
-    el.goSub.textContent = valid ? "+" + damageOf(w) : (w.length < 2 ? "낱말 없음" : "사전에 없음");
+    el.btnGo.classList.toggle("ask", askable);
+    el.btnGo.disabled = !valid && !askable;
+    el.goLabel.textContent = askable ? "등록 요청" : "공격";
+    el.goSub.textContent = valid ? "+" + damageOf(w)
+      : (askable ? "사전에 없음 · 눌러서 제보" : "낱말 없음");
+  }
+
+  // 판에 지금 몇 개의 낱말이 남아 있는지 — 플레이어가 막혔을 때
+  // "내 어휘 문제인가, 게임 문제인가"를 스스로 판단하게 해 준다.
+  function poolCount() {
+    var chars = board.map(function (t) { return t.ch; });
+    var n = 0;
+    for (var i = 0; i < DICT.length; i++) {
+      var w = DICT[i], pool = chars.slice(), ok = true;
+      for (var j = 0; j < w.length; j++) {
+        var k = pool.indexOf(w[j]);
+        if (k < 0) { ok = false; break; }
+        pool.splice(k, 1);
+      }
+      if (ok) n++;
+    }
+    return n;
+  }
+
+  var toastT = null;
+  function toast(msg) {
+    var old = document.querySelector(".toast");
+    if (old) old.remove();
+    var t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    if (toastT) clearTimeout(toastT);
+    toastT = setTimeout(function () { t.remove(); }, 2600);
+  }
+
+  function requestWord(w) {
+    if (!S.asked) S.asked = [];
+    if (S.asked.indexOf(w) < 0) S.asked.push(w);
+    save();
+    toast("“" + w + "” 등록 요청 접수 — 검수 후 반영됩니다");
+    picked = [];
+    drawAll();
   }
 
   function drawStats() {
@@ -471,7 +560,16 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     });
   }
 
-  function drawAll() { drawTiles(); drawSlot(); drawStats(); }
+  function drawAll() {
+    drawTiles(); drawSlot(); drawStats();
+    el.poolCount.innerHTML = run
+      ? "이 판에 만들 수 있는 낱말 <b>" + poolCount() + "개</b>"
+      : "이 판의 낱말 —";
+    var n = (S.asked || []).length;
+    el.askedLine.textContent = n
+      ? "내가 등록 요청한 낱말 " + n + "개 — " + S.asked.slice(-6).join(", ")
+      : "";
+  }
 
   // ── 전투 ────────────────────────────────────────────────────────────
   function damageOf(w) {
@@ -690,7 +788,18 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   });
 
   el.btnClear.addEventListener("click", function () { picked = []; drawAll(); });
-  el.btnGo.addEventListener("click", attack);
+  el.btnGo.addEventListener("click", function () {
+    var w = currentWord();
+    if (DSET[w]) attack();
+    else if (w.length >= 2) requestWord(w);
+  });
+  el.btnShuffle.addEventListener("click", function () {
+    if (!run) return;
+    picked = [];
+    board.sort(function () { return Math.random() - 0.5; });
+    ensureSolvable();
+    drawAll();
+  });
 
   // 키보드로도 — PC에서 심사·시연할 때 필요하다
   window.addEventListener("keydown", function (e) {
