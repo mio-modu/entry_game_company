@@ -106,6 +106,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   transition: transform .09s ease;
 }
 .sigil.hit { transform: translateX(-6px) scale(.95); }
+.sigil.boss { background: var(--gold); box-shadow: 0 0 0 1px #0008 inset, 0 6px 24px -6px var(--gold); }
+.stageline b { color: var(--fg); font-size: 13px; font-weight: 600; }
 .bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .bossname { font-family: var(--font-display); font-size: 17px; }
 .bossname small { font-family: var(--font-body); font-size: 11.5px; color: var(--fg-faint); margin-left: 6px; }
@@ -267,13 +269,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   <div class="arena">
     <div class="stageline">
-      <span><span id="mtName">북한산</span> · <span id="cycle">1</span>번째 종주</span>
+      <span><b id="stageNo">1</b>단계 / 100 · <span id="mtName">북한산</span> <span id="cycle"></span></span>
       <span class="timer" id="timer">45</span>
     </div>
     <div class="bossrow">
-      <div class="sigil" id="sigil">鬼</div>
+      <div class="sigil" id="sigil">불</div>
       <div class="bossinfo">
-        <div class="bossname"><span id="bossName">들쥐 떼</span><small id="bossHint"></small></div>
+        <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
         <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span></div>
       </div>
@@ -306,7 +308,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     <div class="recs">
       <div class="rec"><div class="k">오늘 최고</div><div class="v mono" id="rToday">0</div></div>
       <div class="rec"><div class="k">이번 주</div><div class="v mono" id="rWeek">0</div></div>
-      <div class="rec j"><div class="k">오른 산</div><div class="v mono" id="rStage">1</div></div>
+      <div class="rec j"><div class="k">최고 단계</div><div class="v mono" id="rStage">1</div></div>
     </div>
     <p class="note" id="askedLine"></p>
     <p class="note">기록은 이 브라우저에만 저장됩니다. 실제 출시판에서는 이 자리가 <b>전국 일간·주간 랭킹</b>이 되고, 보상 수령이 재방문의 이유가 됩니다.</p>
@@ -357,20 +359,37 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   var SYLS = [];
   DICT.forEach(function (w) { for (var i = 0; i < w.length; i++) SYLS.push(w[i]); });
 
-  // 적은 짐승이되, 피 한 방울 없다. 깎는 것은 체력이 아니라 기세(氣)이고,
-  // 0이 되면 쓰러지는 게 아니라 꼬리를 내리고 물러난다.
-  var BOSSES = [
-    { n: "들쥐 떼",      s: "鼠", m: "북한산", hp: 170,  t: 45, hint: "두 글자면 충분합니다" },
-    { n: "삵",          s: "狸", m: "속리산", hp: 300,  t: 45, hint: "세 글자는 세 배로 아픕니다" },
-    { n: "멧돼지",       s: "猪", m: "설악산", hp: 520,  t: 42, hint: "연속으로 맞히면 배수가 붙습니다" },
-    { n: "반달곰",       s: "熊", m: "지리산", hp: 820,  t: 40, hint: "긴 낱말을 아껴두세요" },
-    { n: "백두산 호랑이", s: "虎", m: "백두산", hp: 1250, t: 38, hint: "" }
+  // 100단계 = 10개 산 x 10단계. 고유 아트는 신수 10종이면 충분하고,
+  // 1~9단계는 칭호(어린/성난)로 변주한다. 10단계마다 수호신 전투.
+  // 혼령이 아니라 상상의 동물이다. 무속·귀신과 선을 긋되 웅장함은 가져온다.
+  // 동그라미에는 이름 첫 글자만 — 한자는 한글 낱말 게임에 어울리지 않는다.
+  var MOUNTAINS = [
+    { m: "북한산", n: "불가사리" },
+    { m: "속리산", n: "삼족오" },
+    { m: "계룡산", n: "해태" },
+    { m: "설악산", n: "현무" },
+    { m: "소백산", n: "백호" },
+    { m: "덕유산", n: "기린" },
+    { m: "지리산", n: "주작" },
+    { m: "한라산", n: "이무기" },
+    { m: "금강산", n: "봉황" },
+    { m: "백두산", n: "천지의 용" }
+  ];
+  var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
+  var HINTS = [
+    "두 글자면 충분합니다", "세 글자는 세 배로 아픕니다", "연속으로 맞히면 배수가 붙습니다",
+    "긴 낱말을 아껴두세요", "막히면 섞기를 누르세요", "10단계마다 수호신이 기다립니다"
   ];
 
+  // 100단계를 버티려면 강화 효과가 곱셈이어야 한다. 덧셈이면 중반에
+  // 반드시 벽이 생기고, 그 벽을 돈으로만 넘게 만들면 리뷰가 무너진다.
   var UPGRADES = [
-    { id: "atk",   t: "붓끝 (공격력)",  base: 40,  desc: function (s) { return "공격 x" + (1 + s.atk * 0.35).toFixed(2); } },
-    { id: "time",  t: "먹물 (제한시간)", base: 70,  desc: function (s) { return "+" + (s.time * 3) + "초"; } },
-    { id: "combo", t: "인장 (연속 배수)", base: 120, desc: function (s) { return "연속 보너스 +" + (s.combo * 15) + "%"; } }
+    { id: "atk",   t: "붓끝 (공격력)",   base: 40,  r: 1.32,
+      desc: function (s) { return "공격 x" + Math.pow(1.12, s.atk).toFixed(2); } },
+    { id: "time",  t: "먹물 (제한시간)",  base: 90,  r: 1.38,
+      desc: function (s) { return "+" + (s.time * 2) + "초"; } },
+    { id: "combo", t: "인장 (연속 배수)", base: 150, r: 1.38,
+      desc: function (s) { return "연속 보너스 +" + (s.combo * 10) + "%"; } }
   ];
 
   var KEY = "nathero-v1";
@@ -395,7 +414,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   load();
 
   var el = {};
-  ["lv","gold","gem","mtName","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
+  ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
    "floaters","poolCount","btnShuffle","askedLine"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -543,7 +562,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.rStage.textContent = S.bestStage;
     el.ups.textContent = "";
     UPGRADES.forEach(function (u) {
-      var lvl = S[u.id], cost = Math.round(u.base * Math.pow(1.55, lvl));
+      var lvl = S[u.id], cost = Math.round(u.base * Math.pow(u.r, lvl));
       var row = document.createElement("div");
       row.className = "up";
       var left = document.createElement("div");
@@ -575,32 +594,37 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   // ── 전투 ────────────────────────────────────────────────────────────
   function damageOf(w) {
-    var atkMul = 1 + S.atk * 0.35;
-    var comboMul = 1 + (run ? run.combo : 0) * (0.15 + S.combo * 0.15);
+    var atkMul = Math.pow(1.12, S.atk);
+    var comboMul = 1 + (run ? run.combo : 0) * (0.12 + S.combo * 0.10);
     var len = Math.pow(w.length, 1.75);
     return Math.round(12 * len * atkMul * comboMul);
   }
 
-  function bossFor(stage) {
-    var b = BOSSES[stage % BOSSES.length];
-    var cyc = Math.floor(stage / BOSSES.length);
+  function stageInfo(stage) {
+    var loop = Math.floor(stage / 100), k = stage % 100;
+    var M = MOUNTAINS[Math.floor(k / 10)], sub = k % 10;
+    var boss = sub === 9;
     return {
-      n: b.n, s: b.s, m: b.m, hint: b.hint,
-      hp: Math.round(b.hp * Math.pow(1.45, cyc)),
-      t: b.t + S.time * 3
+      n: boss ? M.n + " 수호신" : TITLES[sub] + M.n,
+      m: M.m, boss: boss, no: k + 1, loop: loop,
+      hp: Math.round(150 * Math.pow(1.07, k) * (boss ? 2.4 : 1) * Math.pow(4, loop)),
+      t: (boss ? 55 : 45) + S.time * 2,
+      hint: k < HINTS.length ? HINTS[k] : ""
     };
   }
 
   function startStage() {
-    var b = bossFor(S.stage);
+    var b = stageInfo(S.stage);
     run = { boss: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, score: 0, words: [] };
     picked = [];
     fillBoard();
-    el.sigil.textContent = b.s;
+    el.sigil.textContent = b.n[b.n.indexOf(" ") === 0 ? 1 : 0];
+    el.sigil.classList.toggle("boss", b.boss);
     el.bossName.textContent = b.n;
     el.bossHint.textContent = b.hint;
     el.mtName.textContent = b.m;
-    el.cycle.textContent = Math.floor(S.stage / BOSSES.length) + 1;
+    el.stageNo.textContent = b.no;
+    el.cycle.textContent = b.loop ? "· " + (b.loop + 1) + "회차" : "";
     el.hpMax.textContent = b.hp;
     tick();
     drawAll();
@@ -664,7 +688,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var r = run; run = null;
     var reward = 0;
     if (won) {
-      reward = Math.round(40 + r.max * 0.22);
+      reward = Math.round(25 + r.max * 0.24);
       S.gold += reward;
       S.stage++;
       S.bestStage = Math.max(S.bestStage, S.stage + 1);
