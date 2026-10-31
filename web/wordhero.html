@@ -88,6 +88,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .coin i { font-style: normal; font-size: 11px; }
 .coin.g { color: var(--gold); }
 .coin.j { color: #7FD4E8; }
+.coin.snd {
+  font-family: var(--font-body); font-size: 13px; cursor: pointer;
+  color: var(--gold); border-color: #4A3E18; background: #241F0D; padding: 3px 11px;
+}
+.coin.snd[aria-pressed="false"] { color: var(--fg-faint); background: var(--surface); border-color: var(--line); }
+.coin.snd:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ---- boss ---- */
 .arena {
@@ -118,12 +124,67 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   box-shadow: 0 0 0 1px #0007, 0 8px 22px -10px #000;
   transition: transform .09s ease, box-shadow .25s ease, filter .25s ease;
 }
+.pinner { width: 100%; height: 100%; }
 .portrait img, .portrait canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
 .portrait canvas { background: #171A24; }
 .portrait.hit { transform: translateX(-7px) scale(.95); }
 .portrait.g-young { filter: grayscale(.3) opacity(.86); }
 .portrait.g-angry { filter: contrast(1.2) saturate(1.5) brightness(.96); }
 .portrait.g-guard { box-shadow: 0 0 0 2px var(--gold), 0 8px 28px -8px rgba(201,162,39,.75); }
+
+/* ---- 수호신전 ----
+   10단계는 같은 그림을 쓰면서도 체격이 달라야 한다. 족자가 커지고,
+   기세가 꺾이면 커지는 폭을 한 번 더 키우며 떨게 만든다. 크기는
+   width/height로만 키운다 — transform을 쓰면 .hit과 또 부딪힌다. */
+.portrait.boss { width: 126px; height: 172px; }
+.portrait.boss.p2 {
+  width: 138px; height: 188px;
+  filter: contrast(1.32) saturate(1.75) brightness(1.02);
+  box-shadow: 0 0 0 2px #D6453A, 0 0 36px -4px rgba(214,69,58,.85);
+}
+.portrait.boss.p3 {
+  width: 150px; height: 204px;
+  filter: contrast(1.45) saturate(2) brightness(1.06);
+  box-shadow: 0 0 0 2px #FF6A5A, 0 0 48px -2px rgba(214,69,58,.95);
+}
+.portrait.boss.p2 .pinner { animation: quake .72s steps(4, end) infinite; }
+.portrait.boss.p3 .pinner { animation: quake .34s steps(4, end) infinite; }
+@keyframes quake {
+  0%   { transform: translate(0, 0) }
+  25%  { transform: translate(-2px, 1.5px) }
+  50%  { transform: translate(2px, -1.5px) }
+  75%  { transform: translate(-1.5px, -2px) }
+  100% { transform: translate(0, 0) }
+}
+.rage {
+  position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%);
+  font-family: var(--font-display); font-size: 12px; font-weight: 700;
+  letter-spacing: .2em; padding: 3px 9px; border-radius: 20px;
+  background: #D6453A; color: #fff; white-space: nowrap;
+  box-shadow: 0 2px 10px -2px #000;
+  animation: ragepulse 1.1s ease-in-out infinite;
+}
+.rage.fin { background: var(--gold); color: #1A1206; animation-duration: .5s; }
+@keyframes ragepulse { 50% { opacity: .55; } }
+
+/* 폭주 중에는 판 전체에 붉은 기운이 돈다 */
+body.raging .arena::after {
+  background: radial-gradient(130% 80% at 50% 0%, rgba(214,69,58,.3), transparent 70%);
+  animation: ragepulse 1.6s ease-in-out infinite;
+}
+.hpbar i.regen { background: linear-gradient(90deg, #D6453A, #FF8A7A) !important; }
+
+/* 약점 글자 — 수호신의 비늘이 벌어진 자리 */
+.tile.weak {
+  color: #1A1206; border-color: #F0D98A;
+  background: linear-gradient(180deg, #EBCB72, #C9A227);
+  box-shadow: 0 0 16px -2px rgba(201,162,39,.95);
+  animation: weakpulse 1.2s ease-in-out infinite;
+}
+@keyframes weakpulse { 50% { box-shadow: 0 0 6px -2px rgba(201,162,39,.5); } }
+@media (prefers-reduced-motion: reduce) {
+  .portrait.boss .pinner, .rage, .tile.weak, body.raging .arena::after { animation: none; }
+}
 .stageline b { color: var(--fg); font-size: 13px; font-weight: 600; }
 
 .modes { display: flex; gap: 6px; }
@@ -163,6 +224,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   animation: rise 1s ease-out forwards;
 }
 @keyframes rise { to { transform: translateY(-46px); opacity: 0 } }
+/* 약점을 짚었을 때는 숫자가 더 크고 밝게, 흘려보냈을 때는 작고 흐리게.
+   숫자를 읽지 않아도 '통했는지'를 눈으로 알 수 있어야 한다. */
+.dmg.weak { font-size: 25px; color: #FFE08A; text-shadow: 0 0 14px rgba(201,162,39,.9), 0 2px 6px #000; }
+.dmg.weak-no { font-size: 15px; color: #8B90A3; }
 
 /* ---- word slot ---- */
 .slot {
@@ -303,6 +368,44 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .card .big { font-family: var(--font-mono); font-size: 34px; font-weight: 600; color: var(--gold); line-height: 1.1; }
 .card .row { display: flex; gap: 8px; }
 .card .row .btn { flex: 1; }
+/* 낙관 — 결과 카드의 얼굴. 붉은 인주에 흰 글씨 */
+.seal {
+  align-self: center; display: grid; place-items: center;
+  width: 92px; height: 92px; border-radius: 14px;
+  background: linear-gradient(160deg, #C4332A, #8E201A);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.22), 0 10px 26px -10px #000;
+  transform: rotate(-4deg);
+}
+.seal.full { background: linear-gradient(160deg, #D8B13C, #9C7415); }
+.seal span {
+  font-family: var(--font-display); font-weight: 700; color: #fff;
+  font-size: 19px; line-height: 1.18; letter-spacing: .02em;
+  width: 2.4em; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+
+/* 글자 수별 결과표 */
+.sgrid { display: flex; flex-direction: column; gap: 7px; }
+.sline { display: flex; align-items: center; gap: 9px; }
+.sline i {
+  font-style: normal; font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--fg-dim); width: 42px; text-align: right; flex: none;
+}
+.sline u { text-decoration: none; font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-dim); flex: none; }
+.sline .cells { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+.sline .c { width: 15px; height: 15px; border-radius: 4px; display: block; }
+.c0 { background: transparent; box-shadow: inset 0 0 0 1.5px #343A4C; }
+.c2 { background: #35A06B; }
+.c3 { background: #4A79D8; }
+.c4 { background: #9B5BD6; }
+.legend { font-size: 11.5px; opacity: .8; }
+.shbox > summary {
+  cursor: pointer; font-size: 12px; color: var(--fg-dim);
+  padding: 7px; border: 1px dashed var(--line); border-radius: 9px; list-style: none;
+}
+.shbox > summary::-webkit-details-marker { display: none; }
+.shbox[open] > summary { margin-bottom: 8px; }
+.shbox .share { font-size: 11.5px; line-height: 1.7; max-height: 230px; overflow: auto; overflow-wrap: anywhere; }
+
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
 .words span {
   font-family: var(--font-display); font-size: 13px;
@@ -317,11 +420,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <div class="hud">
     <div class="brand">
       <span class="nm">낱말 용사</span>
-      <span class="lv" id="lv">Lv 1</span>
+      <span class="lv" id="lv">수련 0단</span>
     </div>
     <div class="purse">
       <span class="coin g"><i>냥</i><span id="gold">0</span></span>
       <span class="coin j"><i>옥</i><span id="gem">30</span></span>
+      <button class="coin snd" id="btnSound" aria-pressed="true" title="소리 켜기/끄기">♪</button>
     </div>
   </div>
 
@@ -338,8 +442,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     </div>
     <div class="bossrow">
       <div class="portrait" id="portrait">
-        <img id="pimg" alt="" hidden>
-        <canvas id="sigil" width="288" height="394" aria-label="신수"></canvas>
+        <!-- 흔들림은 안쪽에 건다. 바깥에 걸면 피격 반동(.hit)의 transform과
+             애니메이션이 충돌해 때린 느낌이 사라진다. -->
+        <div class="pinner" id="pinner">
+          <img id="pimg" alt="" hidden>
+          <canvas id="sigil" width="288" height="394" aria-label="신수"></canvas>
+        </div>
+        <span class="rage" id="rage" hidden>폭주</span>
       </div>
       <div class="bossinfo">
         <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
@@ -369,7 +478,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <div class="tiles" id="tiles"></div>
 
   <div class="acts">
-    <button class="btn" id="btnClear">지우기<span class="sub">한 글자 · 꾹 누르면 전체</span></button>
+    <button class="btn" id="btnClear">지우기<span class="sub">한 글자씩</span></button>
     <button class="btn" id="btnHint">힌트<span class="sub">옥 5</span></button>
     <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><span class="sub" id="goSub">낱말 없음</span></button>
   </div>
@@ -410,6 +519,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 </div>
 
 <script src="words.js"></script>
+<script src="sfx.js"></script>
 <script src="sinsu.js"></script>
 <script>
 (function () {
@@ -476,22 +586,48 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   // 확률 강화가 들어가면 같은 단계에 도달하는 데 드는 돈이 실패만큼 늘어난다.
   // 그래서 비용 증가율을 1.32에서 1.16으로 크게 낮췄다. 초반은 싸게 올리고
   // 후반은 돈이 아니라 확률이 벽이 되게 하려는 것이다.
+  //
+  // 세 축의 상한값에서의 기여도를 비슷하게 맞춘다. 전에는 인장이
+  // 단계당 +10%p여서 9단계면 5연속에 x6.1이 붙었다. 붓끝 상한이 x3.25인데
+  // 인장 하나가 그 두 배였고, 그래서 수호신이 한 방에 녹았다.
+  // 인장은 단계당 +3%p로 내리고(9단계 5연속 x2.95), 먹물은 체감이 덧셈이라
+  // 뒤로 갈수록 묻히므로 2초에서 3초로 올렸다.
   var UPGRADES = [
     { id: "atk",   t: "붓끝 (공격력)",   base: 40,  r: 1.16,
-      desc: function (s) { return "공격 x" + Math.pow(1.12, s.atk).toFixed(2); } },
+      desc: function (s) { return "공격 x" + Math.pow(ATK_STEP, s.atk).toFixed(2); } },
     { id: "time",  t: "먹물 (제한시간)",  base: 90,  r: 1.22,
-      desc: function (s) { return "+" + (s.time * 2) + "초"; } },
+      desc: function (s) { return "+" + (s.time * TIME_STEP) + "초"; } },
     { id: "combo", t: "인장 (연속 배수)", base: 150, r: 1.22,
-      desc: function (s) { return "연속 보너스 +" + (s.combo * 10) + "%"; } }
+      desc: function (s) { return "연속마다 +" + Math.round((0.12 + s.combo * COMBO_STEP) * 100) + "%"; } }
   ];
+  var ATK_STEP = 1.14, TIME_STEP = 3, COMBO_STEP = 0.03;
+  // 연속은 12까지만 쌓인다. 상한이 없으면 배수가 끝없이 불어나,
+  // 손이 빠른 사람에겐 수호신이 한순간에 녹고 느린 사람에겐 꿈쩍도
+  // 않는 외길이 된다. 상한을 두면 난이도 곡선이 평평해진다.
+  var COMBO_CAP = 12;
+
+  // 상한을 둔다. 확률 강화에 상한이 없으면 성공률이 바닥에 수렴해
+  // 돈만 먹는 구간이 끝없이 이어지고, "다 올렸다"는 완성감이 없다.
+  // 한 회차에 9단계까지. 다음 회차로 넘어가면 9단계가 더 열린다.
+  var CAP_PER_CYCLE = 9;
+  function upCap() { return CAP_PER_CYCLE * (Math.floor(S.stage / 100) + 1); }
+
+  // 전체 단수는 세 축의 '평균'이다.
+  //  - 합(0~27)으로 하면 숫자가 커서 단수 이야기를 할 수 없다.
+  //  - 최고단계로 하면 한 축만 밀어도 올라가서 균형을 전혀 요구하지 않는다.
+  //  - 평균은 9단이 되려면 세 축을 모두 9로 올려야 한다는 뜻이고,
+  //    한 축만 9여도 3단에 머무르므로 고르게 올리는 쪽을 보상한다.
+  function trainLv() { return Math.floor((S.atk + S.time + S.combo) / 3); }
 
   // 4단계까지는 확정 성공. 거기서 배우고, 그 뒤부터 확률이 걸린다.
   // 실패해도 단계는 내려가지 않는다. 내려가는 순간 과금 압박이 되고
   // 리뷰가 무너진다. 대신 연속 실패를 보정으로 갚아, 운이 나빠서
   // 영영 못 올라가는 일이 없게 한다.
   function successRate(lvl, fails) {
-    if (lvl < 5) return 1;
-    return Math.min(1, Math.max(0.15, 0.95 - (lvl - 4) * 0.055) + fails * 0.10);
+    var k = lvl % CAP_PER_CYCLE;          // 회차가 바뀌면 다시 쉬운 구간부터
+    if (k < 3) return 1;                   // 0~2단계는 확정. 여기서 규칙을 배운다
+    // 마지막 한 칸(8->9)이 약 45%가 되도록. 연속 실패는 10%p씩 갚아준다.
+    return Math.min(1, Math.max(0.20, 0.92 - (k - 2) * 0.095) + fails * 0.10);
   }
 
   var KEY = "nathero-v1";
@@ -499,6 +635,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     gold: 0, gem: 30, stage: 0, cycle: 1,
     atk: 0, time: 0, combo: 0,
     fails: { atk: 0, time: 0, combo: 0 },
+    sound: true,
     best: {}, bestStage: 1
   };
 
@@ -520,8 +657,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   var el = {};
   ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","portrait","pimg","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
-   "floaters","poolCount","btnShuffle","btnNew","found","askedLine","resume","btnFight","fightLabel",
-   "questHead","dailyHead","dDate","dTimer","dBar","dFound","dTotal","dScore","trainPanel"
+   "floaters","poolCount","btnShuffle","btnNew","found","askedLine","resume","btnFight","fightLabel","rage","pinner",
+   "questHead","dailyHead","dDate","dTimer","dBar","dFound","dTotal","dScore","trainPanel","btnSound"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // ── 판 ──────────────────────────────────────────────────────────────
@@ -608,7 +745,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.tiles.textContent = "";
     board.forEach(function (t, i) {
       var b = document.createElement("button");
-      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "");
+      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "")
+        + (run && run.weak && run.weak.indexOf(i) >= 0 ? " weak" : "");
       b.textContent = t.ch;
       b.disabled = !playing() || picked.indexOf(i) >= 0;
       b.addEventListener("click", function () { tap(i); });
@@ -670,6 +808,21 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
   function dailyKey() { return "daily-" + todayKey(); }
 
+  // 소리는 켜둔 채로 시작한다. 브라우저 정책상 첫 터치 전에는 어차피
+  // 나지 않으므로, 갑자기 울려 놀랄 일이 없다.
+  function applySound() {
+    var v = S.sound !== false;
+    if (window.SFX) SFX.set(v);
+    el.btnSound.setAttribute("aria-pressed", v ? "true" : "false");
+    el.btnSound.textContent = v ? "\u266a" : "\u00d7";
+    el.btnSound.title = v ? "소리 끄기" : "소리 켜기";
+  }
+  el.btnSound.addEventListener("click", function () {
+    S.sound = S.sound === false;
+    save(); applySound();
+    if (S.sound !== false && window.SFX) SFX.tap();
+  });
+
   function setMode(m) {
     mode = m;
     document.querySelectorAll(".modes .mode").forEach(function (b) {
@@ -680,6 +833,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.trainPanel.hidden = m !== "quest";
     if (timerId) { clearInterval(timerId); timerId = null; }
     var ov = document.querySelector(".ov"); if (ov) ov.remove();
+    document.body.classList.remove("raging");
+    el.rage.hidden = true;
     if (m === "daily") startDaily(); else startStage();
   }
 
@@ -724,22 +879,59 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var k = todayKey();
     S.best[k] = Math.max(S.best[k] || 0, daily.score);
     save(); drawAll(); tickDaily();
+    if (window.SFX) { foundCount() >= answers.length ? SFX.win() : SFX.lose(); }
     showDaily(false);
   }
 
-  // 공유 글: 어떤 낱말이었는지는 드러내지 않고 성적만 보여준다.
-  // 긴 낱말부터 늘어놓아 '어려운 걸 찾았는지'가 보이게 한다.
+  // 공유 글.
+  //
+  // 처음에는 워들처럼 초록/노랑/흰 네모를 한 줄로 늘어놓았는데, 읽은 사람이
+  // 색을 거꾸로 해석했다. 워들에서 노랑은 "글자는 맞지만 자리가 틀렸다"는
+  // 뜻이라, 여기서도 "네 답은 반만 맞다"로 읽힌다. 이 게임에는 반만 맞는
+  // 낱말이라는 개념이 아예 없으므로 그 색을 쓰면 안 된다.
+  //
+  // 그래서 범례가 필요 없는 모양으로 바꿨다. 줄마다 글자 수를 적어두면
+  // 색이 무슨 뜻인지 묻지 않아도 되고, 빈 네모는 "못 찾은 칸"으로만 읽힌다.
+  //  4글자 🟪  3글자 🟦  2글자 🟩  못 찾음 ⬜
+  var BLK = { 4: "\ud83d\udfea", 3: "\ud83d\udfe6", 2: "\ud83d\udfe9", 0: "\u2b1c" };
+
+  // 등급. 점수보다 칭호가 먼저 입에 붙는다 — 공유를 만드는 건 숫자가 아니라
+  // 자랑할 이름이다.
+  function rank(ratio) {
+    return ratio >= 1    ? "낱말 신선"
+         : ratio >= 0.8  ? "낱말 용사"
+         : ratio >= 0.6  ? "낱말 무사"
+         : ratio >= 0.35 ? "낱말 수련생"
+         :                 "낱말 초심자";
+  }
+
+  // 글자 수별로 줄을 나눈 결과표. 화면과 공유 글이 같은 자료를 쓴다.
+  function shareRows() {
+    var by = {};
+    answers.forEach(function (w) {
+      var L = Math.min(4, Math.max(2, w.length));
+      (by[L] = by[L] || { got: 0, all: 0 }).all++;
+      if (found.indexOf(w) >= 0) by[L].got++;
+    });
+    return [4, 3, 2].filter(function (L) { return by[L]; }).map(function (L) {
+      var r = by[L], line = "";
+      for (var i = 0; i < r.all; i++) line += i < r.got ? BLK[L] : BLK[0];
+      return { len: L, got: r.got, all: r.all, blocks: line };
+    });
+  }
+
   function shareText() {
-    var sorted = answers.slice().sort(function (a, b) { return b.length - a.length; });
-    var blocks = sorted.map(function (w) {
-      return found.indexOf(w) < 0 ? "\u2b1c" : (w.length >= 3 ? "\ud83d\udfe9" : "\ud83d\udfe8");
-    }).join("");
     var d = new Date();
-    return "낱말 용사 · 오늘의 낱말\n"
-      + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "\n\n"
-      + blocks + "  " + foundCount() + "/" + answers.length + "\n"
-      + daily.score.toLocaleString() + "점\n\n"
-      + location.href.split("#")[0] + "#daily";
+    var ratio = answers.length ? foundCount() / answers.length : 0;
+    var body = shareRows().map(function (r) {
+      return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
+    }).join("\n");
+    return "낱말 용사 · 오늘의 낱말 " + (d.getMonth() + 1) + "." + d.getDate() + "\n"
+      + "\ud83c\udfc5 " + rank(ratio) + "\n\n"
+      + body + "\n\n"
+      + "찾은 낱말 " + foundCount() + "/" + answers.length
+      + " · " + daily.score.toLocaleString() + "점 · 수련 " + trainLv() + "단\n\n"
+      + "같이 풀어요 \u25b6 " + location.href.split("#")[0] + "#daily";
   }
 
   function showDaily(already) {
@@ -748,8 +940,16 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var card = document.createElement("div");
     card.className = "card";
 
-    var h = document.createElement("h2");
+    var ratio = answers.length ? foundCount() / answers.length : 0;
     var all = foundCount() >= answers.length;
+
+    // 오늘 받은 칭호를 낙관처럼 찍는다. 점수보다 이게 먼저 보여야 한다.
+    var seal = document.createElement("div");
+    seal.className = "seal" + (all ? " full" : "");
+    seal.innerHTML = '<span>' + rank(ratio) + '</span>';
+    card.appendChild(seal);
+
+    var h = document.createElement("h2");
     h.className = all ? "win" : "";
     h.textContent = already ? "오늘은 이미 하셨습니다" : all ? "모두 찾았습니다" : "오늘의 낱말 끝";
     card.appendChild(h);
@@ -764,10 +964,44 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     lead.textContent = "낱말 " + foundCount() + " / " + answers.length + "개";
     card.appendChild(lead);
 
+    // 공유 글을 그대로 보여주지 않고, 같은 내용을 화면용으로 다시 그린다.
+    var grid = document.createElement("div");
+    grid.className = "sgrid";
+    shareRows().forEach(function (r) {
+      var line = document.createElement("div");
+      line.className = "sline";
+      var lab = document.createElement("i"); lab.textContent = r.len + "글자";
+      line.appendChild(lab);
+      var cells = document.createElement("div"); cells.className = "cells";
+      for (var i = 0; i < r.all; i++) {
+        var c = document.createElement("b");
+        c.className = i < r.got ? "c c" + r.len : "c c0";
+        cells.appendChild(c);
+      }
+      line.appendChild(cells);
+      var num = document.createElement("u"); num.textContent = r.got + "/" + r.all;
+      line.appendChild(num);
+      grid.appendChild(line);
+    });
+    card.appendChild(grid);
+
+    // 색이 무슨 뜻인지 화면에서 한 번은 말해 준다. 공유 글에는 줄마다
+    // 글자 수가 적혀 있어 이 줄이 필요 없다.
+    var lg = document.createElement("p");
+    lg.className = "lead legend";
+    lg.textContent = "색칠된 칸은 찾은 낱말, 빈 칸은 못 찾은 낱말입니다";
+    card.appendChild(lg);
+
+    var det = document.createElement("details");
+    det.className = "shbox";
+    var sum = document.createElement("summary");
+    sum.textContent = "카톡에 붙여넣을 내용 보기";
+    det.appendChild(sum);
     var sh = document.createElement("div");
     sh.className = "share";
     sh.textContent = shareText();
-    card.appendChild(sh);
+    det.appendChild(sh);
+    card.appendChild(det);
 
     var row = document.createElement("div");
     row.className = "row";
@@ -830,6 +1064,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
 
   function requestWord(w) {
+    if (window.SFX) SFX.bad();
     if (!S.asked) S.asked = [];
     if (S.asked.indexOf(w) < 0) S.asked.push(w);
     save();
@@ -839,7 +1074,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
 
   function drawStats() {
-    el.lv.textContent = "Lv " + (1 + S.atk + S.time + S.combo);
+    var cap = upCap();
+    el.lv.textContent = "수련 " + trainLv() + "단";
+    el.lv.title = "세 강화 단계의 평균 · 붓끝 " + S.atk + " / 먹물 " + S.time
+      + " / 인장 " + S.combo + " (각 " + cap + "단계까지)";
     el.gold.textContent = S.gold;
     el.gem.textContent = S.gem;
     el.rToday.textContent = S.best[todayKey()] || 0;
@@ -848,30 +1086,36 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.ups.textContent = "";
     UPGRADES.forEach(function (u) {
       var lvl = S[u.id], cost = Math.round(u.base * Math.pow(u.r, lvl));
+      var maxed = lvl >= cap;
       var fails = S.fails[u.id] || 0;
       var p = successRate(lvl, fails);
       var row = document.createElement("div");
       row.className = "up";
       var left = document.createElement("div");
-      var t = document.createElement("div"); t.className = "t"; t.textContent = u.t + " · " + lvl + "단계";
+      var t = document.createElement("div"); t.className = "t";
+      t.textContent = u.t + " · " + lvl + " / " + cap + "단계";
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc(S);
       var pr = document.createElement("div");
-      pr.className = "d rate" + (p >= 0.8 ? " hi" : p >= 0.5 ? " mid" : " lo");
-      pr.textContent = "성공률 " + Math.round(p * 100) + "%"
-        + (fails ? "  ·  연속 실패 " + fails + "회 보정 +" + (fails * 10) + "%p" : "");
+      pr.className = "d rate" + (maxed ? "" : p >= 0.8 ? " hi" : p >= 0.5 ? " mid" : " lo");
+      pr.textContent = maxed
+        ? "이 회차의 최고 단계입니다"
+        : "성공률 " + Math.round(p * 100) + "%"
+          + (fails ? "  ·  연속 실패 " + fails + "회 보정 +" + (fails * 10) + "%p" : "");
       left.appendChild(t); left.appendChild(d); left.appendChild(pr);
       var b = document.createElement("button");
-      b.textContent = "냥 " + cost;
-      b.disabled = S.gold < cost;
+      b.textContent = maxed ? "완성" : "냥 " + cost;
+      b.disabled = maxed || S.gold < cost;
       b.addEventListener("click", function () {
-        if (S.gold < cost) return;
+        if (maxed || S.gold < cost) return;
         S.gold -= cost;
         if (Math.random() < p) {
           S[u.id] = lvl + 1;
           S.fails[u.id] = 0;
+          if (window.SFX) SFX.up();
           toast("강화 성공 — " + u.t.split(" ")[0] + " " + (lvl + 1) + "단계");
         } else {
           S.fails[u.id] = fails + 1;
+          if (window.SFX) SFX.down();
           toast("강화 실패 — 단계는 그대로입니다 · 다음 성공률 "
                 + Math.round(successRate(lvl, fails + 1) * 100) + "%");
         }
@@ -908,11 +1152,85 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
 
   // ── 전투 ────────────────────────────────────────────────────────────
-  function damageOf(w) {
-    var atkMul = Math.pow(1.12, S.atk);
-    var comboMul = 1 + (run ? run.combo : 0) * (0.12 + S.combo * 0.10);
+  function damageOf(w, idxs) {
+    var atkMul = Math.pow(ATK_STEP, S.atk);
+    var comboMul = 1 + Math.min(run ? run.combo : 0, COMBO_CAP) * (0.12 + S.combo * COMBO_STEP);
     var len = Math.pow(w.length, 1.75);
-    return Math.round(12 * len * atkMul * comboMul);
+    var d = 12 * len * atkMul * comboMul;
+    // 수호신전에서만 붙는 보정. 일반 단계는 지금까지와 똑같다.
+    if (run && run.boss && run.boss.boss) {
+      // 두 글자로 밀어붙이는 전법을 막는다. 폭주하면 거의 흘려보낸다.
+      if (w.length === 2) d *= run.phase >= 2 ? 0.55 : 0.75;
+      // 약점을 짚으면 크게 들어간다 — 이게 혈투의 활로다
+      if (weakHit(idxs || picked)) d *= 1.8;
+      // 마지막 15%는 결정타 구간. 끝을 질질 끌지 않게 한다.
+      if (run.phase >= 3) d *= 1.4;
+    }
+    return Math.round(d);
+  }
+
+  // ── 수호신전 ────────────────────────────────────────────────────────
+  // 10단계는 숫자만 큰 적이 아니라 국면이 바뀌는 싸움이어야 한다.
+  //  1국면(100~50%) 약점 글자 하나, 두 글자 낱말 30% 감소
+  //  2국면(50~15%)  폭주 — 글자판이 뒤집히고, 기세를 초당 1%씩 되찾고,
+  //                 약점이 둘로 늘고, 손이 멈추면 포효로 연속이 끊긴다
+  //  3국면(15~0%)   결정타 — 회복이 멈추고 공격이 1.4배로 들어간다
+  var RAGE_REGEN = 0.010;   // 폭주 중 초당 회복(최대 기세 대비)
+  var ROAR_IDLE = 10;       // 이 초만큼 손이 멈추면 연속이 끊긴다
+
+  function weakHit(idxs) {
+    if (!run || !run.weak || !run.weak.length) return false;
+    for (var i = 0; i < run.weak.length; i++) {
+      if (idxs.indexOf(run.weak[i]) >= 0) return true;
+    }
+    return false;
+  }
+
+  function pickWeak() {
+    if (!run) return;
+    if (!run.boss.boss) { run.weak = []; return; }
+    var pool = [];
+    for (var i = 0; i < board.length; i++) if (picked.indexOf(i) < 0) pool.push(i);
+    pool.sort(function () { return Math.random() - 0.5; });
+    run.weak = pool.slice(0, run.phase >= 2 ? 2 : 1);
+    run.weakAt = run.left;
+  }
+
+  function phaseOf(r) {
+    if (!r.boss.boss) return 1;
+    var p = r.hp / r.max;
+    return p <= 0.15 ? 3 : p <= 0.50 ? 2 : 1;
+  }
+
+  function applyPhase() {
+    if (!run) return;
+    var np = phaseOf(run);
+    if (np === run.phase) return;
+    run.phase = np;
+    if (np === 2) {
+      if (window.SFX) SFX.rage();
+      toast(run.boss.n + "이 폭주합니다 — 기세를 되찾기 시작합니다");
+      // 폭주의 첫 수는 글자판을 뒤흔드는 것. 외워둔 수가 통하지 않는다.
+      picked = [];
+      board.sort(function () { return Math.random() - 0.5; });
+      computeAnswers();
+    } else if (np === 3) {
+      if (window.SFX) SFX.final();
+      toast("결정타 — 지금은 공격이 크게 들어갑니다");
+    }
+    pickWeak();
+    paintBoss();
+  }
+
+  function paintBoss() {
+    if (!run) return;
+    var b = run.boss, rage = b.boss && run.phase >= 2;
+    el.portrait.className = "portrait g-" + b.grade
+      + (b.boss ? " boss p" + run.phase : "");
+    el.rage.hidden = !rage;
+    el.rage.textContent = run.phase >= 3 ? "결정타" : "폭주";
+    el.rage.className = "rage" + (run.phase >= 3 ? " fin" : "");
+    document.body.classList.toggle("raging", !!rage);
   }
 
   function stageInfo(stage) {
@@ -924,20 +1242,23 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       base: M.n,
       grade: boss ? "guard" : sub < 3 ? "young" : sub < 6 ? "base" : "angry",
       m: M.m, boss: boss, no: k + 1, loop: loop,
-      hp: Math.round(150 * Math.pow(1.07, k) * (boss ? 2.4 : 1) * Math.pow(4, loop)),
-      t: (boss ? 55 : 45) + S.time * 2,
-      hint: k < HINTS.length ? HINTS[k] : ""
+      hp: Math.round(150 * Math.pow(1.07, k) * (boss ? 3.0 : 1) * Math.pow(4, loop)),
+      t: (boss ? 70 : 45) + S.time * TIME_STEP,
+      hint: boss ? "두 글자는 거의 통하지 않습니다 · 금빛 글자를 노리세요"
+                 : (k < HINTS.length ? HINTS[k] : "")
     };
   }
 
   function startStage() {
     var b = stageInfo(S.stage);
-    run = { boss: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, score: 0, words: [] };
+    run = { boss: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, score: 0, words: [],
+            phase: 1, weak: [], weakAt: b.t, regen: 0, lastHit: b.t };
     picked = [];
     fillBoard();
+    pickWeak();
     // 그려진 신수가 있으면 그림을, 아직 없으면 코드 렌더러를 쓴다
     var art = ART[b.base];
-    el.portrait.className = "portrait g-" + b.grade;
+    paintBoss();
     el.pimg.hidden = !art;
     el.sigil.hidden = !!art;
     if (art) el.pimg.src = "art/" + art + ".jpg";
@@ -967,7 +1288,38 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!run) return;
     run.left--;
     if (run.left <= 0) { run.left = 0; tick(); finish(false); return; }
+    if (run.boss.boss) bossSecond();
     tick();
+  }
+
+  function bossSecond() {
+    // 약점은 가만히 두지 않는다. 폭주하면 더 빨리 옮겨 다닌다.
+    if (run.weakAt - run.left >= (run.phase >= 2 ? 6 : 9)) pickWeak();
+
+    if (run.phase !== 2) { el.hp.classList.remove("regen"); return; }
+
+    // 폭주 중 회복. 2국면 상한(50%)을 넘기지 않는다 — 넘기면 국면이
+    // 되돌아가 플레이어가 상황을 읽을 수 없게 된다.
+    run.regen += run.max * RAGE_REGEN;
+    var back = Math.floor(run.regen);
+    if (back >= 1) {
+      run.regen -= back;
+      var cap = Math.round(run.max * 0.50);
+      var before = run.hp;
+      run.hp = Math.min(cap, run.hp + back);
+      if (run.hp > before) {
+        el.hp.classList.add("regen");
+        setTimeout(function () { el.hp.classList.remove("regen"); }, 420);
+      }
+    }
+    // 손이 멈추면 포효가 연속을 끊는다. 쉬면서 이기는 싸움이 아니다.
+    if (run.combo > 0 && run.lastHit - run.left >= ROAR_IDLE) {
+      run.combo = 0;
+      run.lastHit = run.left;
+      if (window.SFX) SFX.roar();
+      toast(run.boss.n + "의 포효 — 연속이 끊겼습니다");
+      drawAll();
+    }
   }
 
   function tick() {
@@ -982,13 +1334,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!playing() || picked.indexOf(i) >= 0) return;
     if (picked.length >= 4) return;
     picked.push(i);
+    if (window.SFX) SFX.tap();
     drawAll();
   }
 
-  function floatDmg(n) {
+  function floatDmg(n, kind) {
     var d = document.createElement("div");
-    d.className = "dmg";
-    d.textContent = "-" + n;
+    d.className = "dmg" + (kind ? " " + kind : "");
+    d.textContent = (kind === "weak" ? "약점! -" : "-") + n;
     d.style.left = (18 + Math.random() * 40) + "%";
     d.style.top = "46%";
     el.floaters.appendChild(d);
@@ -1013,6 +1366,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       var pts = Math.round(10 * Math.pow(w.length, 1.9));
       daily.score += pts;
       floatDmg(pts);
+      if (window.SFX) SFX.word(w.length);
       picked = [];
       drawAll();
       if (!remaining().length) endDaily();
@@ -1020,34 +1374,49 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     }
     if (!run || !accepted(w) || found.indexOf(w) >= 0) return;
     found.push(w);
+    var wasWeak = run.boss.boss && weakHit(picked);
+    var shrug = run.boss.boss && w.length === 2;
     var dmg = damageOf(w);
     run.hp -= dmg;
     run.combo++;
     run.score += dmg;
     run.words.push(w);
-    floatDmg(dmg);
+    run.lastHit = run.left;
+    floatDmg(dmg, wasWeak ? "weak" : shrug ? "weak-no" : "");
+    if (window.SFX) {
+      SFX.word(w.length);
+      if (wasWeak) SFX.weak(); else if (shrug) SFX.guard(); else SFX.hit();
+    }
     el.portrait.classList.add("hit");
     setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
     picked = [];
+    if (wasWeak) pickWeak();   // 짚힌 비늘은 닫힌다
     // 글자판을 다 털면 보너스를 주고 새 글자를 깐다
     if (!remaining().length) {
       var bonus = Math.round(dmg * 0.8);
       run.hp -= bonus; run.score += bonus;
       floatDmg(bonus);
+      if (window.SFX) SFX.clear();
       toast("글자판을 모두 찾았습니다 · 보너스 +" + bonus);
       fillBoard();
+      pickWeak();
     }
+    if (run.hp <= 0) { tick(); drawAll(); finish(true); return; }
+    applyPhase();
     tick();
     drawAll();
-    if (run.hp <= 0) finish(true);
   }
 
   function finish(won) {
     if (timerId) { clearInterval(timerId); timerId = null; }
+    document.body.classList.remove("raging");
+    el.rage.hidden = true;
+    el.hp.classList.remove("regen");
     var r = run; run = null;
     var reward = 0;
     if (won) {
-      reward = Math.round(25 + r.max * 0.24);
+      // 단수는 장식이 아니라 수입이다. 고르게 올린 사람이 더 번다.
+      reward = Math.round((25 + r.max * 0.24) * (1 + trainLv() * 0.05));
       S.gold += reward;
       S.stage++;
       S.bestStage = Math.max(S.bestStage, S.stage + 1);
@@ -1058,6 +1427,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.fightLabel.textContent = stageInfo(S.stage).no + "단계";
     el.resume.hidden = false;
     drawAll();
+    if (window.SFX) { won ? SFX.win() : SFX.lose(); }
     overlay(won, r, reward);
   }
 
@@ -1202,24 +1572,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     startStage();
   });
 
-  // 한 글자씩 지운다. 낱말이 최대 네 글자라 몇 번 누르면 전체가 비고,
-  // 급하면 꾹 눌러 한 번에 비운다. 슬롯의 글자를 직접 눌러 빼도 된다.
-  var holdT = null, wiped = false;
-  function holdStart() {
-    wiped = false;
-    holdT = setTimeout(function () {
-      holdT = null;
-      if (picked.length) { wiped = true; picked = []; drawAll(); }
-    }, 450);
-  }
-  function holdEnd() { if (holdT) { clearTimeout(holdT); holdT = null; } }
-  el.btnClear.addEventListener("pointerdown", holdStart);
-  el.btnClear.addEventListener("pointerup", holdEnd);
-  el.btnClear.addEventListener("pointerleave", holdEnd);
-  el.btnClear.addEventListener("pointercancel", holdEnd);
+  // 한 글자씩만 지운다. 낱말이 최대 네 글자라 네 번이면 다 비워지므로
+  // '전체 지우기'는 따로 둘 값어치가 없다. 꾹 누르기는 발견되지 않는
+  // 제스처이고, 주 타깃 연령대에서는 더더욱 쓰이지 않는다.
+  // 가운데 글자만 빼고 싶으면 슬롯의 그 글자를 직접 누르면 된다.
   el.btnClear.addEventListener("click", function () {
-    if (wiped) { wiped = false; return; }
-    if (picked.length) { picked.pop(); drawAll(); }
+    if (!picked.length) return;
+    picked.pop();
+    if (window.SFX) SFX.tap();
+    drawAll();
   });
   el.btnGo.addEventListener("click", function () {
     var w = currentWord();
@@ -1231,6 +1592,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!playing()) return;
     picked = [];
     board.sort(function () { return Math.random() - 0.5; });
+    pickWeak();
     drawAll();
   });
   // 정말 막혔을 때만. 공짜면 계속 눌러 넘기게 되니 시간을 받는다
@@ -1251,6 +1613,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   var hot = window.claude && window.claude.hot;
   function boot() {
+    applySound();
     // 공유 링크(#daily)로 들어오면 바로 오늘의 낱말부터 보여준다
     if ((location.hash || "").toLowerCase() === "#daily") setMode("daily");
     else { drawAll(); startStage(); }
