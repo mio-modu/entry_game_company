@@ -1,0 +1,436 @@
+<title>신수 이미지 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of copyable prompt cards, ordered by the workflow they belong to. */
+:root {
+  --bg: #11131A;
+  --surface: #1A1D27;
+  --surface-2: #232838;
+  --code: #0D0F16;
+  --line: #333950;
+  --fg: #ECEAE3;
+  --fg-dim: #969BB3;
+  --fg-faint: #656B85;
+  --accent: #D6453A;
+  --gold: #C9A227;
+  --jade: #4A9E8F;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.68; margin: 0; }
+.wrap {
+  max-width: 800px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 60px;
+}
+h1, h2 { margin: 0; text-wrap: balance; font-family: var(--font-display); font-weight: 700; }
+h1 { font-size: clamp(28px, 6.4vw, 40px); line-height: 1.18; }
+h2 { font-size: clamp(18px, 3.8vw, 22px); }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--fg-dim); max-width: 60ch; }
+header { display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; }
+
+.flow {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold);
+  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14px;
+}
+.flow .h { font-weight: 700; color: var(--gold); }
+.flow ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.flow li::marker { color: var(--gold); font-family: var(--font-mono); font-size: 12px; }
+
+section { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.card.key { border-color: #4A3E18; }
+.cardhead { display: flex; align-items: flex-start; gap: 12px; padding: 15px 16px; flex-wrap: wrap; }
+.cardhead .n {
+  font-family: var(--font-mono); font-size: 11px; color: var(--bg); background: var(--accent);
+  border-radius: 20px; padding: 2px 9px; flex: none; margin-top: 3px;
+}
+.card.key .cardhead .n { background: var(--gold); }
+.cardhead .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cardhead .t { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.cardhead .d { font-size: 12.5px; color: var(--fg-dim); }
+.copy {
+  font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 14px; cursor: pointer; flex: none; white-space: nowrap;
+}
+.copy:hover { background: #2C3246; }
+.copy.done { background: #15241F; border-color: var(--jade); color: var(--jade); }
+.copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+pre {
+  margin: 0; padding: 15px 16px; background: var(--code); border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.72; color: #D5D8E6;
+  white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow-y: auto;
+}
+.card.open pre { max-height: none; }
+.more {
+  width: 100%; background: var(--surface-2); color: var(--fg-dim); border: 0;
+  border-top: 1px solid var(--line); padding: 8px; font-size: 12px;
+  font-family: var(--font-mono); cursor: pointer;
+}
+.more:hover { color: var(--fg); }
+
+.warn { background: #2A1512; border: 1px solid #5A2A22; border-radius: 11px; padding: 14px 16px; font-size: 13.5px; display: flex; flex-direction: column; gap: 7px; }
+.warn b { color: #FF8B80; }
+.tip { background: #15241F; border: 1px solid #2A5048; border-radius: 11px; padding: 13px 15px; font-size: 13.5px; }
+.tip b { color: var(--jade); }
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
+ul.plain li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; font-size: 14px; align-items: start; }
+ul.plain li::before { content: "▸"; color: var(--accent); font-size: 12px; line-height: 1.7; }
+ul.plain li span { color: var(--fg-dim); }
+ul.plain li b { color: var(--fg); }
+
+footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--fg-faint); }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">낱말 용사 · 이미지 생성용</div>
+  <h1>신수 이미지 프롬프트</h1>
+  <p class="lede">그록·미드저니 같은 이미지 생성 AI에 넣는 프롬프트입니다. 클로드 디자인은 레이아웃 도구라 그림을 못 그리니, 그림은 여기서 뽑아서 그 빈 칸에 끼우면 됩니다.</p>
+</header>
+
+<div class="warn">
+  <span><b>⚠️ "한 장에 8개"는 생각만큼 안 됩니다</b></span>
+  <p>생성 AI는 한 이미지 안에 <b>지시한 개수와 순서를 자주 틀립니다.</b> 8개를 요청하면 6개나 9개가 나오고, 순서도 섞입니다. 그리고 1024px 이미지에 8칸이면 <b>한 칸이 256px</b>이라 게임에 쓰기엔 너무 작습니다.</p>
+  <p>그래서 <b>시트는 "화풍 고르기"용으로만</b> 쓰고, 최종 그림은 <b>1종씩 따로</b> 뽑는 게 맞습니다. 아래 순서가 그렇게 짜여 있습니다.</p>
+</div>
+
+<div class="flow" style="margin-top:13px">
+  <span class="h">순서</span>
+  <ol>
+    <li><b>1번</b>으로 5종 시트를 <b>여러 번</b> 돌립니다. 마음에 드는 화풍 한 장이 나올 때까지.</li>
+    <li><b>2번</b>으로 나머지 5종을 같은 화풍으로 이어 뽑습니다.</li>
+    <li><b>3번</b>으로 확정된 10종을 <b>1마리씩 고해상도</b>로 다시 뽑습니다. ← 실제 게임에 들어갈 것</li>
+    <li><b>4~6번</b>으로 변주·배경·아이콘을 채웁니다.</li>
+    <li><b>7번</b>을 클로드 디자인에 넣어 빈 칸에 끼웁니다.</li>
+  </ol>
+</div>
+
+<section>
+  <div class="card key">
+    <div class="cardhead">
+      <span class="n">0</span>
+      <div class="meta">
+        <span class="t">공통 화풍 블록</span>
+        <span class="d">1~6번 프롬프트 맨 앞에 매번 붙여넣으세요. 이게 화풍을 묶어줍니다.</span>
+      </div>
+      <button class="copy" data-t="q0">복사</button>
+    </div>
+    <pre id="q0">한국 전통 수묵화 스타일. 조선 민화의 결.
+오래된 한지 위에 먹으로 그린 그림. 붓 자국과 갈필(마른 붓) 질감,
+먹이 종이에 번진 자국이 보인다. 선은 적게, 여백은 넉넉하게.
+색은 먹의 농담이 전부. 주홍(인주색) 한 점만 강조로 허용.
+아주 작은 금박 포인트 가능.
+
+금지: 글자, 문자, 숫자, 서명, 워터마크, 3D 렌더, 애니메이션 그림체,
+일본 요괴 그림, 중국 무협 그림, 사진 같은 사실적 묘사, 네온, 그라데이션</pre>
+  </div>
+
+  <div class="card key">
+    <div class="cardhead">
+      <span class="n">0</span>
+      <div class="meta">
+        <span class="t">공통 화풍 블록 (영문)</span>
+        <span class="d">대부분의 이미지 AI는 영어가 결과가 낫습니다. 잘 안 나오면 이쪽으로.</span>
+      </div>
+      <button class="copy" data-t="q0e">복사</button>
+    </div>
+    <pre id="q0e">Traditional Korean ink wash painting (sumukhwa), Joseon minhwa folk art spirit.
+Sumi ink on aged hanji rice paper. Visible brush strokes, dry-brush texture,
+ink bleeding into the fibers. Few confident lines, generous negative space.
+Monochrome ink values only, with a single cinnabar red accent
+and a tiny touch of gold leaf.
+
+Negative prompt: text, letters, numbers, signature, watermark, 3D render,
+anime style, Japanese yokai art, Chinese wuxia art, photorealism,
+neon, gradient, cluttered background</pre>
+  </div>
+</section>
+
+<section>
+  <h2>1단계 — 화풍 고르기</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">1</span>
+      <div class="meta">
+        <span class="t">신수 시트 (앞 5종)</span>
+        <span class="d">여러 번 돌려서 화풍 한 장을 고르는 용도. 이 그림을 그대로 쓰진 않습니다.</span>
+      </div>
+      <button class="copy" data-t="q1">복사</button>
+    </div>
+    <pre id="q1">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+
+한국 전설의 신수 5종을 한 화면에 격자로 그린다. 가로 3칸, 세로 2칸
+(마지막 한 칸은 비워 둔다). 각 칸에 한 마리씩, 전신, 측면,
+칸 정중앙에, 주위 여백 넉넉히.
+
+1) 불가사리 — 쇠를 먹는 조선의 괴수. 곰 같은 작고 둥근 몸,
+   다리가 짧고 뭉툭하다. 코에 뿔
+2) 삼족오 — 다리가 셋 달린 검은 까마귀. 고구려 고분벽화의 결
+3) 해태 — 사자 같은 몸에 풍성한 갈기, 이마에 외뿔 하나.
+   광화문 해치. 듬직하고 위엄 있다
+4) 현무 — 큰 거북의 등껍질을 뱀이 휘감았다. 낮고 무겁다
+5) 백호 — 흰 호랑이. 민화 까치호랑이처럼 위엄 있되 어딘가 익살맞다
+
+칸마다 글자나 번호를 넣지 않는다.
+다섯 마리가 한 사람이 같은 날 그린 것처럼 보여야 한다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">2</span>
+      <div class="meta">
+        <span class="t">신수 시트 (뒤 5종)</span>
+        <span class="d">1번에서 고른 그림을 첨부하고 이걸 넣으면 화풍이 이어집니다.</span>
+      </div>
+      <button class="copy" data-t="q2">복사</button>
+    </div>
+    <pre id="q2">[0번 공통 화풍 블록 + 1번에서 고른 이미지를 함께 첨부]
+
+첨부한 그림과 완전히 같은 화풍·붓질·먹 농도로 이어서
+나머지 신수 5종을 같은 격자 형식으로 그린다.
+
+6) 기린 — 사슴 몸에 비늘, 긴 다리, 이마에 뿔 둘. 눈이 온순하다
+7) 주작 — 붉은 기운의 큰 새. 날개를 활짝 펴고 긴 꼬리깃이 흐른다
+8) 이무기 — 용이 되지 못한 거대한 뱀. 뿔이 없다. 미련과 분노가 함께
+9) 봉황 — 오색의 큰 새. 가장 화려한 꼬리깃. 날개를 크게
+10) 천지의 용 — 동양의 용. 긴 몸, 사슴뿔, 긴 수염, 네 발톱.
+    구름을 뚫고 솟아오른다. 가장 압도적으로
+
+글자와 번호는 넣지 않는다.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>2단계 — 실제로 쓸 그림</h2>
+
+  <div class="card key">
+    <div class="cardhead">
+      <span class="n">3</span>
+      <div class="meta">
+        <span class="t">개별 고해상도 (10번 반복)</span>
+        <span class="d">게임에 실제로 들어갈 그림입니다. 이게 본 작업이에요.</span>
+      </div>
+      <button class="copy" data-t="q3">복사</button>
+    </div>
+    <pre id="q3">[0번 공통 화풍 블록 + 앞서 고른 시트 이미지를 함께 첨부]
+
+첨부한 시트와 같은 화풍으로, {신수 이름} 한 마리만 크게 그린다.
+
+· 정사각 화면
+· 전신, 측면, 화면 정중앙
+· 사방에 여백을 넉넉히 둔다 (잘릴 여지 없이)
+· 배경은 무늬 없는 균일한 한지 바탕 한 가지 톤.
+  풍경·소품·바닥 그림자 없음
+· 글자, 번호, 서명 없음
+
+{여기에 그 신수의 특징 한 줄을 붙여넣으세요}
+
+배경을 나중에 지워서 게임 화면에 올릴 것이라, 배경이 단순하고
+생물의 윤곽이 또렷해야 한다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">4</span>
+      <div class="meta">
+        <span class="t">등급 변주 (성난 · 수호신)</span>
+        <span class="d">100단계를 10종으로 채우는 핵심. 종마다 한 번씩.</span>
+      </div>
+      <button class="copy" data-t="q4">복사</button>
+    </div>
+    <pre id="q4">[0번 공통 화풍 블록 + 해당 신수의 확정 그림을 첨부]
+
+첨부한 {신수 이름}과 같은 개체를, 세 가지 상태로 나란히 그린다.
+세 마리가 서로 다른 동물로 보이면 안 된다. 같은 놈이어야 한다.
+
+1) 평상 — 길을 막고 담담히 서 있다
+2) 성난 — 털이 서고 자세가 낮아진다. 기운이 거칠고 주홍빛이 돈다
+3) 위엄 — 가장 크고 당당하다.
+   뒤에 네모난 붉은 인장(도장) 자국이 희미하게 깔린다
+
+어느 쪽도 다치거나 피 흘리거나 쓰러지지 않는다.
+이 게임에서 깎이는 것은 체력이 아니라 기세다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">5</span>
+      <div class="meta">
+        <span class="t">물러나는 컷</span>
+        <span class="d">기세가 꺾였을 때. 처량하면 안 됩니다.</span>
+      </div>
+      <button class="copy" data-t="q5">복사</button>
+    </div>
+    <pre id="q5">[0번 공통 화풍 블록 + 해당 신수의 확정 그림을 첨부]
+
+첨부한 {신수 이름}이 기세가 꺾여 물러나는 모습을 그린다.
+고개를 돌리거나 몸을 틀어 길을 내어주는 자세.
+뒷모습이나 반측면이 좋다.
+
+처량하거나 불쌍해 보이면 안 된다. 위엄은 그대로 남아 있고,
+다만 오늘은 지나가게 해준다는 태도다.
+상처·피·쓰러짐 없음.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>3단계 — 배경과 아이콘</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">6</span>
+      <div class="meta">
+        <span class="t">산 배경 10종</span>
+        <span class="d">가운데를 비워야 합니다. 거기에 신수가 섭니다.</span>
+      </div>
+      <button class="copy" data-t="q6">복사</button>
+    </div>
+    <pre id="q6">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+
+{산 이름}의 수묵 산수화. 세로로 긴 화면.
+
+· 먼 산은 옅게, 가까운 능선은 짙게. 먹의 농담만으로 거리를 만든다
+· 화면 한가운데는 비워 둔다 (여기에 캐릭터가 설 자리다)
+· 위쪽 1/4은 안개에 덮여 어둡다 (여기에 글자가 올라간다)
+· 아래쪽에 시선을 끄는 세부를 두지 않는다 (가려질 영역이다)
+· 사람, 건물, 글자, 낙관 없음
+
+산 목록 — 한 번에 하나씩 넣으세요:
+북한산 · 속리산 · 계룡산 · 설악산 · 소백산 ·
+덕유산 · 지리산 · 한라산 · 금강산 · 백두산(천지)</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">7</span>
+      <div class="meta">
+        <span class="t">앱 아이콘용 용 머리</span>
+        <span class="d">48픽셀로 줄여도 보여야 합니다. 세부 묘사는 적이에요.</span>
+      </div>
+      <button class="copy" data-t="q7">복사</button>
+    </div>
+    <pre id="q7">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+
+정사각 화면. 동양 용의 머리를 정면에서 크게 클로즈업.
+
+· 형태를 아주 단순하게. 48픽셀로 줄여도 용인 줄 알아볼 수 있어야 한다
+· 세부 묘사를 줄이고 실루엣과 덩어리를 강하게
+· 배경은 짙은 먹색 단색, 용은 밝은 한지색으로 또렷하게 대비
+· 눈에만 금박 한 점
+· 화면 가장자리까지 꽉 채운다 (여백 적게)
+· 글자 없음
+
+이것은 모바일 앱 아이콘이다. 작게 줄였을 때 뭉개지면 실패다.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>4단계 — 클로드 디자인에 끼우기</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">8</span>
+      <div class="meta">
+        <span class="t">빈 칸에 그림 넣기</span>
+        <span class="d">받으신 zip의 image-slot 자리를 채우는 단계입니다.</span>
+      </div>
+      <button class="copy" data-t="q8">복사</button>
+    </div>
+    <pre id="q8">앞서 만든 "낱말 용사" 디자인 파일들의 빈 그림 칸(image-slot)에
+이제 실제 그림을 넣으려고 해. 이미지 10장을 올릴게.
+
+해줬으면 하는 것:
+1. 어느 그림이 어느 칸에 들어가야 하는지 정리해줘
+   (신수 아트 시트 / 인게임 화면 / 아이콘 / 스크린샷 / 광고 소재)
+2. 칸마다 크기·여백·정렬을 통일해줘. 한 마리만 크거나 치우치면 안 된다
+3. 배경이 투명하지 않은 그림은 어떻게 처리할지 알려줘
+4. 아이콘처럼 작게 들어가는 자리는 잘리는 부분이 없는지 확인해줘
+
+이 10종은 게임 전체에서 재사용되니, 한 번 정한 배치 규칙을
+나중에도 그대로 쓸 수 있게 규칙으로 적어줘.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>놓치기 쉬운 것들</h2>
+  <ul class="plain">
+    <li><b>글자는 절대 요구하지 마세요.</b> <span>이미지 AI는 한글을 거의 못 씁니다. 이름표나 번호를 넣으라고 하면 깨진 글자가 그려집니다. 캡션은 나중에 디자인에서 올립니다.</span></li>
+    <li><b>배경은 단색으로 뽑으세요.</b> <span>풍경이 같이 그려지면 배경을 지울 수가 없습니다. "무늬 없는 균일한 한지 바탕"을 꼭 넣으세요.</span></li>
+    <li><b>시트는 화풍만 고르는 용도입니다.</b> <span>한 칸이 256픽셀이라 게임에 못 씁니다. 반드시 3번으로 1마리씩 다시 뽑으세요.</span></li>
+    <li><b>마음에 든 그림은 꼭 첨부해서 이어가세요.</b> <span>말로만 "같은 화풍으로"라고 하면 안 됩니다. 이미지를 함께 넣어야 붓질이 이어집니다.</span></li>
+    <li><b>상업적 이용 가능 여부를 확인하세요.</b> <span>서비스마다 약관이 다르고 요금제에 따라서도 달라집니다. 스토어에 올릴 게임이라 이건 꼭 확인하셔야 합니다.</span></li>
+    <li><b>10종을 다 뽑고 나서 다시 보세요.</b> <span>한 마리씩 보면 다 괜찮은데, 열 마리를 늘어놓으면 두세 마리가 혼자 논다는 걸 알게 됩니다. 그것만 다시 뽑으면 됩니다.</span></li>
+  </ul>
+  <div class="tip">
+    <b>용부터 뽑으세요.</b> 가장 어렵고, 아이콘에도 쓰이고, 최종 보스입니다. 용이 잘 나오는 화풍이면 나머지 아홉은 따라옵니다. 용이 안 나오는 화풍은 다른 걸 아무리 잘 뽑아도 끝이 허전해집니다.
+  </div>
+</section>
+
+<footer>
+  신수 이름·산·특징은 <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 프로토타입</a>과 같은 설정입니다. 지금 게임에 들어 있는 그림은 코드로 그린 자리표시라, 여기서 뽑은 그림으로 교체하면 됩니다.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = document.getElementById(btn.dataset.t);
+      if (!pre) return;
+      var done = function () {
+        btn.textContent = "복사됨";
+        btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "복사"; btn.classList.remove("done"); }, 1600);
+      };
+      try {
+        navigator.clipboard.writeText(pre.textContent).then(done, function () { select(pre, btn); });
+      } catch (e) { select(pre, btn); }
+    });
+  });
+
+  // 클립보드가 막힌 뷰어에서는 대신 선택해 준다
+  function select(pre, btn) {
+    try {
+      var r = document.createRange();
+      r.selectNodeContents(pre);
+      var s = window.getSelection();
+      s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "직접 복사";
+      setTimeout(function () { btn.textContent = "복사"; }, 2200);
+    } catch (e) {}
+  }
+
+  document.querySelectorAll(".card").forEach(function (card) {
+    var pre = card.querySelector("pre");
+    if (!pre) return;
+    requestAnimationFrame(function () {
+      if (pre.scrollHeight <= pre.clientHeight + 4) return;
+      var b = document.createElement("button");
+      b.className = "more";
+      b.textContent = "전체 보기 ▾";
+      b.addEventListener("click", function () {
+        card.classList.toggle("open");
+        b.textContent = card.classList.contains("open") ? "접기 ▴" : "전체 보기 ▾";
+      });
+      card.appendChild(b);
+    });
+  });
+})();
+</script>
