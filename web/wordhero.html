@@ -267,15 +267,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   <div class="arena">
     <div class="stageline">
-      <span>제 <span id="stageNo">1</span> 관문 · <span id="cycle">1</span>회차</span>
+      <span><span id="mtName">북한산</span> · <span id="cycle">1</span>번째 종주</span>
       <span class="timer" id="timer">45</span>
     </div>
     <div class="bossrow">
       <div class="sigil" id="sigil">鬼</div>
       <div class="bossinfo">
-        <div class="bossname"><span id="bossName">달걀귀신</span><small id="bossHint"></small></div>
+        <div class="bossname"><span id="bossName">들쥐 떼</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
-        <div class="hpnum"><span id="hpNow">0</span> / <span id="hpMax">0</span></div>
+        <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span></div>
       </div>
     </div>
     <div class="floaters" id="floaters"></div>
@@ -306,7 +306,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     <div class="recs">
       <div class="rec"><div class="k">오늘 최고</div><div class="v mono" id="rToday">0</div></div>
       <div class="rec"><div class="k">이번 주</div><div class="v mono" id="rWeek">0</div></div>
-      <div class="rec j"><div class="k">최고 관문</div><div class="v mono" id="rStage">1</div></div>
+      <div class="rec j"><div class="k">오른 산</div><div class="v mono" id="rStage">1</div></div>
     </div>
     <p class="note" id="askedLine"></p>
     <p class="note">기록은 이 브라우저에만 저장됩니다. 실제 출시판에서는 이 자리가 <b>전국 일간·주간 랭킹</b>이 되고, 보상 수령이 재방문의 이유가 됩니다.</p>
@@ -357,12 +357,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   var SYLS = [];
   DICT.forEach(function (w) { for (var i = 0; i < w.length; i++) SYLS.push(w[i]); });
 
+  // 적은 짐승이되, 피 한 방울 없다. 깎는 것은 체력이 아니라 기세(氣)이고,
+  // 0이 되면 쓰러지는 게 아니라 꼬리를 내리고 물러난다.
   var BOSSES = [
-    { n: "달걀귀신", s: "卵", hp: 170, t: 45, hint: "두 글자면 충분합니다" },
-    { n: "도깨비",   s: "鬼", hp: 300, t: 45, hint: "세 글자는 세 배로 아픕니다" },
-    { n: "구미호",   s: "狐", hp: 520, t: 42, hint: "연속으로 맞히면 배수가 붙습니다" },
-    { n: "그슨대",   s: "影", hp: 820, t: 40, hint: "긴 낱말을 아껴두세요" },
-    { n: "저승사자", s: "冥", hp: 1250, t: 38, hint: "" }
+    { n: "들쥐 떼",      s: "鼠", m: "북한산", hp: 170,  t: 45, hint: "두 글자면 충분합니다" },
+    { n: "삵",          s: "狸", m: "속리산", hp: 300,  t: 45, hint: "세 글자는 세 배로 아픕니다" },
+    { n: "멧돼지",       s: "猪", m: "설악산", hp: 520,  t: 42, hint: "연속으로 맞히면 배수가 붙습니다" },
+    { n: "반달곰",       s: "熊", m: "지리산", hp: 820,  t: 40, hint: "긴 낱말을 아껴두세요" },
+    { n: "백두산 호랑이", s: "虎", m: "백두산", hp: 1250, t: 38, hint: "" }
   ];
 
   var UPGRADES = [
@@ -393,7 +395,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   load();
 
   var el = {};
-  ["lv","gold","gem","stageNo","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
+  ["lv","gold","gem","mtName","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
    "floaters","poolCount","btnShuffle","askedLine"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -471,7 +473,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!picked.length) {
       var ph = document.createElement("span");
       ph.className = "ph";
-      ph.textContent = run ? "글자를 눌러 낱말을 만드세요" : "관문을 시작하세요";
+      ph.textContent = run ? "글자를 눌러 낱말을 만드세요" : "산을 오르세요";
       el.slot.appendChild(ph);
     } else {
       picked.forEach(function (i, k) {
@@ -583,7 +585,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var b = BOSSES[stage % BOSSES.length];
     var cyc = Math.floor(stage / BOSSES.length);
     return {
-      n: b.n, s: b.s, hint: b.hint,
+      n: b.n, s: b.s, m: b.m, hint: b.hint,
       hp: Math.round(b.hp * Math.pow(1.45, cyc)),
       t: b.t + S.time * 3
     };
@@ -597,7 +599,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.sigil.textContent = b.s;
     el.bossName.textContent = b.n;
     el.bossHint.textContent = b.hint;
-    el.stageNo.textContent = (S.stage % BOSSES.length) + 1;
+    el.mtName.textContent = b.m;
     el.cycle.textContent = Math.floor(S.stage / BOSSES.length) + 1;
     el.hpMax.textContent = b.hp;
     tick();
@@ -698,7 +700,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
     var h = document.createElement("h2");
     h.className = won ? "win" : "lose";
-    h.textContent = won ? r.boss.n + " 퇴치" : "시간 초과";
+    h.textContent = won ? r.boss.n + ", 물러나다" : "해가 저물었습니다";
     card.appendChild(h);
 
     var big = document.createElement("div");
@@ -710,7 +712,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     lead.className = "lead";
     lead.textContent = won
       ? "낱말 " + r.words.length + "개 · 획득 냥 " + reward
-      : r.boss.n + "의 기력이 " + Math.max(0, r.hp) + " 남았습니다";
+      : r.boss.n + "의 기세가 " + Math.max(0, r.hp) + " 남았습니다";
     card.appendChild(lead);
 
     if (r.words.length) {
@@ -752,7 +754,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     } else {
       var next = document.createElement("button");
       next.className = "btn go";
-      next.textContent = "다음 관문";
+      next.textContent = "다음 산으로";
       next.addEventListener("click", function () { ov.remove(); startStage(); });
       row.appendChild(next);
     }
