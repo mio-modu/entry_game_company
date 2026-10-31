@@ -151,6 +151,20 @@ body.quake { animation: shake .42s ease-out; }
 .btn.go[disabled] { background: var(--surface-2); color: var(--fg-faint); }
 .btn small { display: block; font-size: 10.5px; font-weight: 400; opacity: .75; }
 
+/* 수호신을 쓰러뜨린 뒤의 덤 시간. 하던 판을 마저 채우면 냥을 더 받지만,
+   생각이 안 나면 기다릴 것 없이 바로 끝낼 수 있어야 한다. 떠오르지 않는
+   낱말을 붙잡고 시계만 보는 30초가 게임을 가장 빨리 지루하게 만든다. */
+.bonusbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(90deg, #2E2412, #241D10);
+  border: 1px solid #4A3E18; border-radius: 12px; padding: 9px 9px 9px 14px;
+  font-size: 12.5px; color: #E6D9A8; animation: say .35s ease-out;
+}
+.bonusbar b { color: var(--gold); font-weight: 700; }
+.bonusbar button {
+  flex: none; background: var(--gold); color: #1A1206; border-radius: 9px;
+  padding: 9px 13px; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
 .bonus { display: flex; flex-wrap: wrap; gap: 5px; min-height: 22px; }
 .bonus span { font-family: var(--font-display); font-size: 12.5px; background: #152B27;
   color: #A8E0D3; border-radius: 20px; padding: 1px 10px; }
@@ -197,7 +211,7 @@ body.quake { animation: shake .42s ease-out; }
         <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
         <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span>
-          <span style="opacity:.7">· 0이 되면 이깁니다</span></div>
+          <span style="opacity:.7" id="hpTail">· 0이 되면 이깁니다</span></div>
       </div>
     </div>
     <div class="floaters" id="floaters"></div>
@@ -216,7 +230,11 @@ body.quake { animation: shake .42s ease-out; }
   <div class="acts">
     <button class="btn" id="btnClear">지우기<small>한 글자씩</small></button>
     <button class="btn" id="btnHint">힌트<small>뜻풀이</small></button>
-    <button class="btn go" id="btnGo" disabled>공격<small id="goSub">낱말을 만드세요</small></button>
+    <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><small id="goSub">낱말을 만드세요</small></button>
+  </div>
+  <div class="bonusbar" id="bonusBar" hidden>
+    <span><b id="bLeft">1</b>개 남은 빈칸은 <b>보너스</b>입니다</span>
+    <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
 
@@ -230,8 +248,10 @@ body.quake { animation: shake .42s ease-out; }
     <p>빈칸은 <b>가장 잘 드는 공격</b>입니다. 긴 낱말일수록 깊게 들어갑니다.
        빈칸에 없는 낱말도 사전에 있으면 <b>절반만큼</b> 들어갑니다 —
        아는 낱말이 헛되지 않습니다.</p>
-    <p>빈칸을 <b>모두</b> 채우면 <b>완전 격파</b>입니다. 기세가 크게 꺾이고,
-       시간과 냥을 두둑이 받고, 새 글자판이 깔립니다.</p>
+    <p>수호신이 쓰러져도 빈칸이 남았다면 <b>보너스 시간</b>이 이어집니다.
+       남은 빈칸을 채우면 냥을 더 받고, 다 채우면 <b>완전 격파</b>입니다.
+       생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내면 됩니다 —
+       기다릴 필요가 없습니다.</p>
     <p class="cite">낱말·뜻풀이 자료: 국립국어원 <b>한국어 학습용 어휘 목록</b>,
       <b>한국어기초사전</b>, <b>표준국어대사전</b> (CC BY-SA 2.0 KR).</p>
   </div>
@@ -365,7 +385,7 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
-   "btnGo","goSub","bonus"].forEach(function (id) { el[id] = document.getElementById(id); });
+   "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   var stage = 0, gold = 0, run = null, picked = [], timerId = null, toastT = null;
 
@@ -413,10 +433,12 @@ body.quake { animation: shake .42s ease-out; }
     var b = stageInfo(stage);
     var p = makePuzzle(b.mt);
     var hp = hpFor(p.ans, b.need);
-    run = { b: b, hp: hp, max: hp, left: b.t, combo: 0,
-            bonus: [], cleared: 0, perfect: 0, found: 0,
+    run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
+            bonus: [], cleared: 0, perfect: 0, found: 0, extra: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null) };
     picked = [];
+    el.bonusBar.hidden = true;
+    el.portrait.classList.remove("down");
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
     el.bossHint.textContent = b.m + " · " + b.need + "개를 채우면 쓰러집니다";
@@ -448,12 +470,21 @@ body.quake { animation: shake .42s ease-out; }
     drawSlots(); drawTiles(); drawWord();
     el.hp.style.width = Math.max(0, (run.hp / run.max) * 100) + "%";
     el.hpNow.textContent = Math.max(0, run.hp);
+    if (run.phase === "bonus") {
+      el.bLeft.textContent = remaining().length;
+      el.bossHint.textContent = run.b.m + " · 쓰러뜨렸습니다";
+      el.hpTail.textContent = "· 보너스 시간";
+      el.goLabel.textContent = "채우기";
+    } else {
+      el.hpTail.textContent = "· 0이 되면 이깁니다";
+      el.goLabel.textContent = "공격";
+    }
     el.gold.textContent = gold;
     var left = remaining().length;
     el.gFound.textContent = run.ans.length - left;
     el.gTotal.textContent = run.ans.length;
-    el.gNote.textContent = left === 1 ? "하나 남았습니다 · 완전 격파!"
-                                      : "다 채우면 완전 격파";
+    el.gNote.textContent = run.phase === "bonus" ? "보너스 시간"
+      : left === 1 ? "하나 남았습니다 · 완전 격파!" : "다 채우면 완전 격파";
     el.hpNow.parentNode.title = run.b.need + "개를 채우면 쓰러집니다";
     el.timer.textContent = run.left;
     el.timer.classList.toggle("low", run.left <= 10);
@@ -515,6 +546,13 @@ body.quake { animation: shake .42s ease-out; }
     var ok = isSlot || isBonus;
     el.slot.classList.toggle("ok", ok);
     el.btnGo.disabled = !ok;
+    if (run.phase === "bonus") {
+      el.goSub.textContent = isSlot ? "빈칸을 채웁니다 · +" + (w.length * 25) + "냥"
+        : isBonus ? "보너스 낱말 · +" + (w.length * 5) + "냥"
+        : w.length < 2 ? "낱말을 만드세요"
+        : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
+      return;
+    }
     el.goSub.textContent = isSlot ? "빈칸 · 기세 -" + damage(w, true)
       : isBonus ? "보너스 · 기세 -" + damage(w, false) + ", 시간 +3초"
       : w.length < 2 ? "낱말을 만드세요"
@@ -558,10 +596,33 @@ body.quake { animation: shake .42s ease-out; }
     var w = word();
     var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
 
+    run.found++;
+
+    // 수호신을 이미 쓰러뜨린 뒤라면 기세를 깎을 것이 없다. 냥으로 받는다.
+    if (run.phase === "bonus") {
+      var pay = isSlot ? w.length * 25 : w.length * 5;
+      if (isSlot) run.got[w] = 1;
+      else {
+        run.bonus.push(w);
+        var sb = document.createElement("span"); sb.textContent = w; el.bonus.appendChild(sb);
+      }
+      gold += pay; run.extra += pay;
+      floatDmg("+" + pay + "냥", true);
+      if (window.SFX) { SFX.word(w.length); isSlot ? SFX.up() : SFX.tap(); }
+      picked = []; draw();
+      if (!remaining().length) {           // 보너스 시간에 다 채웠다
+        run.perfect++;
+        gold += 80; run.extra += 80;
+        if (window.SFX) SFX.clear();
+        toast("완전 격파 · +80냥");
+        setTimeout(function () { if (run) result(run, true); }, 700);
+      }
+      return;
+    }
+
     var dmg = damage(w, isSlot);
     run.hp -= dmg;
     run.combo++;
-    run.found++;
     if (isSlot) {
       run.got[w] = 1;
       floatDmg("-" + dmg, false);
@@ -578,10 +639,17 @@ body.quake { animation: shake .42s ease-out; }
     setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
     picked = [];
     draw();
-    if (run.hp <= 0) return finish(true);
+
+    // 수호신이 쓰러졌다. 빈칸이 남았으면 바로 끝내지 않고 덤 시간을 준다.
+    // 그래야 "둘만 맞춰도 깨진다"는 약속을 지키면서도 셋째 빈칸이
+    // 할 일을 갖는다. 다 채웠다면 그 자리에서 끝이다.
+    if (run.hp <= 0) {
+      if (!remaining().length) { run.perfect++; return finish(true); }
+      return toBonus();
+    }
 
     if (!remaining().length) {
-      // 완전 격파. 다 찾는 건 어려우니 찾았을 때는 확실히 갚는다.
+      // 수호신이 아직 서 있는데 글자판을 다 털었다 — 크게 갚고 새 판을 깐다
       run.cleared++;
       run.perfect++;
       var big = Math.round(run.max * 0.35);
@@ -597,10 +665,26 @@ body.quake { animation: shake .42s ease-out; }
     }
   }
 
+  function toBonus() {
+    run.phase = "bonus";
+    el.btnGo.disabled = true;
+    if (window.SFX) SFX.win();
+    tumble(function () {
+      if (!run) return;
+      el.bonusBar.hidden = false;
+      toast("물리쳤습니다! 남은 빈칸은 보너스입니다");
+      draw();
+    }, true);
+  }
+
   function onSecond() {
     if (!run) return;
     run.left--;
-    if (run.left <= 0) { run.left = 0; draw(); return finish(false); }
+    if (run.left <= 0) {
+      run.left = 0; draw();
+      // 보너스 시간에 시계가 멈춘 것은 진 게 아니다. 이미 이겨 둔 판이다.
+      return run.phase === "bonus" ? result(run, true) : finish(false);
+    }
     draw();
   }
 
@@ -611,7 +695,7 @@ body.quake { animation: shake .42s ease-out; }
     "으윽\u2026 낱말이\u2026", "기억해 두마", "한 수 배웠다"
   ];
 
-  function tumble(after) {
+  function tumble(after, keep) {
     el.portrait.classList.add("down");
     document.body.classList.add("quake");
     setTimeout(function () { document.body.classList.remove("quake"); }, 440);
@@ -629,7 +713,7 @@ body.quake { animation: shake .42s ease-out; }
       document.querySelector(".arena").appendChild(sp);
     }, 780);
 
-    setTimeout(function () { dz.remove(); sp.remove(); after(); }, 1700);
+    setTimeout(function () { dz.remove(); sp.remove(); after(); }, keep ? 1500 : 1700);
   }
 
   function finish(won) {
@@ -641,7 +725,10 @@ body.quake { animation: shake .42s ease-out; }
   }
 
   function result(r, won) {
-    var reward = won ? Math.round(40 + r.max * 0.3 + r.perfect * 40) : 0;
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    run = null;
+    el.bonusBar.hidden = true;
+    var reward = won ? Math.round(40 + r.max * 0.3) : 0;
     gold += reward;
     if (won) stage = Math.min(99, stage + 1);
     el.gold.textContent = gold;
@@ -656,9 +743,9 @@ body.quake { animation: shake .42s ease-out; }
     big.textContent = r.found + "낱말";
     card.appendChild(big);
     var lead = document.createElement("p"); lead.className = "lead";
-    lead.textContent = (r.perfect ? "완전 격파 " + r.perfect + "판 · " : "")
+    lead.textContent = (r.perfect ? "완전 격파 · " : "")
       + "보너스 낱말 " + r.bonus.length + "개"
-      + (won ? " · " + reward + "냥" : "");
+      + (won ? " · " + reward + "냥" + (r.extra ? " (+보너스 " + r.extra + "냥)" : "") : "");
     card.appendChild(lead);
     if (!won) {
       var miss = document.createElement("p"); miss.className = "lead";
@@ -682,6 +769,9 @@ body.quake { animation: shake .42s ease-out; }
 
   // ── 조작 ────────────────────────────────────────────────────────────
   el.btnGo.addEventListener("click", attack);
+  el.btnEnd.addEventListener("click", function () {
+    if (run && run.phase === "bonus") result(run, true);
+  });
   el.btnClear.addEventListener("click", function () {
     if (!picked.length) return;
     picked.pop();
