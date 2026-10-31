@@ -97,11 +97,20 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .stageline .timer { font-size: 15px; font-weight: 600; color: var(--fg); }
 .stageline .timer.low { color: var(--danger); }
 .bossrow { display: flex; align-items: center; gap: 13px; }
-.sigil {
-  width: 96px; height: 96px; flex: none; display: block;
-  transition: transform .09s ease;
+/* 신수는 한지에 그린 그림이다. 어두운 먹색 UI 위에 족자처럼 걸린다.
+   등급은 그림을 다시 그리는 게 아니라 필터와 테두리로만 구분한다. */
+.portrait {
+  width: 104px; height: 142px; flex: none; position: relative;
+  border-radius: 8px; overflow: hidden; background: #E8E2D2;
+  box-shadow: 0 0 0 1px #0007, 0 8px 22px -10px #000;
+  transition: transform .09s ease, box-shadow .25s ease, filter .25s ease;
 }
-.sigil.hit { transform: translateX(-7px) scale(.94); }
+.portrait img, .portrait canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portrait canvas { background: #171A24; }
+.portrait.hit { transform: translateX(-7px) scale(.95); }
+.portrait.g-young { filter: grayscale(.3) opacity(.86); }
+.portrait.g-angry { filter: contrast(1.2) saturate(1.5) brightness(.96); }
+.portrait.g-guard { box-shadow: 0 0 0 2px var(--gold), 0 8px 28px -8px rgba(201,162,39,.75); }
 .stageline b { color: var(--fg); font-size: 13px; font-weight: 600; }
 .bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .bossname { font-family: var(--font-display); font-size: 17px; }
@@ -268,7 +277,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <span class="timer" id="timer">45</span>
     </div>
     <div class="bossrow">
-      <canvas class="sigil" id="sigil" width="288" height="288" aria-label="신수"></canvas>
+      <div class="portrait" id="portrait">
+        <img id="pimg" alt="" hidden>
+        <canvas id="sigil" width="288" height="394" aria-label="신수"></canvas>
+      </div>
       <div class="bossinfo">
         <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
@@ -372,6 +384,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     { m: "백두산", n: "천지의 용" }
   ];
   var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
+  // 이미지가 들어온 신수들. 이무기·봉황은 아직 안 나와서 코드 그림으로 버틴다.
+  var ART = {
+    "불가사리": "bulgasari", "삼족오": "samjogo", "해태": "haetae", "현무": "hyeonmu",
+    "백호": "baekho", "기린": "kirin", "주작": "jujak", "천지의 용": "yong"
+  };
   var HINTS = [
     "두 글자면 충분합니다", "세 글자는 세 배로 아픕니다", "연속으로 맞히면 배수가 붙습니다",
     "긴 낱말을 아껴두세요", "막히면 섞기를 누르세요", "10단계마다 수호신이 기다립니다"
@@ -410,7 +427,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   load();
 
   var el = {};
-  ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","bossName","bossHint","hp","hpNow","hpMax",
+  ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","portrait","pimg","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
    "floaters","poolCount","btnShuffle","askedLine"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -616,7 +633,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     run = { boss: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, score: 0, words: [] };
     picked = [];
     fillBoard();
-    if (window.Sinsu) window.Sinsu.draw(el.sigil, b.base, b.grade);
+    // 그려진 신수가 있으면 그림을, 아직 없으면 코드 렌더러를 쓴다
+    var art = ART[b.base];
+    el.portrait.className = "portrait g-" + b.grade;
+    el.pimg.hidden = !art;
+    el.sigil.hidden = !!art;
+    if (art) el.pimg.src = "art/" + art + ".jpg";
+    else if (window.Sinsu) window.Sinsu.draw(el.sigil, b.base, b.grade);
     el.bossName.textContent = b.n;
     el.bossHint.textContent = b.hint;
     el.mtName.textContent = b.m;
@@ -671,8 +694,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     run.score += dmg;
     run.words.push(w);
     floatDmg(dmg);
-    el.sigil.classList.add("hit");
-    setTimeout(function () { el.sigil.classList.remove("hit"); }, 110);
+    el.portrait.classList.add("hit");
+    setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
     refill(picked.slice());
     picked = [];
     tick();

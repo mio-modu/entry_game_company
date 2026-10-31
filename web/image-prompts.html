@@ -3,19 +3,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one column of copyable prompt cards, ordered by the workflow they belong to. */
+/* Layout: status table first, then prompts ordered by what the remaining quota should buy. */
 :root {
-  --bg: #11131A;
-  --surface: #1A1D27;
-  --surface-2: #232838;
-  --code: #0D0F16;
-  --line: #333950;
-  --fg: #ECEAE3;
-  --fg-dim: #969BB3;
-  --fg-faint: #656B85;
-  --accent: #D6453A;
-  --gold: #C9A227;
-  --jade: #4A9E8F;
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232838; --code: #0D0F16;
+  --line: #333950; --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --warn: #E0683C;
   --font-display: "Gowun Batang", serif;
   --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -38,18 +30,22 @@ code { font-family: var(--font-mono); font-size: .88em; background: var(--surfac
 .lede { color: var(--fg-dim); max-width: 60ch; }
 header { display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; }
 
-.flow {
-  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold);
-  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14px;
-}
-.flow .h { font-weight: 700; color: var(--gold); }
-.flow ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
-.flow li::marker { color: var(--gold); font-family: var(--font-mono); font-size: 12px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 380px; }
+th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-faint); font-weight: 600; background: var(--surface); }
+td.s { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+td.ok { color: var(--jade); }
+td.redo { color: var(--warn); }
+td.none { color: var(--accent); }
+td.n { font-family: var(--font-mono); color: var(--fg-faint); }
 
 section { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .card.key { border-color: #4A3E18; }
+.card.urgent { border-color: #5A2A22; }
 .cardhead { display: flex; align-items: flex-start; gap: 12px; padding: 15px 16px; flex-wrap: wrap; }
 .cardhead .n {
   font-family: var(--font-mono); font-size: 11px; color: var(--bg); background: var(--accent);
@@ -59,6 +55,7 @@ section { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
 .cardhead .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cardhead .t { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
 .cardhead .d { font-size: 12.5px; color: var(--fg-dim); }
+.cardhead .cost { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-faint); letter-spacing: .04em; }
 .copy {
   font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
   background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
@@ -70,20 +67,16 @@ section { margin-top: 34px; display: flex; flex-direction: column; gap: 13px; }
 pre {
   margin: 0; padding: 15px 16px; background: var(--code); border-top: 1px solid var(--line);
   font-family: var(--font-mono); font-size: 12.5px; line-height: 1.72; color: #D5D8E6;
-  white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow-y: auto;
+  white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto;
 }
 .card.open pre { max-height: none; }
-.more {
-  width: 100%; background: var(--surface-2); color: var(--fg-dim); border: 0;
-  border-top: 1px solid var(--line); padding: 8px; font-size: 12px;
-  font-family: var(--font-mono); cursor: pointer;
-}
+.more { width: 100%; background: var(--surface-2); color: var(--fg-dim); border: 0; border-top: 1px solid var(--line); padding: 8px; font-size: 12px; font-family: var(--font-mono); cursor: pointer; }
 .more:hover { color: var(--fg); }
 
-.warn { background: #2A1512; border: 1px solid #5A2A22; border-radius: 11px; padding: 14px 16px; font-size: 13.5px; display: flex; flex-direction: column; gap: 7px; }
-.warn b { color: #FF8B80; }
 .tip { background: #15241F; border: 1px solid #2A5048; border-radius: 11px; padding: 13px 15px; font-size: 13.5px; }
 .tip b { color: var(--jade); }
+.warn { background: #2A1512; border: 1px solid #5A2A22; border-radius: 11px; padding: 13px 15px; font-size: 13.5px; display: flex; flex-direction: column; gap: 6px; }
+.warn b { color: #FF8B80; }
 
 ul.plain { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
 ul.plain li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; font-size: 14px; align-items: start; }
@@ -97,26 +90,31 @@ footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line);
 <div class="wrap">
 
 <header>
-  <div class="eyebrow">낱말 용사 · 이미지 생성용</div>
+  <div class="eyebrow">낱말 용사 · 2차 생성분</div>
   <h1>신수 이미지 프롬프트</h1>
-  <p class="lede">그록·미드저니 같은 이미지 생성 AI에 넣는 프롬프트입니다. 클로드 디자인은 레이아웃 도구라 그림을 못 그리니, 그림은 여기서 뽑아서 그 빈 칸에 끼우면 됩니다.</p>
+  <p class="lede">1차에서 8장이 나왔고 화풍이 확정됐습니다. 이 페이지는 <b>이력이 없는 새 계정에서도 같은 그림이 나오도록</b> 다시 쓴 것입니다. 0번 화풍 블록만 제대로 붙이면 이전 그림과 이어집니다.</p>
 </header>
 
-<div class="warn">
-  <span><b>⚠️ "한 장에 8개"는 생각만큼 안 됩니다</b></span>
-  <p>생성 AI는 한 이미지 안에 <b>지시한 개수와 순서를 자주 틀립니다.</b> 8개를 요청하면 6개나 9개가 나오고, 순서도 섞입니다. 그리고 1024px 이미지에 8칸이면 <b>한 칸이 256px</b>이라 게임에 쓰기엔 너무 작습니다.</p>
-  <p>그래서 <b>시트는 "화풍 고르기"용으로만</b> 쓰고, 최종 그림은 <b>1종씩 따로</b> 뽑는 게 맞습니다. 아래 순서가 그렇게 짜여 있습니다.</p>
+<div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th>신수</th><th>산</th><th>상태</th></tr></thead>
+    <tbody>
+      <tr><td class="n">1</td><td>불가사리</td><td>북한산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">2</td><td>삼족오</td><td>속리산</td><td class="s redo">⟲ 다리 2개 — 재생성</td></tr>
+      <tr><td class="n">3</td><td>해태</td><td>계룡산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">4</td><td>현무</td><td>설악산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">5</td><td>백호</td><td>소백산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">6</td><td>기린</td><td>덕유산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">7</td><td>주작</td><td>지리산</td><td class="s ok">✓ 완료</td></tr>
+      <tr><td class="n">8</td><td>이무기</td><td>한라산</td><td class="s none">✗ 없음</td></tr>
+      <tr><td class="n">9</td><td>봉황</td><td>금강산</td><td class="s none">✗ 없음</td></tr>
+      <tr><td class="n">10</td><td>천지의 용</td><td>백두산</td><td class="s ok">✓ 완료</td></tr>
+    </tbody>
+  </table>
 </div>
 
-<div class="flow" style="margin-top:13px">
-  <span class="h">순서</span>
-  <ol>
-    <li><b>1번</b>으로 5종 시트를 <b>여러 번</b> 돌립니다. 마음에 드는 화풍 한 장이 나올 때까지.</li>
-    <li><b>2번</b>으로 나머지 5종을 같은 화풍으로 이어 뽑습니다.</li>
-    <li><b>3번</b>으로 확정된 10종을 <b>1마리씩 고해상도</b>로 다시 뽑습니다. ← 실제 게임에 들어갈 것</li>
-    <li><b>4~6번</b>으로 변주·배경·아이콘을 채웁니다.</li>
-    <li><b>7번</b>을 클로드 디자인에 넣어 빈 칸에 끼웁니다.</li>
-  </ol>
+<div class="tip" style="margin-top:13px">
+  <b>한도가 적으면 1 → 2 → 3 순서로만 쓰세요.</b> 그 셋이면 게임의 10종이 다 채워집니다. 등급 변주(성난·수호신)는 지금 게임에서 <b>필터로 처리하고 있어서 따로 안 뽑아도 됩니다.</b> 그림 20장을 아낀 겁니다.
 </div>
 
 <section>
@@ -124,265 +122,288 @@ footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line);
     <div class="cardhead">
       <span class="n">0</span>
       <div class="meta">
-        <span class="t">공통 화풍 블록</span>
-        <span class="d">1~6번 프롬프트 맨 앞에 매번 붙여넣으세요. 이게 화풍을 묶어줍니다.</span>
+        <span class="t">확정 화풍 블록</span>
+        <span class="d">1차 8장에서 나온 화풍을 글로 고정한 것. 모든 프롬프트 맨 앞에 붙이세요.</span>
       </div>
       <button class="copy" data-t="q0">복사</button>
     </div>
-    <pre id="q0">한국 전통 수묵화 스타일. 조선 민화의 결.
-오래된 한지 위에 먹으로 그린 그림. 붓 자국과 갈필(마른 붓) 질감,
-먹이 종이에 번진 자국이 보인다. 선은 적게, 여백은 넉넉하게.
-색은 먹의 농담이 전부. 주홍(인주색) 한 점만 강조로 허용.
-아주 작은 금박 포인트 가능.
+    <pre id="q0">한국 전통 수묵화. 오래된 한지에 그린 그림.
 
-금지: 글자, 문자, 숫자, 서명, 워터마크, 3D 렌더, 애니메이션 그림체,
-일본 요괴 그림, 중국 무협 그림, 사진 같은 사실적 묘사, 네온, 그라데이션</pre>
+[바탕]
+· 밝은 베이지에서 연한 황토빛으로 이어지는 한지.
+  종이 섬유 결과 자연스러운 얼룩이 드러난다
+· 가장자리는 세월에 조금 바래 어둡다
+· 배경에 풍경·소품·바닥선·그림자 없음. 오직 종이뿐
+
+[그림]
+· 먹으로 그린다. 가는 붓선으로 털과 비늘을 촘촘히 쌓고,
+  덩어리는 수묵 음영으로 번지게 한다
+· 거의 흑백. 먹의 농담이 전부다
+
+[포인트 — 이 시리즈의 서명이다. 빠뜨리지 말 것]
+· 주홍(인주색) 표식 딱 하나. 이마나 목, 등 한 군데에 작게
+· 금박 조각 한둘을 몸이나 종이 여백에 흩뿌리듯
+
+[구도]
+· 생물 한 마리만. 전신. 측면이나 살짝 3/4
+· 화면 중앙, 사방 여백 넉넉히
+· 세로 2:3 비율
+
+금지: 글자, 문자, 숫자, 서명, 낙관, 워터마크, 3D 렌더,
+애니메이션 그림체, 사진 같은 사실감, 네온, 그라데이션, 배경 풍경</pre>
   </div>
 
   <div class="card key">
     <div class="cardhead">
       <span class="n">0</span>
       <div class="meta">
-        <span class="t">공통 화풍 블록 (영문)</span>
-        <span class="d">대부분의 이미지 AI는 영어가 결과가 낫습니다. 잘 안 나오면 이쪽으로.</span>
+        <span class="t">확정 화풍 블록 (영문)</span>
+        <span class="d">한국어로 결이 안 맞게 나오면 이쪽으로 바꿔보세요.</span>
       </div>
       <button class="copy" data-t="q0e">복사</button>
     </div>
-    <pre id="q0e">Traditional Korean ink wash painting (sumukhwa), Joseon minhwa folk art spirit.
-Sumi ink on aged hanji rice paper. Visible brush strokes, dry-brush texture,
-ink bleeding into the fibers. Few confident lines, generous negative space.
-Monochrome ink values only, with a single cinnabar red accent
-and a tiny touch of gold leaf.
+    <pre id="q0e">Traditional Korean ink painting on aged hanji paper.
 
-Negative prompt: text, letters, numbers, signature, watermark, 3D render,
-anime style, Japanese yokai art, Chinese wuxia art, photorealism,
-neon, gradient, cluttered background</pre>
+PAPER: warm beige to pale ochre hanji, visible paper fibers and natural
+mottling, edges slightly darkened with age. Nothing else on the paper —
+no landscape, no props, no ground line, no cast shadow.
+
+INK: sumi ink. Fine brush lines building fur and scales densely,
+masses rendered with soft ink wash bleeding. Essentially monochrome —
+ink values carry everything.
+
+SIGNATURE ACCENTS (do not omit):
+· exactly one small cinnabar red marking, on the forehead, throat or back
+· one or two flecks of gold leaf on the body or scattered in the margin
+
+COMPOSITION: a single creature, full body, side view or slight 3/4,
+centered with generous margins, vertical 2:3 format.
+
+Negative prompt: text, letters, numbers, signature, seal, watermark,
+3D render, anime style, photorealism, neon, gradient, background scenery</pre>
   </div>
 </section>
 
 <section>
-  <h2>1단계 — 화풍 고르기</h2>
+  <h2>우선순위 1 — 이것만 뽑아도 게임이 완성됩니다</h2>
 
-  <div class="card">
+  <div class="card urgent">
     <div class="cardhead">
       <span class="n">1</span>
       <div class="meta">
-        <span class="t">신수 시트 (앞 5종)</span>
-        <span class="d">여러 번 돌려서 화풍 한 장을 고르는 용도. 이 그림을 그대로 쓰진 않습니다.</span>
+        <span class="t">이무기</span>
+        <span class="d">8단계 한라산. 용과 확실히 달라야 합니다 — 뿔도 발도 없습니다.</span>
+        <span class="cost">1장</span>
       </div>
       <button class="copy" data-t="q1">복사</button>
     </div>
-    <pre id="q1">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+    <pre id="q1">[0번 확정 화풍 블록을 먼저 붙여넣으세요]
+[이미 뽑아둔 용 그림을 참고 이미지로 함께 첨부하면 결이 더 잘 맞습니다]
 
-한국 전설의 신수 5종을 한 화면에 격자로 그린다. 가로 3칸, 세로 2칸
-(마지막 한 칸은 비워 둔다). 각 칸에 한 마리씩, 전신, 측면,
-칸 정중앙에, 주위 여백 넉넉히.
+이무기를 그린다. 용이 되지 못한 거대한 뱀이다.
 
-1) 불가사리 — 쇠를 먹는 조선의 괴수. 곰 같은 작고 둥근 몸,
-   다리가 짧고 뭉툭하다. 코에 뿔
-2) 삼족오 — 다리가 셋 달린 검은 까마귀. 고구려 고분벽화의 결
-3) 해태 — 사자 같은 몸에 풍성한 갈기, 이마에 외뿔 하나.
-   광화문 해치. 듬직하고 위엄 있다
-4) 현무 — 큰 거북의 등껍질을 뱀이 휘감았다. 낮고 무겁다
-5) 백호 — 흰 호랑이. 민화 까치호랑이처럼 위엄 있되 어딘가 익살맞다
+· 굵고 긴 뱀의 몸이 두세 번 크게 똬리를 틀며 휘어진다
+· 비늘을 촘촘히 그린다. 머리는 뱀에 가깝되 조금 사납다
+· 뿔이 없다. 수염이 없다. 발이 없다
+  (용이 되려다 못 된 존재라 용의 특징이 하나도 없어야 한다)
+· 눈빛에 미련과 분노가 함께 있다
+· 구름이나 물을 그리지 않는다. 종이 위에 몸만
 
-칸마다 글자나 번호를 넣지 않는다.
-다섯 마리가 한 사람이 같은 날 그린 것처럼 보여야 한다.</pre>
+첨부한 용 그림과 같은 종이·같은 붓질이되, 한눈에 용이 아니라
+뱀으로 보여야 한다. 둘을 나란히 놓았을 때 격이 다르게.</pre>
   </div>
 
-  <div class="card">
+  <div class="card urgent">
     <div class="cardhead">
       <span class="n">2</span>
       <div class="meta">
-        <span class="t">신수 시트 (뒤 5종)</span>
-        <span class="d">1번에서 고른 그림을 첨부하고 이걸 넣으면 화풍이 이어집니다.</span>
+        <span class="t">봉황</span>
+        <span class="d">9단계 금강산. 이미 뽑힌 주작과 구분이 관건입니다.</span>
+        <span class="cost">1장</span>
       </div>
       <button class="copy" data-t="q2">복사</button>
     </div>
-    <pre id="q2">[0번 공통 화풍 블록 + 1번에서 고른 이미지를 함께 첨부]
+    <pre id="q2">[0번 확정 화풍 블록을 먼저 붙여넣으세요]
+[이미 뽑아둔 주작(붉은 기운의 새) 그림을 참고로 함께 첨부]
 
-첨부한 그림과 완전히 같은 화풍·붓질·먹 농도로 이어서
-나머지 신수 5종을 같은 격자 형식으로 그린다.
+봉황을 그린다. 첨부한 주작과 같은 화풍이되, 한눈에 다른 새여야 한다.
 
-6) 기린 — 사슴 몸에 비늘, 긴 다리, 이마에 뿔 둘. 눈이 온순하다
-7) 주작 — 붉은 기운의 큰 새. 날개를 활짝 펴고 긴 꼬리깃이 흐른다
-8) 이무기 — 용이 되지 못한 거대한 뱀. 뿔이 없다. 미련과 분노가 함께
-9) 봉황 — 오색의 큰 새. 가장 화려한 꼬리깃. 날개를 크게
-10) 천지의 용 — 동양의 용. 긴 몸, 사슴뿔, 긴 수염, 네 발톱.
-    구름을 뚫고 솟아오른다. 가장 압도적으로
+주작과 이렇게 다르게:
+· 주작은 날개를 활짝 펴고 날아오르는 자세였다 →
+  봉황은 바닥이나 바위에 우아하게 선 자세로
+· 주작은 붉은 기운이 번졌다 → 봉황은 붉은 기운 없이,
+  대신 꼬리깃이 훨씬 길고 겹겹이 흐른다
+· 봉황은 머리에 화려한 볏이 있고 목이 길고 우아하다
+· 몸집이 더 크고 당당하다. 공작과 꿩을 섞은 듯한 품위
 
-글자와 번호는 넣지 않는다.</pre>
+· 주홍 표식은 볏이나 눈가에 작게 하나
+· 금박은 꼬리깃 끝에
+
+두 그림을 나란히 놓았을 때 "비슷한 새 두 마리"가 아니라
+"격이 다른 두 존재"로 보여야 한다.</pre>
+  </div>
+
+  <div class="card urgent">
+    <div class="cardhead">
+      <span class="n">3</span>
+      <div class="meta">
+        <span class="t">삼족오 (재생성)</span>
+        <span class="d">1차 그림은 다리가 2개였습니다. 이름 자체가 '세 발 까마귀'라 틀리면 안 됩니다.</span>
+        <span class="cost">1장 · 여러 번 돌려야 할 수 있음</span>
+      </div>
+      <button class="copy" data-t="q3">복사</button>
+    </div>
+    <pre id="q3">[0번 확정 화풍 블록을 먼저 붙여넣으세요]
+
+삼족오를 그린다. 고구려 고분벽화에 나오는 세 발 달린 검은 까마귀다.
+
+가장 중요한 것 — 다리가 반드시 셋이다:
+· 다리 세 개가 모두 뚜렷하게 보이도록 그린다
+· 앞에 둘, 가운데나 뒤에 하나. 셋 다 땅을 딛고 있다
+· 다리가 둘이면 실패다. 셋인지 꼭 확인할 것
+
+· 검은 깃털을 먹으로 짙게. 부리는 날카롭다
+· 머리에 작은 볏
+· 주홍 표식은 가슴에 점 하나
+· 금박은 꼬리깃 쪽에
+· 몸은 옆을 보고 선 자세
+
+세 발이 분명하게 드러나지 않으면 다시 그린다.</pre>
   </div>
 </section>
 
 <section>
-  <h2>2단계 — 실제로 쓸 그림</h2>
-
-  <div class="card key">
-    <div class="cardhead">
-      <span class="n">3</span>
-      <div class="meta">
-        <span class="t">개별 고해상도 (10번 반복)</span>
-        <span class="d">게임에 실제로 들어갈 그림입니다. 이게 본 작업이에요.</span>
-      </div>
-      <button class="copy" data-t="q3">복사</button>
-    </div>
-    <pre id="q3">[0번 공통 화풍 블록 + 앞서 고른 시트 이미지를 함께 첨부]
-
-첨부한 시트와 같은 화풍으로, {신수 이름} 한 마리만 크게 그린다.
-
-· 정사각 화면
-· 전신, 측면, 화면 정중앙
-· 사방에 여백을 넉넉히 둔다 (잘릴 여지 없이)
-· 배경은 무늬 없는 균일한 한지 바탕 한 가지 톤.
-  풍경·소품·바닥 그림자 없음
-· 글자, 번호, 서명 없음
-
-{여기에 그 신수의 특징 한 줄을 붙여넣으세요}
-
-배경을 나중에 지워서 게임 화면에 올릴 것이라, 배경이 단순하고
-생물의 윤곽이 또렷해야 한다.</pre>
-  </div>
+  <h2>우선순위 2 — 게임이 확 달라 보입니다</h2>
 
   <div class="card">
     <div class="cardhead">
       <span class="n">4</span>
       <div class="meta">
-        <span class="t">등급 변주 (성난 · 수호신)</span>
-        <span class="d">100단계를 10종으로 채우는 핵심. 종마다 한 번씩.</span>
+        <span class="t">산 배경 10종</span>
+        <span class="d">신수 뒤에 깔립니다. 분위기는 캐릭터보다 배경이 만듭니다.</span>
+        <span class="cost">10장 · 한 번에 하나씩</span>
       </div>
       <button class="copy" data-t="q4">복사</button>
     </div>
-    <pre id="q4">[0번 공통 화풍 블록 + 해당 신수의 확정 그림을 첨부]
-
-첨부한 {신수 이름}과 같은 개체를, 세 가지 상태로 나란히 그린다.
-세 마리가 서로 다른 동물로 보이면 안 된다. 같은 놈이어야 한다.
-
-1) 평상 — 길을 막고 담담히 서 있다
-2) 성난 — 털이 서고 자세가 낮아진다. 기운이 거칠고 주홍빛이 돈다
-3) 위엄 — 가장 크고 당당하다.
-   뒤에 네모난 붉은 인장(도장) 자국이 희미하게 깔린다
-
-어느 쪽도 다치거나 피 흘리거나 쓰러지지 않는다.
-이 게임에서 깎이는 것은 체력이 아니라 기세다.</pre>
-  </div>
-
-  <div class="card">
-    <div class="cardhead">
-      <span class="n">5</span>
-      <div class="meta">
-        <span class="t">물러나는 컷</span>
-        <span class="d">기세가 꺾였을 때. 처량하면 안 됩니다.</span>
-      </div>
-      <button class="copy" data-t="q5">복사</button>
-    </div>
-    <pre id="q5">[0번 공통 화풍 블록 + 해당 신수의 확정 그림을 첨부]
-
-첨부한 {신수 이름}이 기세가 꺾여 물러나는 모습을 그린다.
-고개를 돌리거나 몸을 틀어 길을 내어주는 자세.
-뒷모습이나 반측면이 좋다.
-
-처량하거나 불쌍해 보이면 안 된다. 위엄은 그대로 남아 있고,
-다만 오늘은 지나가게 해준다는 태도다.
-상처·피·쓰러짐 없음.</pre>
-  </div>
-</section>
-
-<section>
-  <h2>3단계 — 배경과 아이콘</h2>
-
-  <div class="card">
-    <div class="cardhead">
-      <span class="n">6</span>
-      <div class="meta">
-        <span class="t">산 배경 10종</span>
-        <span class="d">가운데를 비워야 합니다. 거기에 신수가 섭니다.</span>
-      </div>
-      <button class="copy" data-t="q6">복사</button>
-    </div>
-    <pre id="q6">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+    <pre id="q4">[0번 확정 화풍 블록을 먼저 붙여넣으세요]
+단, 이번에는 생물이 아니라 풍경이다. "생물 한 마리만" 조항은 빼고 읽어줘.
 
 {산 이름}의 수묵 산수화. 세로로 긴 화면.
 
+· 같은 한지 바탕, 같은 먹 농담
 · 먼 산은 옅게, 가까운 능선은 짙게. 먹의 농담만으로 거리를 만든다
-· 화면 한가운데는 비워 둔다 (여기에 캐릭터가 설 자리다)
-· 위쪽 1/4은 안개에 덮여 어둡다 (여기에 글자가 올라간다)
-· 아래쪽에 시선을 끄는 세부를 두지 않는다 (가려질 영역이다)
-· 사람, 건물, 글자, 낙관 없음
+· 안개를 쓴다. 산허리를 감도는 운무
+· 주홍은 쓰지 않는다 (앞에 설 신수의 주홍 표식이 묻힌다)
+· 금박 한둘은 하늘 여백에
 
-산 목록 — 한 번에 하나씩 넣으세요:
+반드시 지킬 것:
+· 화면 한가운데는 비워 둔다. 여기에 신수가 선다
+· 위쪽 1/4은 안개로 덮어 어둡고 단순하게. 여기에 글자가 올라간다
+· 아래쪽 1/4에 시선을 끄는 세부를 두지 않는다. 가려질 영역이다
+· 사람, 건물, 배, 글자, 낙관 없음
+
+산 이름을 하나씩 바꿔가며 열 번 뽑으세요:
 북한산 · 속리산 · 계룡산 · 설악산 · 소백산 ·
 덕유산 · 지리산 · 한라산 · 금강산 · 백두산(천지)</pre>
   </div>
 
   <div class="card">
     <div class="cardhead">
-      <span class="n">7</span>
+      <span class="n">5</span>
       <div class="meta">
         <span class="t">앱 아이콘용 용 머리</span>
-        <span class="d">48픽셀로 줄여도 보여야 합니다. 세부 묘사는 적이에요.</span>
+        <span class="d">설치율을 가장 크게 움직이는 한 장입니다.</span>
+        <span class="cost">1장 · 여러 번 돌려 고르기</span>
       </div>
-      <button class="copy" data-t="q7">복사</button>
+      <button class="copy" data-t="q5">복사</button>
     </div>
-    <pre id="q7">[여기에 0번 공통 화풍 블록을 먼저 붙여넣으세요]
+    <pre id="q5">[0번 확정 화풍 블록을 먼저 붙여넣으세요]
+단, 이번에는 세로 2:3이 아니라 정사각이다.
 
-정사각 화면. 동양 용의 머리를 정면에서 크게 클로즈업.
+용의 머리를 정면에서 크게 클로즈업한다. 앱 아이콘으로 쓸 그림이다.
 
-· 형태를 아주 단순하게. 48픽셀로 줄여도 용인 줄 알아볼 수 있어야 한다
-· 세부 묘사를 줄이고 실루엣과 덩어리를 강하게
-· 배경은 짙은 먹색 단색, 용은 밝은 한지색으로 또렷하게 대비
-· 눈에만 금박 한 점
-· 화면 가장자리까지 꽉 채운다 (여백 적게)
-· 글자 없음
+· 정사각 화면. 머리가 화면을 꽉 채운다. 여백을 적게
+· 형태를 과감하게 단순화한다.
+  48픽셀로 줄여도 용인 줄 알아볼 수 있어야 한다
+· 세밀한 비늘 묘사보다 실루엣과 뿔·수염의 덩어리감을 살린다
+· 눈에 금박 한 점. 주홍은 이마에 작게 하나
+· 한지 바탕은 그대로 두되 조금 더 어둡게 해서 머리가 도드라지게
 
-이것은 모바일 앱 아이콘이다. 작게 줄였을 때 뭉개지면 실패다.</pre>
+이것은 스토어 목록에서 엄지손톱만 하게 보인다.
+크게 봤을 때 멋있는 것보다, 작게 줄였을 때 알아보이는 것이 중요하다.
+같은 조건으로 네 장을 다른 각도로 그려줘.</pre>
   </div>
 </section>
 
 <section>
-  <h2>4단계 — 클로드 디자인에 끼우기</h2>
+  <h2>우선순위 3 — 여유가 생기면</h2>
 
   <div class="card">
     <div class="cardhead">
-      <span class="n">8</span>
+      <span class="n">6</span>
       <div class="meta">
-        <span class="t">빈 칸에 그림 넣기</span>
-        <span class="d">받으신 zip의 image-slot 자리를 채우는 단계입니다.</span>
+        <span class="t">수호신 변주</span>
+        <span class="d">10단계 보스용. 지금은 필터로 대신하고 있어 급하지 않습니다.</span>
+        <span class="cost">10장</span>
       </div>
-      <button class="copy" data-t="q8">복사</button>
+      <button class="copy" data-t="q6">복사</button>
     </div>
-    <pre id="q8">앞서 만든 "낱말 용사" 디자인 파일들의 빈 그림 칸(image-slot)에
-이제 실제 그림을 넣으려고 해. 이미지 10장을 올릴게.
+    <pre id="q6">[0번 확정 화풍 블록 + 해당 신수의 1차 그림을 참고로 첨부]
 
-해줬으면 하는 것:
-1. 어느 그림이 어느 칸에 들어가야 하는지 정리해줘
-   (신수 아트 시트 / 인게임 화면 / 아이콘 / 스크린샷 / 광고 소재)
-2. 칸마다 크기·여백·정렬을 통일해줘. 한 마리만 크거나 치우치면 안 된다
-3. 배경이 투명하지 않은 그림은 어떻게 처리할지 알려줘
-4. 아이콘처럼 작게 들어가는 자리는 잘리는 부분이 없는지 확인해줘
+첨부한 {신수 이름}과 같은 개체를, 수호신의 모습으로 다시 그린다.
+다른 동물로 보이면 안 된다. 같은 놈이 격이 올라간 것이다.
 
-이 10종은 게임 전체에서 재사용되니, 한 번 정한 배치 규칙을
-나중에도 그대로 쓸 수 있게 규칙으로 적어줘.</pre>
+· 자세가 더 크고 당당해진다. 화면을 더 많이 차지한다
+· 먹이 더 짙어지고 붓질이 거칠어진다
+· 뒤에 네모난 붉은 인장(도장) 자국이 희미하게 깔린다
+· 금박을 조금 더 쓴다 (뿔끝, 발톱, 눈)
+· 주홍 표식은 그대로 한 군데
+
+다치거나 피 흘리거나 쓰러지지 않는다.
+이 게임에서 깎이는 것은 체력이 아니라 기세다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">7</span>
+      <div class="meta">
+        <span class="t">물러나는 컷</span>
+        <span class="d">이겼을 때 연출용. 없어도 게임은 돌아갑니다.</span>
+        <span class="cost">10장</span>
+      </div>
+      <button class="copy" data-t="q7">복사</button>
+    </div>
+    <pre id="q7">[0번 확정 화풍 블록 + 해당 신수의 1차 그림을 참고로 첨부]
+
+첨부한 {신수 이름}이 기세가 꺾여 물러나는 모습.
+
+· 고개를 돌리거나 몸을 틀어 길을 내어주는 자세
+· 뒷모습이나 반측면
+· 처량하거나 불쌍해 보이면 안 된다.
+  위엄은 그대로고, 다만 오늘은 지나가게 해준다는 태도
+· 상처·피·쓰러짐 없음
+· 먹을 조금 옅게 써서 기운이 빠진 느낌만</pre>
   </div>
 </section>
 
 <section>
-  <h2>놓치기 쉬운 것들</h2>
+  <h2>다음 계정에서 할 때 주의</h2>
   <ul class="plain">
-    <li><b>글자는 절대 요구하지 마세요.</b> <span>이미지 AI는 한글을 거의 못 씁니다. 이름표나 번호를 넣으라고 하면 깨진 글자가 그려집니다. 캡션은 나중에 디자인에서 올립니다.</span></li>
-    <li><b>배경은 단색으로 뽑으세요.</b> <span>풍경이 같이 그려지면 배경을 지울 수가 없습니다. "무늬 없는 균일한 한지 바탕"을 꼭 넣으세요.</span></li>
-    <li><b>시트는 화풍만 고르는 용도입니다.</b> <span>한 칸이 256픽셀이라 게임에 못 씁니다. 반드시 3번으로 1마리씩 다시 뽑으세요.</span></li>
-    <li><b>마음에 든 그림은 꼭 첨부해서 이어가세요.</b> <span>말로만 "같은 화풍으로"라고 하면 안 됩니다. 이미지를 함께 넣어야 붓질이 이어집니다.</span></li>
-    <li><b>상업적 이용 가능 여부를 확인하세요.</b> <span>서비스마다 약관이 다르고 요금제에 따라서도 달라집니다. 스토어에 올릴 게임이라 이건 꼭 확인하셔야 합니다.</span></li>
-    <li><b>10종을 다 뽑고 나서 다시 보세요.</b> <span>한 마리씩 보면 다 괜찮은데, 열 마리를 늘어놓으면 두세 마리가 혼자 논다는 걸 알게 됩니다. 그것만 다시 뽑으면 됩니다.</span></li>
+    <li><b>0번 화풍 블록을 매번 붙이세요.</b> <span>새 계정에는 이전 대화 이력이 없습니다. 이 블록이 1차 8장의 화풍을 글로 옮겨둔 것이라, 이게 없으면 전혀 다른 그림이 나옵니다.</span></li>
+    <li><b>1차 그림을 참고 이미지로 첨부하세요.</b> <span>글만으로는 한계가 있습니다. 용·주작 그림을 같이 올리면 종이 질감과 붓질까지 따라옵니다. 이게 가장 확실한 방법입니다.</span></li>
+    <li><b>이무기와 봉황은 "다르게"를 강조하세요.</b> <span>이무기는 용과, 봉황은 주작과 닮게 나오기 쉽습니다. 프롬프트에 "무엇이 달라야 하는지"를 적어둔 이유입니다.</span></li>
+    <li><b>삼족오는 여러 번 돌릴 각오를 하세요.</b> <span>생성 AI는 다리 개수를 자주 틀립니다. 한 번에 안 나오면 "다리 세 개" 조건만 더 강하게 반복해서 다시 넣으세요.</span></li>
+    <li><b>배경은 주홍을 빼세요.</b> <span>산 배경에 붉은 점이 있으면 앞에 설 신수의 주홍 표식이 묻힙니다. 강조는 화면에 하나여야 합니다.</span></li>
+    <li><b>상업적 이용 약관을 확인하세요.</b> <span>계정과 요금제에 따라 다릅니다. 스토어에 올릴 게임이라 나중에 문제되면 전부 다시 만들어야 합니다.</span></li>
   </ul>
-  <div class="tip">
-    <b>용부터 뽑으세요.</b> 가장 어렵고, 아이콘에도 쓰이고, 최종 보스입니다. 용이 잘 나오는 화풍이면 나머지 아홉은 따라옵니다. 용이 안 나오는 화풍은 다른 걸 아무리 잘 뽑아도 끝이 허전해집니다.
+  <div class="warn">
+    <span><b>⚠️ 1차 8장을 꼭 원본으로 보관하세요</b></span>
+    <p>게임에 넣은 건 가로 460픽셀로 줄인 것입니다. <b>스토어 스크린샷과 아이콘에는 원본 해상도가 필요합니다.</b> 생성 서비스에서 지워지기 전에 받아서 따로 보관해 두세요.</p>
   </div>
 </section>
 
 <footer>
-  신수 이름·산·특징은 <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 프로토타입</a>과 같은 설정입니다. 지금 게임에 들어 있는 그림은 코드로 그린 자리표시라, 여기서 뽑은 그림으로 교체하면 됩니다.
+  신수 이름·산·단계 설정은 <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 프로토타입</a>과 같습니다. 1차 8장은 이미 게임에 들어가 있고, 이무기와 봉황만 아직 코드로 그린 자리표시입니다.
 </footer>
 
 </div>
@@ -395,8 +416,7 @@ neon, gradient, cluttered background</pre>
       var pre = document.getElementById(btn.dataset.t);
       if (!pre) return;
       var done = function () {
-        btn.textContent = "복사됨";
-        btn.classList.add("done");
+        btn.textContent = "복사됨"; btn.classList.add("done");
         setTimeout(function () { btn.textContent = "복사"; btn.classList.remove("done"); }, 1600);
       };
       try {
@@ -404,27 +424,22 @@ neon, gradient, cluttered background</pre>
       } catch (e) { select(pre, btn); }
     });
   });
-
   // 클립보드가 막힌 뷰어에서는 대신 선택해 준다
   function select(pre, btn) {
     try {
-      var r = document.createRange();
-      r.selectNodeContents(pre);
-      var s = window.getSelection();
-      s.removeAllRanges(); s.addRange(r);
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
       btn.textContent = "직접 복사";
       setTimeout(function () { btn.textContent = "복사"; }, 2200);
     } catch (e) {}
   }
-
   document.querySelectorAll(".card").forEach(function (card) {
     var pre = card.querySelector("pre");
     if (!pre) return;
     requestAnimationFrame(function () {
       if (pre.scrollHeight <= pre.clientHeight + 4) return;
       var b = document.createElement("button");
-      b.className = "more";
-      b.textContent = "전체 보기 ▾";
+      b.className = "more"; b.textContent = "전체 보기 ▾";
       b.addEventListener("click", function () {
         card.classList.toggle("open");
         b.textContent = card.classList.contains("open") ? "접기 ▴" : "전체 보기 ▾";
