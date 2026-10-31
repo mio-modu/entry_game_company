@@ -98,15 +98,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .stageline .timer.low { color: var(--danger); }
 .bossrow { display: flex; align-items: center; gap: 13px; }
 .sigil {
-  width: 68px; height: 68px; flex: none; border-radius: 50%;
-  display: grid; place-items: center;
-  font-family: var(--font-display); font-size: 25px; font-weight: 700;
-  color: #0E1016; background: var(--accent);
-  box-shadow: 0 0 0 1px #0008 inset, 0 6px 20px -8px var(--accent);
+  width: 96px; height: 96px; flex: none; display: block;
   transition: transform .09s ease;
 }
-.sigil.hit { transform: translateX(-6px) scale(.95); }
-.sigil.boss { background: var(--gold); box-shadow: 0 0 0 1px #0008 inset, 0 6px 24px -6px var(--gold); }
+.sigil.hit { transform: translateX(-7px) scale(.94); }
 .stageline b { color: var(--fg); font-size: 13px; font-weight: 600; }
 .bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .bossname { font-family: var(--font-display); font-size: 17px; }
@@ -273,7 +268,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <span class="timer" id="timer">45</span>
     </div>
     <div class="bossrow">
-      <div class="sigil" id="sigil">불</div>
+      <canvas class="sigil" id="sigil" width="288" height="288" aria-label="신수"></canvas>
       <div class="bossinfo">
         <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
@@ -318,6 +313,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 </div>
 
+<script src="sinsu.js"></script>
 <script>
 (function () {
   "use strict";
@@ -606,6 +602,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var boss = sub === 9;
     return {
       n: boss ? M.n + " 수호신" : TITLES[sub] + M.n,
+      base: M.n,
+      grade: boss ? "guard" : sub < 3 ? "young" : sub < 6 ? "base" : "angry",
       m: M.m, boss: boss, no: k + 1, loop: loop,
       hp: Math.round(150 * Math.pow(1.07, k) * (boss ? 2.4 : 1) * Math.pow(4, loop)),
       t: (boss ? 55 : 45) + S.time * 2,
@@ -618,8 +616,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     run = { boss: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, score: 0, words: [] };
     picked = [];
     fillBoard();
-    el.sigil.textContent = b.n[b.n.indexOf(" ") === 0 ? 1 : 0];
-    el.sigil.classList.toggle("boss", b.boss);
+    if (window.Sinsu) window.Sinsu.draw(el.sigil, b.base, b.grade);
     el.bossName.textContent = b.n;
     el.bossHint.textContent = b.hint;
     el.mtName.textContent = b.m;
