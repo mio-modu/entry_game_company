@@ -883,7 +883,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   // 과금 접점 2 — 힌트
   el.btnHint.addEventListener("click", function () {
     if (!run || S.gem < 5) return;
-    var rest = remaining();
+    // 남은 것 중 가장 긴 낱말을 알려준다. 플레이어가 가장 찾기 어려워하는
+    // 것이고 데미지도 가장 크다. 옥 5개가 아깝지 않아야 또 쓴다.
+    var rest = remaining().sort(function (a, b) { return b.length - a.length; });
     if (!rest.length) return;
     var w = rest[0];
     S.gem -= 5; save();
