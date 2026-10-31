@@ -369,7 +369,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   <div class="tiles" id="tiles"></div>
 
   <div class="acts">
-    <button class="btn" id="btnClear">지우기</button>
+    <button class="btn" id="btnClear">지우기<span class="sub">한 글자 · 꾹 누르면 전체</span></button>
     <button class="btn" id="btnHint">힌트<span class="sub">옥 5</span></button>
     <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><span class="sub" id="goSub">낱말 없음</span></button>
   </div>
@@ -1202,7 +1202,25 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     startStage();
   });
 
-  el.btnClear.addEventListener("click", function () { picked = []; drawAll(); });
+  // 한 글자씩 지운다. 낱말이 최대 네 글자라 몇 번 누르면 전체가 비고,
+  // 급하면 꾹 눌러 한 번에 비운다. 슬롯의 글자를 직접 눌러 빼도 된다.
+  var holdT = null, wiped = false;
+  function holdStart() {
+    wiped = false;
+    holdT = setTimeout(function () {
+      holdT = null;
+      if (picked.length) { wiped = true; picked = []; drawAll(); }
+    }, 450);
+  }
+  function holdEnd() { if (holdT) { clearTimeout(holdT); holdT = null; } }
+  el.btnClear.addEventListener("pointerdown", holdStart);
+  el.btnClear.addEventListener("pointerup", holdEnd);
+  el.btnClear.addEventListener("pointerleave", holdEnd);
+  el.btnClear.addEventListener("pointercancel", holdEnd);
+  el.btnClear.addEventListener("click", function () {
+    if (wiped) { wiped = false; return; }
+    if (picked.length) { picked.pop(); drawAll(); }
+  });
   el.btnGo.addEventListener("click", function () {
     var w = currentWord();
     if (accepted(w)) attack();
