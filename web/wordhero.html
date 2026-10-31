@@ -183,6 +183,19 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   padding: 3px 11px; font-size: 11.5px; font-family: var(--font-mono);
 }
 .mini:hover { color: var(--fg); border-color: var(--fg-faint); }
+.mini-row { display: flex; gap: 6px; flex: none; }
+.found { display: flex; flex-wrap: wrap; gap: 5px; }
+.found span {
+  font-family: var(--font-display); font-size: 13px;
+  background: #15241F; border: 1px solid #2A5048; color: var(--jade);
+  border-radius: 20px; padding: 1px 10px;
+}
+.missed { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.missed span {
+  font-family: var(--font-display); font-size: 13px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--fg-dim);
+  border-radius: 20px; padding: 1px 10px;
+}
 .toast {
   position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%); z-index: 40; max-width: 92vw;
@@ -301,9 +314,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   </div>
 
   <div class="boardinfo">
-    <span id="poolCount">이 판의 낱말 —</span>
-    <button class="mini" id="btnShuffle">섞기</button>
+    <span id="poolCount">글자판 대기</span>
+    <span class="mini-row">
+      <button class="mini" id="btnShuffle">섞기</button>
+      <button class="mini" id="btnNew">새 글자 −5초</button>
+    </span>
   </div>
+  <div class="found" id="found"></div>
 
   <div class="panel">
     <h3>수련 <span class="tag">강화</span></h3>
@@ -379,12 +396,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     { m: "소백산", n: "백호" },
     { m: "덕유산", n: "기린" },
     { m: "지리산", n: "주작" },
-    { m: "한라산", n: "이무기" },
+    { m: "한라산", n: "백록" },
     { m: "금강산", n: "봉황" },
     { m: "백두산", n: "천지의 용" }
   ];
   var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
-  // 이미지가 들어온 신수들. 이무기·봉황은 아직 안 나와서 코드 그림으로 버틴다.
+  // 이미지가 들어온 신수들. 백록·봉황은 아직 안 나와서 코드 그림으로 버틴다.
   var ART = {
     "불가사리": "bulgasari", "삼족오": "samjogo", "해태": "haetae", "현무": "hyeonmu",
     "백호": "baekho", "기린": "kirin", "주작": "jujak", "천지의 용": "yong"
@@ -429,28 +446,41 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   var el = {};
   ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","portrait","pimg","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
-   "floaters","poolCount","btnShuffle","askedLine"
+   "floaters","poolCount","btnShuffle","btnNew","found","askedLine"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // ── 판 ──────────────────────────────────────────────────────────────
   var TILE_N = 12;
-  var board = [];      // {ch, used}
+  var board = [];      // {ch}
   var picked = [];     // board 인덱스
+  var answers = [];    // 이 글자판으로 만들 수 있는 사전 낱말 전부
+  var found = [];      // 그중 플레이어가 찾은 것
   var run = null;      // 진행 중인 전투
 
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-  function canFormAny(chars) {
-    for (var i = 0; i < DICT.length; i++) {
-      var w = DICT[i], pool = chars.slice(), ok = true;
-      for (var j = 0; j < w.length; j++) {
-        var k = pool.indexOf(w[j]);
-        if (k < 0) { ok = false; break; }
-        pool.splice(k, 1);
-      }
-      if (ok) return w;
+  function formable(w, chars) {
+    var pool = chars.slice();
+    for (var i = 0; i < w.length; i++) {
+      var k = pool.indexOf(w[i]);
+      if (k < 0) return false;
+      pool.splice(k, 1);
     }
+    return true;
+  }
+
+  function canFormAny(chars) {
+    for (var i = 0; i < DICT.length; i++) if (formable(DICT[i], chars)) return DICT[i];
     return null;
+  }
+
+  // 글자판이 바뀔 때마다 정답 집합을 미리 구해 둔다. 플레이어에게
+  // "몇 글자짜리가 몇 개 남았는지"를 보여주기 위한 것 — 이게 있어야
+  // 틀렸을 때 '게임이 이상하다'가 아니라 '내가 못 찾았다'가 된다.
+  function computeAnswers() {
+    var chars = board.map(function (t) { return t.ch; });
+    answers = DICT.filter(function (w) { return formable(w, chars); });
+    found = [];
   }
 
   // 판에는 반드시 풀 수 있는 낱말이 하나 이상 남아 있게 한다
@@ -466,20 +496,30 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     spots.forEach(function (i, k) { board[i] = { ch: seed[k] }; });
   }
 
+  // 정답이 너무 적은 판은 답답하다. 몇 번 굴려서 가장 풍성한 판을 고른다.
   function fillBoard() {
-    board = [];
-    var seeds = [pick(DICT), pick(DICT)];
-    seeds.forEach(function (w) {
-      for (var i = 0; i < w.length && board.length < TILE_N; i++) board.push({ ch: w[i] });
-    });
-    while (board.length < TILE_N) board.push({ ch: pick(SYLS) });
+    var best = null, bestN = -1;
+    for (var t = 0; t < 12; t++) {
+      var b = [];
+      [pick(DICT), pick(DICT)].forEach(function (w) {
+        for (var i = 0; i < w.length && b.length < TILE_N; i++) b.push({ ch: w[i] });
+      });
+      while (b.length < TILE_N) b.push({ ch: pick(SYLS) });
+      var chars = b.map(function (x) { return x.ch; });
+      var n = 0;
+      for (i = 0; i < DICT.length; i++) if (formable(DICT[i], chars)) n++;
+      if (n > bestN) { bestN = n; best = b; }
+      if (n >= 5) break;
+    }
+    board = best;
     board.sort(function () { return Math.random() - 0.5; });
     ensureSolvable();
+    computeAnswers();
+    picked = [];
   }
 
-  function refill(idxs) {
-    idxs.forEach(function (i) { board[i] = { ch: pick(SYLS) }; });
-    ensureSolvable();
+  function remaining() {
+    return answers.filter(function (w) { return found.indexOf(w) < 0; });
   }
 
   // ── 그리기 ──────────────────────────────────────────────────────────
@@ -516,33 +556,18 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
         el.slot.appendChild(s);
       });
     }
-    var valid = w.length >= 2 && DSET[w];
+    var dup = DSET[w] && found.indexOf(w) >= 0;
+    var valid = w.length >= 2 && DSET[w] && !dup;
     // 사전에 없다고 막아 세우기만 하면 그 자리에서 별 하나가 떨어진다.
     // 같은 버튼을 제보 창구로 바꿔, 불만이 그대로 어휘 데이터가 되게 한다.
-    var askable = !valid && w.length >= 2;
+    var askable = w.length >= 2 && !DSET[w];
     el.slot.classList.toggle("ok", valid);
     el.btnGo.classList.toggle("ask", askable);
     el.btnGo.disabled = !valid && !askable;
     el.goLabel.textContent = askable ? "등록 요청" : "공격";
     el.goSub.textContent = valid ? "+" + damageOf(w)
+      : dup ? "이미 찾은 낱말"
       : (askable ? "사전에 없음 · 눌러서 제보" : "낱말 없음");
-  }
-
-  // 판에 지금 몇 개의 낱말이 남아 있는지 — 플레이어가 막혔을 때
-  // "내 어휘 문제인가, 게임 문제인가"를 스스로 판단하게 해 준다.
-  function poolCount() {
-    var chars = board.map(function (t) { return t.ch; });
-    var n = 0;
-    for (var i = 0; i < DICT.length; i++) {
-      var w = DICT[i], pool = chars.slice(), ok = true;
-      for (var j = 0; j < w.length; j++) {
-        var k = pool.indexOf(w[j]);
-        if (k < 0) { ok = false; break; }
-        pool.splice(k, 1);
-      }
-      if (ok) n++;
-    }
-    return n;
   }
 
   var toastT = null;
@@ -596,9 +621,22 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   function drawAll() {
     drawTiles(); drawSlot(); drawStats();
-    el.poolCount.innerHTML = run
-      ? "이 판에 만들 수 있는 낱말 <b>" + poolCount() + "개</b>"
-      : "이 판의 낱말 —";
+    if (!run) el.poolCount.innerHTML = "글자판 대기";
+    else {
+      var rest = remaining();
+      if (!rest.length) el.poolCount.innerHTML = "<b>모두 찾았습니다</b>";
+      else {
+        var by = {};
+        rest.forEach(function (w) { by[w.length] = (by[w.length] || 0) + 1; });
+        el.poolCount.innerHTML = "남은 낱말 " + Object.keys(by).sort().map(function (k) {
+          return k + "글자 <b>" + by[k] + "</b>";
+        }).join(" · ");
+      }
+    }
+    el.found.textContent = "";
+    found.forEach(function (w) {
+      var s = document.createElement("span"); s.textContent = w; el.found.appendChild(s);
+    });
     var n = (S.asked || []).length;
     el.askedLine.textContent = n
       ? "내가 등록 요청한 낱말 " + n + "개 — " + S.asked.slice(-6).join(", ")
@@ -687,7 +725,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   function attack() {
     var w = currentWord();
-    if (!run || !DSET[w]) return;
+    if (!run || !DSET[w] || found.indexOf(w) >= 0) return;
+    found.push(w);
     var dmg = damageOf(w);
     run.hp -= dmg;
     run.combo++;
@@ -696,8 +735,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     floatDmg(dmg);
     el.portrait.classList.add("hit");
     setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
-    refill(picked.slice());
     picked = [];
+    // 글자판을 다 털면 보너스를 주고 새 글자를 깐다
+    if (!remaining().length) {
+      var bonus = Math.round(dmg * 0.8);
+      run.hp -= bonus; run.score += bonus;
+      floatDmg(bonus);
+      toast("글자판을 모두 찾았습니다 · 보너스 +" + bonus);
+      fillBoard();
+    }
     tick();
     drawAll();
     if (run.hp <= 0) finish(true);
@@ -768,6 +814,22 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       card.appendChild(ws);
     }
 
+    // 못 찾은 낱말을 공개한다. 정답을 숨기면 "이게 왜 안 돼"가 남지만,
+    // 보여주면 "아 그게 있었구나"가 되고 어휘를 하나 배워 간다.
+    var miss = remaining().slice(0, 10);
+    if (miss.length) {
+      var mt = document.createElement("p");
+      mt.className = "lead";
+      mt.textContent = "이 글자판에 있었던 낱말";
+      card.appendChild(mt);
+      var ms = document.createElement("div");
+      ms.className = "missed";
+      miss.forEach(function (w) {
+        var s = document.createElement("span"); s.textContent = w; ms.appendChild(s);
+      });
+      card.appendChild(ms);
+    }
+
     var row = document.createElement("div");
     row.className = "row";
 
@@ -821,8 +883,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   // 과금 접점 2 — 힌트
   el.btnHint.addEventListener("click", function () {
     if (!run || S.gem < 5) return;
-    var w = canFormAny(board.map(function (t) { return t.ch; }));
-    if (!w) return;
+    var rest = remaining();
+    if (!rest.length) return;
+    var w = rest[0];
     S.gem -= 5; save();
     picked = [];
     for (var i = 0; i < w.length; i++) {
@@ -839,12 +902,19 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (DSET[w]) attack();
     else if (w.length >= 2) requestWord(w);
   });
+  // 섞기는 순서만 바꾼다 — 정답 집합은 그대로다
   el.btnShuffle.addEventListener("click", function () {
     if (!run) return;
     picked = [];
     board.sort(function () { return Math.random() - 0.5; });
-    ensureSolvable();
     drawAll();
+  });
+  // 정말 막혔을 때만. 공짜면 계속 눌러 넘기게 되니 시간을 받는다
+  el.btnNew.addEventListener("click", function () {
+    if (!run) return;
+    run.left = Math.max(1, run.left - 5);
+    fillBoard();
+    tick(); drawAll();
   });
 
   // 키보드로도 — PC에서 심사·시연할 때 필요하다

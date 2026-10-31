@@ -216,7 +216,8 @@
     { k: "기린",     m: "덕유산", lv: 6,  t: "beast",   seed: 61, horns: 2, tail: "long",
       p: { bw: .82, bh: .80, leg: 1.34, neck: 1.62, head: .74, limb: .72, low: -24 } },
     { k: "주작",     m: "지리산", lv: 7,  t: "bird",    seed: 73, tailFeathers: 5, fancy: true, crest: true },
-    { k: "이무기",   m: "한라산", lv: 8,  t: "serpent", seed: 83, horns: 0 },
+    { k: "백록",     m: "한라산", lv: 8,  t: "beast",   seed: 83, horns: 2, tail: "stub",
+      p: { bw: .88, bh: .84, leg: 1.22, neck: 1.40, head: .78, limb: .78, low: -16 } },
     { k: "봉황",     m: "금강산", lv: 9,  t: "bird",    seed: 97, tailFeathers: 6, fancy: true, crest: true },
     { k: "천지의 용", m: "백두산", lv: 10, t: "serpent", seed: 101, horns: 1, whiskers: true, legs: true }
   ];
