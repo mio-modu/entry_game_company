@@ -485,7 +485,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       while (b.length < TILE_N) b.push({ ch: pick(SYLS) });
       var chars = b.map(function (x) { return x.ch; });
       var n = 0;
-      for (i = 0; i < DICT.length; i++) if (formable(DICT[i], chars)) n++;
+      for (var i = 0; i < DICT.length; i++) if (formable(DICT[i], chars)) n++;
       if (n > bestN) { bestN = n; best = b; }
       if (n >= 5) break;
     }
