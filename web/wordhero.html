@@ -125,6 +125,31 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .portrait.g-angry { filter: contrast(1.2) saturate(1.5) brightness(.96); }
 .portrait.g-guard { box-shadow: 0 0 0 2px var(--gold), 0 8px 28px -8px rgba(201,162,39,.75); }
 .stageline b { color: var(--fg); font-size: 13px; font-weight: 600; }
+
+.modes { display: flex; gap: 6px; }
+.modes .mode {
+  flex: 1; font-family: var(--font-body); font-size: 13.5px; font-weight: 600;
+  background: var(--surface); color: var(--fg-dim);
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px; cursor: pointer;
+}
+.modes .mode.on { background: #2E2412; color: var(--gold); border-color: #4A3E18; }
+.modes .mode:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.dailybar { display: flex; flex-direction: column; gap: 9px; }
+.dailybar .dtop {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim); letter-spacing: .05em;
+}
+.dprog { height: 13px; background: #0C0E14; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+.dprog i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #2F7A6B, var(--jade)); transition: width .3s cubic-bezier(.2,.8,.3,1); }
+.dnums { display: flex; justify-content: space-between; font-size: 13px; color: var(--fg-dim); }
+.dnums b { font-family: var(--font-mono); color: var(--fg); font-size: 16px; }
+
+.share {
+  background: var(--code); border: 1px solid var(--line); border-radius: 10px;
+  padding: 13px; font-family: var(--font-mono); font-size: 13px; line-height: 1.75;
+  white-space: pre-wrap; text-align: left; color: #D5D8E6;
+}
 .bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .bossname { font-family: var(--font-display); font-size: 17px; }
 .bossname small { font-family: var(--font-body); font-size: 11.5px; color: var(--fg-faint); margin-left: 6px; }
@@ -300,7 +325,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     </div>
   </div>
 
+  <div class="modes">
+    <button class="mode on" data-m="quest">모험</button>
+    <button class="mode" data-m="daily">오늘의 낱말</button>
+  </div>
+
   <div class="arena">
+   <div id="questHead">
     <div class="stageline">
       <span><b id="stageNo">1</b>단계 / 100 · <span id="mtName">북한산</span> <span id="cycle"></span></span>
       <span class="timer" id="timer">45</span>
@@ -316,6 +347,20 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
         <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span></div>
       </div>
     </div>
+   </div>
+
+    <div class="dailybar" id="dailyHead" hidden>
+      <div class="dtop">
+        <span id="dDate">오늘의 낱말</span>
+        <span class="timer" id="dTimer">90</span>
+      </div>
+      <div class="dprog"><i id="dBar"></i></div>
+      <div class="dnums">
+        <span>찾은 낱말 <b id="dFound">0</b> / <span id="dTotal">0</span></span>
+        <span>점수 <b id="dScore">0</b></span>
+      </div>
+    </div>
+
     <div class="floaters" id="floaters"></div>
   </div>
 
@@ -338,7 +383,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   </div>
   <div class="found" id="found"></div>
 
-  <div class="panel">
+  <div class="panel" id="trainPanel">
     <h3>수련 <span class="tag">강화</span></h3>
     <div class="ups" id="ups"></div>
   </div>
@@ -475,7 +520,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   var el = {};
   ["lv","gold","gem","mtName","stageNo","cycle","timer","sigil","portrait","pimg","bossName","bossHint","hp","hpNow","hpMax",
    "slot","tiles","btnClear","btnHint","btnGo","goSub","goLabel","ups","rToday","rWeek","rStage",
-   "floaters","poolCount","btnShuffle","btnNew","found","askedLine","resume","btnFight","fightLabel"
+   "floaters","poolCount","btnShuffle","btnNew","found","askedLine","resume","btnFight","fightLabel",
+   "questHead","dailyHead","dDate","dTimer","dBar","dFound","dTotal","dScore","trainPanel"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // ── 판 ──────────────────────────────────────────────────────────────
@@ -513,27 +559,33 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
 
   // 판에는 반드시 풀 수 있는 낱말이 하나 이상 남아 있게 한다
-  function ensureSolvable() {
+  function ensureSolvable(rnd) {
+    rnd = rnd || Math.random;
     var chars = board.map(function (t) { return t.ch; });
     if (canFormAny(chars)) return;
-    var seed = pick(DICT.filter(function (w) { return w.length <= 3; }));
+    var pool = DICT.filter(function (w) { return w.length <= 3; });
+    var seed = pool[Math.floor(rnd() * pool.length)];
     var spots = [];
     while (spots.length < seed.length) {
-      var i = Math.floor(Math.random() * TILE_N);
+      var i = Math.floor(rnd() * TILE_N);
       if (spots.indexOf(i) < 0) spots.push(i);
     }
     spots.forEach(function (i, k) { board[i] = { ch: seed[k] }; });
   }
 
   // 정답이 너무 적은 판은 답답하다. 몇 번 굴려서 가장 풍성한 판을 고른다.
-  function fillBoard() {
+  // rnd를 받으면 같은 글자판이 재현된다. 오늘의 낱말은 날짜를 씨앗으로
+  // 넘겨, 모두가 같은 문제를 받는다. 그래야 점수를 비교할 수 있다.
+  function fillBoard(rnd) {
+    rnd = rnd || Math.random;
+    var pk = function (a) { return a[Math.floor(rnd() * a.length)]; };
     var best = null, bestN = -1;
     for (var t = 0; t < 12; t++) {
       var b = [];
-      [pick(DICT), pick(DICT)].forEach(function (w) {
+      [pk(DICT), pk(DICT)].forEach(function (w) {
         for (var i = 0; i < w.length && b.length < TILE_N; i++) b.push({ ch: w[i] });
       });
-      while (b.length < TILE_N) b.push({ ch: pick(SYLS) });
+      while (b.length < TILE_N) b.push({ ch: pk(SYLS) });
       var chars = b.map(function (x) { return x.ch; });
       var n = 0;
       for (var i = 0; i < DICT.length; i++) if (formable(DICT[i], chars)) n++;
@@ -541,8 +593,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       if (n >= 5) break;
     }
     board = best;
-    board.sort(function () { return Math.random() - 0.5; });
-    ensureSolvable();
+    board.sort(function () { return rnd() - 0.5; });
+    ensureSolvable(rnd);
     computeAnswers();
     picked = [];
   }
@@ -558,7 +610,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       var b = document.createElement("button");
       b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "");
       b.textContent = t.ch;
-      b.disabled = !run || picked.indexOf(i) >= 0;
+      b.disabled = !playing() || picked.indexOf(i) >= 0;
       b.addEventListener("click", function () { tap(i); });
       el.tiles.appendChild(b);
     });
@@ -574,7 +626,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!picked.length) {
       var ph = document.createElement("span");
       ph.className = "ph";
-      ph.textContent = run ? "글자를 눌러 낱말을 만드세요" : "산을 오르세요";
+      ph.textContent = playing() ? "글자를 눌러 낱말을 만드세요"
+        : (mode === "daily" ? "오늘은 끝났습니다" : "산을 오르세요");
       el.slot.appendChild(ph);
     } else {
       picked.forEach(function (i, k) {
@@ -598,6 +651,170 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.goSub.textContent = valid ? "+" + damageOf(w)
       : dup ? "이미 찾은 낱말"
       : (askable ? "사전에 없음 · 눌러서 제보" : "낱말 없음");
+  }
+
+  // ── 오늘의 낱말 ─────────────────────────────────────────────
+  // 모두가 같은 글자판을 받아야 점수 비교가 의미를 가진다. 그래서
+  // 날짜를 씨앗으로 쓴다. 하루 한 번, 90초, 끝나면 공유용 요약이 나온다.
+  var mode = "quest";
+  var daily = null;
+  var DAILY_SEC = 90;
+
+  function srng(seed) {
+    var x = seed >>> 0;
+    return function () { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; };
+  }
+  function dailySeed() {
+    var d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  }
+  function dailyKey() { return "daily-" + todayKey(); }
+
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll(".modes .mode").forEach(function (b) {
+      b.classList.toggle("on", b.dataset.m === m);
+    });
+    el.questHead.hidden = m !== "quest";
+    el.dailyHead.hidden = m !== "daily";
+    el.trainPanel.hidden = m !== "quest";
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    var ov = document.querySelector(".ov"); if (ov) ov.remove();
+    if (m === "daily") startDaily(); else startStage();
+  }
+
+  function startDaily() {
+    run = null;
+    el.resume.hidden = true;
+    fillBoard(srng(dailySeed()));
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(dailyKey()) || "null"); } catch (e) {}
+    daily = { left: DAILY_SEC, score: 0, over: false };
+    var d = new Date();
+    el.dDate.textContent = (d.getMonth() + 1) + "월 " + d.getDate() + "일의 낱말";
+    if (saved) {
+      found = (saved.found || []).filter(function (w) { return answers.indexOf(w) >= 0; });
+      daily.score = saved.score || 0;
+      daily.over = true;
+      daily.left = 0;
+      drawAll(); tickDaily();
+      showDaily(true);
+      return;
+    }
+    drawAll(); tickDaily();
+    timerId = setInterval(onSecond, 1000);
+  }
+
+  function tickDaily() {
+    el.dTimer.textContent = daily.left;
+    el.dTimer.classList.toggle("low", daily.left <= 15);
+    var fc = foundCount();
+    el.dFound.textContent = fc;
+    el.dTotal.textContent = answers.length;
+    el.dScore.textContent = daily.score.toLocaleString();
+    el.dBar.style.width = (answers.length ? (fc / answers.length) * 100 : 0) + "%";
+  }
+
+  function endDaily() {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    daily.over = true;
+    try {
+      localStorage.setItem(dailyKey(), JSON.stringify({ found: found, score: daily.score }));
+    } catch (e) {}
+    var k = todayKey();
+    S.best[k] = Math.max(S.best[k] || 0, daily.score);
+    save(); drawAll(); tickDaily();
+    showDaily(false);
+  }
+
+  // 공유 글: 어떤 낱말이었는지는 드러내지 않고 성적만 보여준다.
+  // 긴 낱말부터 늘어놓아 '어려운 걸 찾았는지'가 보이게 한다.
+  function shareText() {
+    var sorted = answers.slice().sort(function (a, b) { return b.length - a.length; });
+    var blocks = sorted.map(function (w) {
+      return found.indexOf(w) < 0 ? "\u2b1c" : (w.length >= 3 ? "\ud83d\udfe9" : "\ud83d\udfe8");
+    }).join("");
+    var d = new Date();
+    return "낱말 용사 · 오늘의 낱말\n"
+      + d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate() + "\n\n"
+      + blocks + "  " + foundCount() + "/" + answers.length + "\n"
+      + daily.score.toLocaleString() + "점\n\n"
+      + location.href.split("#")[0] + "#daily";
+  }
+
+  function showDaily(already) {
+    var ov = document.createElement("div");
+    ov.className = "ov";
+    var card = document.createElement("div");
+    card.className = "card";
+
+    var h = document.createElement("h2");
+    var all = foundCount() >= answers.length;
+    h.className = all ? "win" : "";
+    h.textContent = already ? "오늘은 이미 하셨습니다" : all ? "모두 찾았습니다" : "오늘의 낱말 끝";
+    card.appendChild(h);
+
+    var big = document.createElement("div");
+    big.className = "big";
+    big.textContent = daily.score.toLocaleString();
+    card.appendChild(big);
+
+    var lead = document.createElement("p");
+    lead.className = "lead";
+    lead.textContent = "낱말 " + foundCount() + " / " + answers.length + "개";
+    card.appendChild(lead);
+
+    var sh = document.createElement("div");
+    sh.className = "share";
+    sh.textContent = shareText();
+    card.appendChild(sh);
+
+    var row = document.createElement("div");
+    row.className = "row";
+    var cp = document.createElement("button");
+    cp.className = "btn go";
+    cp.textContent = "결과 복사하기";
+    cp.addEventListener("click", function () {
+      var t = shareText();
+      var done = function () { cp.textContent = "복사됨 · 카톡에 붙여넣으세요"; };
+      try {
+        navigator.clipboard.writeText(t).then(done, function () {
+          var r = document.createRange(); r.selectNodeContents(sh);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+          cp.textContent = "직접 복사해 주세요";
+        });
+      } catch (e) { cp.textContent = "직접 복사해 주세요"; }
+    });
+    row.appendChild(cp);
+    card.appendChild(row);
+
+    var miss = answers.filter(function (w) { return found.indexOf(w) < 0; }).slice(0, 12);
+    if (miss.length) {
+      var mt = document.createElement("p"); mt.className = "lead"; mt.textContent = "못 찾은 낱말";
+      card.appendChild(mt);
+      var ms = document.createElement("div"); ms.className = "missed";
+      miss.forEach(function (w) { var x = document.createElement("span"); x.textContent = w; ms.appendChild(x); });
+      card.appendChild(ms);
+    }
+
+    var back = document.createElement("button");
+    back.className = "btn";
+    back.textContent = "모험으로 돌아가기";
+    back.addEventListener("click", function () { ov.remove(); setMode("quest"); });
+    card.appendChild(back);
+
+    var reset = document.createElement("button");
+    reset.className = "btn";
+    reset.style.fontSize = "12px";
+    reset.textContent = "오늘 기록 지우기 (시연용)";
+    reset.addEventListener("click", function () {
+      try { localStorage.removeItem(dailyKey()); } catch (e) {}
+      ov.remove(); startDaily();
+    });
+    card.appendChild(reset);
+
+    ov.appendChild(card);
+    document.body.appendChild(ov);
   }
 
   var toastT = null;
@@ -667,7 +884,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   function drawAll() {
     drawTiles(); drawSlot(); drawStats();
-    if (!run) el.poolCount.innerHTML = "글자판 대기";
+    if (!playing()) el.poolCount.innerHTML = "글자판 대기";
     else {
       var rest = remaining();
       if (!rest.length) el.poolCount.innerHTML = "<b>모두 찾았습니다</b>";
@@ -683,6 +900,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     found.forEach(function (w) {
       var s = document.createElement("span"); s.textContent = w; el.found.appendChild(s);
     });
+    if (mode === "daily" && daily) tickDaily();
     var n = (S.asked || []).length;
     el.askedLine.textContent = n
       ? "내가 등록 요청한 낱말 " + n + "개 — " + S.asked.slice(-6).join(", ")
@@ -739,6 +957,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   var timerId = null;
   function onSecond() {
+    if (mode === "daily") {
+      if (!daily || daily.over) return;
+      daily.left--;
+      if (daily.left <= 0) { daily.left = 0; tickDaily(); endDaily(); return; }
+      tickDaily();
+      return;
+    }
     if (!run) return;
     run.left--;
     if (run.left <= 0) { run.left = 0; tick(); finish(false); return; }
@@ -754,7 +979,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   }
 
   function tap(i) {
-    if (!run || picked.indexOf(i) >= 0) return;
+    if (!playing() || picked.indexOf(i) >= 0) return;
     if (picked.length >= 4) return;
     picked.push(i);
     drawAll();
@@ -770,8 +995,29 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     setTimeout(function () { d.remove(); }, 1000);
   }
 
+  // 모드마다 '지금 플레이 중인가'의 조건이 다르다. 한 군데로 모은다.
+  function playing() {
+    return mode === "daily" ? !!(daily && !daily.over) : !!run;
+  }
+
+  function foundCount() {
+    return found.filter(function (w) { return answers.indexOf(w) >= 0; }).length;
+  }
+
   function attack() {
     var w = currentWord();
+    if (!accepted(w) || found.indexOf(w) >= 0) return;
+    if (mode === "daily") {
+      if (!daily || daily.over) return;
+      found.push(w);
+      var pts = Math.round(10 * Math.pow(w.length, 1.9));
+      daily.score += pts;
+      floatDmg(pts);
+      picked = [];
+      drawAll();
+      if (!remaining().length) endDaily();
+      return;
+    }
     if (!run || !accepted(w) || found.indexOf(w) >= 0) return;
     found.push(w);
     var dmg = damageOf(w);
@@ -931,7 +1177,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   // 과금 접점 2 — 힌트
   el.btnHint.addEventListener("click", function () {
-    if (!run || S.gem < 5) return;
+    if (!playing() || S.gem < 5) return;
     // 남은 것 중 가장 긴 낱말을 알려준다. 플레이어가 가장 찾기 어려워하는
     // 것이고 데미지도 가장 크다. 옥 5개가 아깝지 않아야 또 쓴다.
     var rest = remaining().sort(function (a, b) { return b.length - a.length; });
@@ -947,6 +1193,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     drawAll();
   });
 
+  document.querySelectorAll(".modes .mode").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.dataset.m); });
+  });
+
   el.btnFight.addEventListener("click", function () {
     window.scrollTo({ top: 0, behavior: "smooth" });
     startStage();
@@ -960,13 +1210,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   });
   // 섞기는 순서만 바꾼다 — 정답 집합은 그대로다
   el.btnShuffle.addEventListener("click", function () {
-    if (!run) return;
+    if (!playing()) return;
     picked = [];
     board.sort(function () { return Math.random() - 0.5; });
     drawAll();
   });
   // 정말 막혔을 때만. 공짜면 계속 눌러 넘기게 되니 시간을 받는다
   el.btnNew.addEventListener("click", function () {
+    if (mode === "daily") { toast("오늘의 낱말은 글자판이 고정입니다"); return; }
     if (!run) return;
     run.left = Math.max(1, run.left - 5);
     fillBoard();
@@ -981,7 +1232,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   });
 
   var hot = window.claude && window.claude.hot;
-  function boot() { drawAll(); startStage(); }
+  function boot() {
+    // 공유 링크(#daily)로 들어오면 바로 오늘의 낱말부터 보여준다
+    if ((location.hash || "").toLowerCase() === "#daily") setMode("daily");
+    else { drawAll(); startStage(); }
+  }
   if (hot && hot.snapshot) hot.snapshot(function () { return { s: S }; });
   if (hot && hot.ready) hot.ready(boot); else boot();
 })();
