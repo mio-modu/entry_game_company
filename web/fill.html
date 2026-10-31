@@ -1,0 +1,523 @@
+<title>낱말 채우기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #242838; --line: #333950;
+  --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --danger: #E0683C;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
+  font-size: 15px; line-height: 1.6; margin: 0; }
+.wrap { max-width: 460px; margin: 0 auto; min-height: 100%; display: flex;
+  flex-direction: column; gap: 11px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px calc(16px + env(safe-area-inset-bottom, 0px)); }
+h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 700; }
+p { margin: 0; }
+button { font-family: inherit; cursor: pointer; border: 0; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.hud { display: flex; justify-content: space-between; align-items: center; }
+.brand { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.brand small { font-family: var(--font-body); font-size: 11px; color: var(--fg-faint);
+  letter-spacing: .1em; margin-left: 7px; }
+.purse { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-dim); }
+.purse b { color: var(--gold); }
+
+.arena { position: relative; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 13px; display: flex; flex-direction: column; gap: 10px; }
+.stageline { display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11.5px; color: var(--fg-dim); font-family: var(--font-mono); letter-spacing: .06em; }
+.stageline b { color: var(--fg); font-size: 13px; }
+.stageline .timer { font-size: 16px; font-weight: 600; color: var(--fg); }
+.stageline .timer.low { color: var(--danger); }
+.bossrow { display: flex; align-items: center; gap: 12px; }
+.portrait { width: 86px; height: 118px; flex: none; border-radius: 8px; overflow: hidden;
+  background: #E8E2D2; box-shadow: 0 0 0 1px #0007, 0 8px 22px -10px #000;
+  transition: transform .09s ease; }
+.portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portrait.hit { transform: translateX(-6px) scale(.95); }
+.bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.bossname { font-family: var(--font-display); font-size: 16px; }
+.bossname small { display: block; font-family: var(--font-body); font-size: 11px; color: var(--fg-faint); }
+.hpbar { height: 10px; background: #0C0E14; border: 1px solid var(--line);
+  border-radius: 20px; overflow: hidden; }
+.hpbar i { display: block; height: 100%; width: 100%;
+  background: linear-gradient(90deg, #B8332A, var(--accent));
+  transition: width .35s cubic-bezier(.2,.8,.3,1); }
+.hpnum { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-dim); }
+.floaters { position: absolute; inset: 0; pointer-events: none; }
+.dmg { position: absolute; font-family: var(--font-mono); font-weight: 600; color: var(--gold);
+  font-size: 21px; text-shadow: 0 2px 6px #000; animation: rise 1s ease-out forwards; }
+.dmg.bonus { color: var(--jade); font-size: 17px; }
+@keyframes rise { to { transform: translateY(-46px); opacity: 0 } }
+
+/* ---- 빈칸 격자. 이 게임의 전부다. ----
+   몇 글자짜리 낱말이 몇 개 숨어 있는지 처음부터 보인다. 목표가 보이니
+   찾았을 때 '맞췄다'가 아니라 '채웠다'가 되고, 다 채우면 끝이 난다.
+   목표도 끝도 없이 훑기만 하던 것과 손맛이 완전히 다르다. */
+.grid { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; display: flex; flex-direction: column; gap: 9px; }
+.slotrow { display: flex; gap: 5px; justify-content: center; align-items: center; }
+.cell { width: 42px; height: 46px; border-radius: 8px; display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
+  background: #0E1017; box-shadow: inset 0 0 0 1.5px #2C3142; color: transparent;
+  transition: all .25s cubic-bezier(.2,.8,.3,1); }
+.cell.on { background: linear-gradient(180deg, #EBCB72, #C9A227); color: #1A1206;
+  box-shadow: 0 2px 12px -3px rgba(201,162,39,.8); animation: snap .32s ease-out; }
+@keyframes snap { 0% { transform: scale(.55) rotate(-8deg); opacity: .3 } 60% { transform: scale(1.12) } }
+.slotrow .lenlab { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-faint);
+  width: 28px; text-align: right; flex: none; }
+.gridtop { display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11.5px; color: var(--fg-dim); font-family: var(--font-mono); }
+.gridtop b { color: var(--gold); font-size: 14px; }
+
+/* ---- 만드는 자리 + 타일 ---- */
+.slot { min-height: 54px; background: var(--surface); border: 1px dashed var(--line);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  gap: 5px; padding: 7px; }
+.slot.ok { border-style: solid; border-color: var(--gold); }
+.slot .ph { color: var(--fg-faint); font-size: 13px; }
+.slot .syl { font-family: var(--font-display); font-size: 21px; font-weight: 700;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 9px; padding: 3px 11px; }
+.tiles { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.tile { aspect-ratio: 1; width: 100%; display: grid; place-items: center;
+  font-family: var(--font-display); font-size: clamp(16px, 4.6vw, 21px); font-weight: 700;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 10px; transition: transform .08s ease, opacity .15s ease; }
+.tile:active { transform: scale(.92); }
+.tile.used { opacity: .22; }
+.acts { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 6px; }
+.btn { border-radius: 11px; padding: 12px 8px; font-size: 14px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
+.btn.go { background: var(--accent); color: #fff; border-color: transparent; }
+.btn.go[disabled] { background: var(--surface-2); color: var(--fg-faint); }
+.btn small { display: block; font-size: 10.5px; font-weight: 400; opacity: .75; }
+
+.bonus { display: flex; flex-wrap: wrap; gap: 5px; min-height: 22px; }
+.bonus span { font-family: var(--font-display); font-size: 12.5px; background: #152B27;
+  color: #A8E0D3; border-radius: 20px; padding: 1px 10px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.panel h2 { font-size: 14px; }
+.panel p { font-size: 12.5px; color: var(--fg-dim); }
+.panel p b { color: var(--fg); font-weight: 600; }
+.cite { font-size: 10.5px; color: var(--fg-faint); line-height: 1.6; }
+
+.ov { position: fixed; inset: 0; z-index: 30; background: rgba(8,9,13,.92);
+  display: grid; place-items: center; padding: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 22px; max-width: 360px; width: 100%; display: flex; flex-direction: column;
+  gap: 13px; text-align: center; }
+.card h2 { font-size: 23px; } .card h2.win { color: var(--jade); }
+.card h2.lose { color: var(--danger); }
+.card .lead { font-size: 13.5px; color: var(--fg-dim); }
+.card .big { font-family: var(--font-mono); font-size: 32px; font-weight: 600;
+  color: var(--gold); line-height: 1.1; }
+.words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+.words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 40;
+  background: #2A2F42; border: 1px solid var(--line); border-radius: 22px;
+  padding: 9px 17px; font-size: 13px; max-width: 90vw; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="hud">
+    <div class="brand">낱말 채우기 <small>시험판</small></div>
+    <div class="purse">냥 <b id="gold">0</b></div>
+  </div>
+
+  <div class="arena">
+    <div class="stageline">
+      <span><b id="stageNo">1</b>단계 · <span id="mtName">북한산</span></span>
+      <span class="timer" id="timer">60</span>
+    </div>
+    <div class="bossrow">
+      <div class="portrait" id="portrait"><img id="pimg" alt=""></div>
+      <div class="bossinfo">
+        <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
+        <div class="hpbar"><i id="hp"></i></div>
+        <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span></div>
+      </div>
+    </div>
+    <div class="floaters" id="floaters"></div>
+  </div>
+
+  <div class="grid">
+    <div class="gridtop">
+      <span>채울 낱말 <b id="gFound">0</b> / <span id="gTotal">0</span></span>
+      <span id="gNote">빈칸을 모두 채우면 한 판이 끝납니다</span>
+    </div>
+    <div id="slots"></div>
+  </div>
+
+  <div class="slot" id="slot"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="acts">
+    <button class="btn" id="btnClear">지우기<small>한 글자씩</small></button>
+    <button class="btn" id="btnHint">힌트<small>뜻풀이</small></button>
+    <button class="btn go" id="btnGo" disabled>공격<small id="goSub">낱말을 만드세요</small></button>
+  </div>
+  <div class="bonus" id="bonus"></div>
+
+  <div class="panel">
+    <h2>규칙</h2>
+    <p>아래 글자로 위의 <b>빈칸</b>을 채웁니다. 몇 글자짜리가 몇 개 숨어 있는지
+       처음부터 보이고, <b>다 채우면 한 판이 끝납니다.</b></p>
+    <p>빈칸에 없는 낱말이라도 <b>사전에 있으면 보너스</b>로 인정합니다 —
+       아는 낱말이 헛되지 않습니다.</p>
+    <p class="cite">낱말·뜻풀이 자료: 국립국어원 <b>한국어 학습용 어휘 목록</b>,
+      <b>한국어기초사전</b>, <b>표준국어대사전</b> (CC BY-SA 2.0 KR).</p>
+  </div>
+</div>
+
+<script src="words.js"></script>
+<script src="defs.js"></script>
+<script src="sfx.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var MOUNTAINS = [
+    { m: "북한산", n: "불가사리", a: "bulgasari" }, { m: "속리산", n: "삼족오", a: "samjogo" },
+    { m: "계룡산", n: "해태", a: "haetae" },       { m: "설악산", n: "현무", a: "hyeonmu" },
+    { m: "소백산", n: "백호", a: "baekho" },        { m: "덕유산", n: "기린", a: "kirin" },
+    { m: "지리산", n: "주작", a: "jujak" },         { m: "한라산", n: "백록", a: "baekrok" },
+    { m: "금강산", n: "봉황", a: "bonghwang" },     { m: "백두산", n: "천지의 용", a: "yong" }
+  ];
+  var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
+
+  // ── 사전 ────────────────────────────────────────────────────────────
+  // 빈칸에 넣을 낱말은 '보통 사람이 아는 말'에서만 고른다. 19만 낱말에서
+  // 고르면 빈칸이 영영 안 채워지고, 그건 퍼즐이 아니라 벌이다.
+  // 보너스 판정만 19만 전체로 넓게 본다.
+  var ACCEPT = window.WORDS_ACCEPT || " ";
+  var D = window.DEFS || {};
+  var MEAN = Object.create(null);
+  var COMMON = [], BY = Object.create(null), SET = Object.create(null);
+
+  (window.WORDS_SEED || []).forEach(function (w) {
+    if (w.length >= 2 && w.length <= 4 && !SET[w]) { SET[w] = 1; COMMON.push(w); }
+  });
+  ["초급", "중급"].forEach(function (lv) {
+    (D[lv] || []).forEach(function (r) {
+      MEAN[r[0]] = r[1];
+      if (r[0].length >= 2 && r[0].length <= 4 && !SET[r[0]]) { SET[r[0]] = 1; COMMON.push(r[0]); }
+    });
+  });
+  ["고급", "기타"].forEach(function (lv) {
+    (D[lv] || []).forEach(function (r) { MEAN[r[0]] = r[1]; });
+  });
+  COMMON.forEach(function (w) {
+    var seen = Object.create(null);
+    for (var i = 0; i < w.length; i++) {
+      var c = w.charAt(i);
+      if (!seen[c]) { seen[c] = 1; (BY[c] || (BY[c] = [])).push(w); }
+    }
+  });
+
+  function accepted(w) { return w.length >= 2 && ACCEPT.indexOf(" " + w + " ") >= 0; }
+  function counts(w) {
+    var m = Object.create(null);
+    for (var i = 0; i < w.length; i++) m[w.charAt(i)] = (m[w.charAt(i)] || 0) + 1;
+    return m;
+  }
+  function fits(w, pool) {
+    var m = counts(w);
+    for (var k in m) if ((pool[k] || 0) < m[k]) return false;
+    return true;
+  }
+
+  // ── 문제 만들기 ─────────────────────────────────────────────────────
+  // 긴 낱말 하나에서 출발해, 그 글자를 함께 쓰는 다른 낱말을 끌어와 주머니를
+  // 키운다. 무작위 글자를 뿌리면 정답이 한두 개밖에 안 나와 빈칸이 썰렁하다.
+  var TILE_N = 7;
+  function makePuzzle() {
+    for (var t = 0; t < 400; t++) {
+      var w1 = COMMON[Math.floor(Math.random() * COMMON.length)];
+      if (w1.length < 3) continue;
+      var pool = counts(w1), size = w1.length, guard = 0;
+      while (size < TILE_N && guard++ < 50) {
+        var ks = Object.keys(pool);
+        var share = ks[Math.floor(Math.random() * ks.length)];
+        var c = BY[share];
+        if (!c || !c.length) continue;
+        var w2 = c[Math.floor(Math.random() * c.length)], m2 = counts(w2);
+        for (var k in m2) {
+          if (size >= TILE_N) break;
+          if (m2[k] > (pool[k] || 0)) { pool[k] = (pool[k] || 0) + 1; size++; }
+        }
+      }
+      if (size < TILE_N) continue;
+      var ans = COMMON.filter(function (w) { return fits(w, pool); });
+      if (ans.length < 3 || ans.length > 8) continue;
+      var tiles = [];
+      for (var k2 in pool) for (var i = 0; i < pool[k2]; i++) tiles.push(k2);
+      tiles.sort(function () { return Math.random() - 0.5; });
+      ans.sort(function (a, b) { return b.length - a.length || a.localeCompare(b); });
+      return { tiles: tiles, ans: ans };
+    }
+    return { tiles: "가나다라마바사".split(""), ans: ["가나다"] };
+  }
+
+  // ── 상태 ────────────────────────────────────────────────────────────
+  var el = {};
+  ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
+   "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
+   "btnGo","goSub","bonus"].forEach(function (id) { el[id] = document.getElementById(id); });
+
+  var stage = 0, gold = 0, run = null, picked = [], timerId = null, toastT = null;
+
+  function stageInfo(k) {
+    var M = MOUNTAINS[Math.floor(k / 10)], sub = k % 10, boss = sub === 9;
+    return { n: boss ? M.n + " 수호신" : TITLES[sub] + M.n, art: M.a, m: M.m, boss: boss,
+             no: k + 1, hp: Math.round(300 * Math.pow(1.08, k) * (boss ? 2.4 : 1)),
+             t: boss ? 75 : 60 };
+  }
+
+  function start() {
+    var b = stageInfo(stage);
+    run = { b: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, bonus: [], cleared: 0 };
+    el.pimg.src = "art/" + b.art + ".jpg";
+    el.bossName.textContent = b.n;
+    el.bossHint.textContent = b.m + " · 낱말 채우기";
+    el.stageNo.textContent = b.no;
+    el.mtName.textContent = b.m;
+    el.hpMax.textContent = b.hp;
+    el.bonus.textContent = "";
+    newBoard();
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(onSecond, 1000);
+    draw();
+  }
+
+  function newBoard() {
+    var p = makePuzzle();
+    run.tiles = p.tiles;
+    run.ans = p.ans;
+    run.got = Object.create(null);
+    picked = [];
+  }
+
+  function remaining() {
+    return run.ans.filter(function (w) { return !run.got[w]; });
+  }
+
+  // ── 그리기 ──────────────────────────────────────────────────────────
+  function draw() {
+    drawSlots(); drawTiles(); drawWord();
+    el.hp.style.width = Math.max(0, (run.hp / run.max) * 100) + "%";
+    el.hpNow.textContent = Math.max(0, run.hp);
+    el.gold.textContent = gold;
+    var got = run.ans.length - remaining().length;
+    el.gFound.textContent = got;
+    el.gTotal.textContent = run.ans.length;
+    el.timer.textContent = run.left;
+    el.timer.classList.toggle("low", run.left <= 10);
+  }
+
+  function drawSlots() {
+    el.slots.textContent = "";
+    run.ans.forEach(function (w) {
+      var row = document.createElement("div");
+      row.className = "slotrow";
+      var lab = document.createElement("span");
+      lab.className = "lenlab"; lab.textContent = w.length + "자";
+      row.appendChild(lab);
+      var on = !!run.got[w];
+      for (var i = 0; i < w.length; i++) {
+        var c = document.createElement("b");
+        c.className = "cell" + (on ? " on" : "");
+        c.textContent = on ? w.charAt(i) : "";
+        row.appendChild(c);
+      }
+      el.slots.appendChild(row);
+    });
+  }
+
+  function drawTiles() {
+    el.tiles.textContent = "";
+    run.tiles.forEach(function (ch, i) {
+      var b = document.createElement("button");
+      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "");
+      b.textContent = ch;
+      b.disabled = picked.indexOf(i) >= 0;
+      b.addEventListener("click", function () { tap(i); });
+      el.tiles.appendChild(b);
+    });
+  }
+
+  function word() {
+    return picked.map(function (i) { return run.tiles[i]; }).join("");
+  }
+
+  function drawWord() {
+    var w = word();
+    el.slot.textContent = "";
+    if (!picked.length) {
+      var ph = document.createElement("span");
+      ph.className = "ph"; ph.textContent = "글자를 눌러 낱말을 만드세요";
+      el.slot.appendChild(ph);
+    } else {
+      picked.forEach(function (i, k) {
+        var s = document.createElement("button");
+        s.className = "syl"; s.textContent = run.tiles[i];
+        s.addEventListener("click", function () { picked.splice(k, 1); draw(); });
+        el.slot.appendChild(s);
+      });
+    }
+    var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
+    var isBonus = !isSlot && accepted(w) && run.bonus.indexOf(w) < 0 && !run.got[w];
+    var ok = isSlot || isBonus;
+    el.slot.classList.toggle("ok", ok);
+    el.btnGo.disabled = !ok;
+    el.goSub.textContent = isSlot ? "빈칸을 채웁니다 +" + damage(w, true)
+      : isBonus ? "보너스 낱말 +" + damage(w, false)
+      : w.length < 2 ? "낱말을 만드세요"
+      : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
+  }
+
+  function damage(w, isSlot) {
+    var d = 15 * Math.pow(w.length, 1.8) * (1 + Math.min(run.combo, 10) * 0.10);
+    return Math.round(isSlot ? d : d * 0.5);   // 보너스는 절반 — 빈칸이 본줄기다
+  }
+
+  function tap(i) {
+    if (!run || picked.indexOf(i) >= 0 || picked.length >= 4) return;
+    picked.push(i);
+    if (window.SFX) SFX.tap();
+    draw();
+  }
+
+  function floatDmg(n, bonus) {
+    var d = document.createElement("div");
+    d.className = "dmg" + (bonus ? " bonus" : "");
+    d.textContent = "-" + n;
+    d.style.left = (20 + Math.random() * 42) + "%";
+    d.style.top = "40%";
+    el.floaters.appendChild(d);
+    setTimeout(function () { d.remove(); }, 1000);
+  }
+
+  function toast(msg) {
+    var old = document.querySelector(".toast"); if (old) old.remove();
+    var t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+    document.body.appendChild(t);
+    if (toastT) clearTimeout(toastT);
+    toastT = setTimeout(function () { t.remove(); }, 2600);
+  }
+
+  function attack() {
+    if (!run || el.btnGo.disabled) return;
+    var w = word();
+    var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
+    var dmg = damage(w, isSlot);
+    run.hp -= dmg; run.combo++;
+    if (isSlot) run.got[w] = 1;
+    else {
+      run.bonus.push(w);
+      var s = document.createElement("span"); s.textContent = w; el.bonus.appendChild(s);
+    }
+    floatDmg(dmg, !isSlot);
+    if (window.SFX) { SFX.word(w.length); isSlot ? SFX.hit() : SFX.tap(); }
+    el.portrait.classList.add("hit");
+    setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
+    picked = [];
+    draw();
+    if (run.hp <= 0) return finish(true);
+    if (!remaining().length) {
+      // 다 채웠다. 이 순간이 이 게임의 보상이다.
+      run.cleared++;
+      var bonus = Math.round(run.max * 0.18);
+      run.hp -= bonus;
+      floatDmg(bonus);
+      if (window.SFX) SFX.clear();
+      toast("빈칸을 모두 채웠습니다 · 보너스 +" + bonus);
+      draw();
+      if (run.hp <= 0) return finish(true);
+      setTimeout(function () { if (run) { newBoard(); draw(); } }, 700);
+    }
+  }
+
+  function onSecond() {
+    if (!run) return;
+    run.left--;
+    if (run.left <= 0) { run.left = 0; draw(); return finish(false); }
+    draw();
+  }
+
+  function finish(won) {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    var r = run; run = null;
+    if (window.SFX) { won ? SFX.win() : SFX.lose(); }
+    var reward = won ? Math.round(30 + r.max * 0.25) : 0;
+    gold += reward;
+    if (won) stage = Math.min(99, stage + 1);
+
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2");
+    h.className = won ? "win" : "lose";
+    h.textContent = won ? r.b.n + "을 물리쳤습니다" : "시간이 다 됐습니다";
+    card.appendChild(h);
+    var big = document.createElement("div"); big.className = "big";
+    big.textContent = r.cleared + "판";
+    card.appendChild(big);
+    var lead = document.createElement("p"); lead.className = "lead";
+    lead.textContent = "다 채운 글자판 " + r.cleared + "개 · 보너스 낱말 " + r.bonus.length + "개"
+      + (won ? " · " + reward + "냥" : "");
+    card.appendChild(lead);
+    if (!won) {
+      var miss = document.createElement("p"); miss.className = "lead";
+      miss.textContent = "못 채운 낱말"; card.appendChild(miss);
+      var ws = document.createElement("div"); ws.className = "words";
+      r.ans.filter(function (w) { return !r.got[w]; }).forEach(function (w) {
+        var s = document.createElement("span"); s.textContent = w; ws.appendChild(s);
+      });
+      card.appendChild(ws);
+    }
+    var b1 = document.createElement("button"); b1.className = "btn";
+    b1.textContent = won ? "다음 단계로" : "다시 도전";
+    b1.addEventListener("click", function () { ov.remove(); start(); });
+    card.appendChild(b1);
+    ov.appendChild(card); document.body.appendChild(ov); b1.focus();
+  }
+
+  // ── 조작 ────────────────────────────────────────────────────────────
+  el.btnGo.addEventListener("click", attack);
+  el.btnClear.addEventListener("click", function () {
+    if (!picked.length) return;
+    picked.pop();
+    if (window.SFX) SFX.tap();
+    draw();
+  });
+  // 힌트는 글자가 아니라 뜻을 준다. 답을 알려주면 채우는 맛이 사라진다.
+  el.btnHint.addEventListener("click", function () {
+    if (!run) return;
+    var rest = remaining();
+    if (!rest.length) { toast("남은 빈칸이 없습니다"); return; }
+    var withMean = rest.filter(function (w) { return MEAN[w]; });
+    if (!withMean.length) {
+      var w0 = rest[0];
+      toast(w0.length + "글자 · 첫 글자는 “" + w0.charAt(0) + "”");
+      return;
+    }
+    var w = withMean[Math.floor(Math.random() * withMean.length)];
+    toast(w.length + "글자 · " + MEAN[w]);
+  });
+
+  start();
+})();
+</script>
