@@ -1,0 +1,437 @@
+<title>산 배경 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: style block first, then one card per mountain in play order. */
+:root {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232838; --code: #0D0F16;
+  --line: #333950; --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.68; margin: 0; }
+.wrap {
+  max-width: 800px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 60px;
+}
+h1, h2 { margin: 0; text-wrap: balance; font-family: var(--font-display); font-weight: 700; }
+h1 { font-size: clamp(28px, 6.4vw, 40px); line-height: 1.18; }
+h2 { font-size: clamp(18px, 3.8vw, 22px); }
+p { margin: 0; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--fg-dim); max-width: 60ch; }
+header { display: flex; flex-direction: column; gap: 11px; margin-bottom: 22px; }
+
+.rule {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold);
+  border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 9px; font-size: 14px;
+}
+.rule .h { font-weight: 700; color: var(--gold); }
+.rule ul { margin: 0; padding-left: 19px; display: flex; flex-direction: column; gap: 5px; }
+.rule li::marker { color: var(--gold); }
+
+section { margin-top: 30px; display: flex; flex-direction: column; gap: 12px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.card.key { border-color: #4A3E18; }
+.cardhead { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; flex-wrap: wrap; }
+.cardhead .n {
+  font-family: var(--font-mono); font-size: 11px; color: var(--bg); background: var(--accent);
+  border-radius: 20px; padding: 2px 9px; flex: none; margin-top: 3px; min-width: 30px; text-align: center;
+}
+.card.key .cardhead .n { background: var(--gold); }
+.cardhead .meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cardhead .t { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.cardhead .t small { font-family: var(--font-body); font-size: 12px; color: var(--jade); font-weight: 400; margin-left: 7px; }
+.cardhead .d { font-size: 12.5px; color: var(--fg-dim); }
+.copy {
+  font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 14px; cursor: pointer; flex: none; white-space: nowrap;
+}
+.copy:hover { background: #2C3246; }
+.copy.done { background: #15241F; border-color: var(--jade); color: var(--jade); }
+.copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+pre {
+  margin: 0; padding: 14px 16px; background: var(--code); border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; color: #D5D8E6;
+  white-space: pre-wrap; word-break: break-word;
+}
+.tip { background: #15241F; border: 1px solid #2A5048; border-radius: 11px; padding: 13px 15px; font-size: 13.5px; }
+.tip b { color: var(--jade); }
+.warn { background: #2A1512; border: 1px solid #5A2A22; border-radius: 11px; padding: 13px 15px; font-size: 13.5px; }
+.warn b { color: #FF8B80; }
+
+.zones { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; }
+.frame {
+  aspect-ratio: 2/3; border: 1px solid var(--line); border-radius: 8px;
+  display: grid; grid-template-rows: 1fr 2fr 1fr; overflow: hidden; font-size: 9.5px;
+  font-family: var(--font-mono); text-align: center; background: #1E2230;
+}
+.frame div { display: grid; place-items: center; padding: 2px; }
+.frame .z1 { background: #10131C; color: var(--fg-faint); }
+.frame .z2 { background: #262B3B; color: var(--jade); }
+.frame .z3 { background: #171B27; color: var(--fg-faint); }
+.zones ul { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 5px; }
+.zones b { color: var(--fg); }
+
+footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--fg-faint); }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">낱말 용사 · 배경</div>
+  <h1>산 배경 10종 프롬프트</h1>
+  <p class="lede">산 이름만 바꾼 똑같은 프롬프트 열 장이 아닙니다. 산마다 실제로 다르게 생겼으니, 그 생김새를 각각 적어 넣었습니다. 그래야 열 장이 서로 다른 산으로 보입니다.</p>
+</header>
+
+<div class="rule">
+  <span class="h">쓰는 법</span>
+  <ul>
+    <li><b>0번 화풍 블록</b>을 먼저 붙여넣고, 그 아래에 산 하나를 이어 붙입니다.</li>
+    <li>이미 뽑아둔 <b>신수 그림 한 장을 참고 이미지로 첨부</b>하세요. 종이 질감과 먹 농도가 맞아야 한 세계처럼 보입니다.</li>
+    <li>열 장을 다 뽑고 <b>나란히 놓고 보세요.</b> 혼자 튀는 한두 장이 반드시 있습니다. 그것만 다시 뽑으면 됩니다.</li>
+  </ul>
+</div>
+
+<section>
+  <h2>화면 구역 — 이게 가장 중요합니다</h2>
+  <div class="zones">
+    <div class="frame">
+      <div class="z1">상단 ¼<br>글자 올라감</div>
+      <div class="z2">가운데<br>신수 자리<br>비워둘 것</div>
+      <div class="z3">하단 ¼<br>타일이 덮음</div>
+    </div>
+    <ul>
+      <li><b>가운데는 비웁니다.</b> 신수 그림이 여기 섭니다. 산봉우리를 한가운데 두면 가립니다.</li>
+      <li><b>상단 ¼은 어둡고 단순하게.</b> 단계·산 이름·남은 시간이 올라갑니다. 복잡하면 글자가 안 읽힙니다.</li>
+      <li><b>하단 ¼에 공들이지 마세요.</b> 글자 타일이 덮습니다.</li>
+      <li><b>주홍을 쓰지 않습니다.</b> 신수의 주홍 표식이 묻힙니다. 강조는 화면에 하나여야 합니다.</li>
+    </ul>
+  </div>
+  <div class="warn">
+    <b>⚠️ 이 네 가지를 안 적으면</b> 예쁜데 못 쓰는 배경이 나옵니다. 그래서 모든 프롬프트 끝에 똑같이 박아뒀습니다.
+  </div>
+</section>
+
+<section>
+  <div class="card key">
+    <div class="cardhead">
+      <span class="n">0</span>
+      <div class="meta">
+        <span class="t">화풍 블록</span>
+        <span class="d">10장 전부 맨 앞에 붙입니다. 신수 그림과 같은 세계로 묶어주는 부분입니다.</span>
+      </div>
+      <button class="copy" data-t="m0">복사</button>
+    </div>
+    <pre id="m0">한국 전통 수묵 산수화. 오래된 한지에 먹으로 그린 그림.
+
+[바탕]
+· 밝은 베이지에서 연한 황토빛으로 이어지는 한지.
+  종이 섬유 결과 자연스러운 얼룩이 드러난다
+· 가장자리는 세월에 조금 바래 어둡다
+
+[먹]
+· 먼 산은 옅게, 가까운 능선은 짙게. 먹의 농담만으로 거리를 만든다
+· 안개와 운무를 쓴다. 산허리를 감돌게
+· 색은 거의 쓰지 않는다. 먹의 농담이 전부
+· 금박 한둘을 하늘 여백에 아주 작게
+
+[화면]
+· 세로로 긴 화면 (2:3)
+
+금지: 글자, 문자, 낙관, 서명, 워터마크, 사람, 건물, 절, 탑, 배,
+3D 렌더, 사진 같은 사실감, 네온, 그라데이션, 선명한 색채</pre>
+  </div>
+</section>
+
+<section>
+  <h2>10개 산</h2>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">1</span>
+      <div class="meta">
+        <span class="t">북한산 <small>1~10단계 · 불가사리</small></span>
+        <span class="d">서울의 화강암 봉우리. 첫 산이라 가장 낮고 순해 보여야 합니다.</span>
+      </div>
+      <button class="copy" data-t="m1">복사</button>
+    </div>
+    <pre id="m1">[0번 화풍 블록을 먼저]
+
+북한산의 수묵 산수화.
+
+· 희고 둥근 화강암 바위 봉우리 셋이 어깨를 맞대고 솟아 있다
+· 바위가 매끈하고 둥글다. 날카롭지 않다
+· 봉우리 사이로 소나무가 드문드문
+· 산세가 높지 않고 품이 넉넉하다. 첫 산답게 위압적이지 않게
+· 아래쪽은 완만한 숲 능선이 겹겹이
+
+이 그림은 열 개 산 중 가장 낮고 순한 산이다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">2</span>
+      <div class="meta">
+        <span class="t">속리산 <small>11~20단계 · 삼족오</small></span>
+        <span class="d">기암괴석과 노송. 바위가 층층이 쌓인 모습이 특징입니다.</span>
+      </div>
+      <button class="copy" data-t="m2">복사</button>
+    </div>
+    <pre id="m2">[0번 화풍 블록을 먼저]
+
+속리산의 수묵 산수화.
+
+· 널찍한 바위가 층층이 쌓여 탑처럼 선 기암괴석
+· 바위 틈마다 굽은 노송이 자란다. 가지가 옆으로 뻗은 오래된 소나무
+· 바위의 결을 가로줄로 그린다. 켜켜이 쌓인 느낌
+· 산세는 아직 높지 않다. 바위가 주인공이다
+
+북한산보다 바위가 더 거칠고 기이하게.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">3</span>
+      <div class="meta">
+        <span class="t">계룡산 <small>21~30단계 · 해태</small></span>
+        <span class="d">이름이 '닭 볏을 쓴 용'입니다. 능선 모양이 그렇게 생겼습니다.</span>
+      </div>
+      <button class="copy" data-t="m3">복사</button>
+    </div>
+    <pre id="m3">[0번 화풍 블록을 먼저]
+
+계룡산의 수묵 산수화.
+
+· 능선이 닭의 볏처럼 뾰족뾰족 이어진다. 이것이 이 산의 이름이 된 생김새다
+· 작고 날카로운 봉우리들이 톱니처럼 줄지어 늘어선다
+· 능선이 길게 좌우로 뻗으며 용의 등처럼 굽이친다
+· 봉우리 사이사이로 안개가 끼어 있다
+
+봉우리 하나하나는 크지 않되, 줄지어 선 모습이 인상적이어야 한다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">4</span>
+      <div class="meta">
+        <span class="t">설악산 <small>31~40단계 · 현무</small></span>
+        <span class="d">한국에서 가장 험한 바위산. 여기서부터 분위기가 달라집니다.</span>
+      </div>
+      <button class="copy" data-t="m4">복사</button>
+    </div>
+    <pre id="m4">[0번 화풍 블록을 먼저]
+
+설악산의 수묵 산수화.
+
+· 거대한 바위 덩어리가 통째로 솟아오른 기암. 수직으로 깎아지른 절벽
+· 그 뒤로 뾰족한 바위 봉우리들이 공룡의 등지느러미처럼 줄지어 이어진다
+· 바위의 세로 결을 강하게. 쪼개지고 갈라진 느낌
+· 깊은 골짜기에 운무가 가득 찼다
+
+지금까지 중 가장 험하고 날카롭게. 여기서부터 산이 사나워진다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">5</span>
+      <div class="meta">
+        <span class="t">소백산 <small>41~50단계 · 백호</small></span>
+        <span class="d">앞뒤 산들과 정반대로 — 부드럽고 허허로운 능선입니다.</span>
+      </div>
+      <button class="copy" data-t="m5">복사</button>
+    </div>
+    <pre id="m5">[0번 화풍 블록을 먼저]
+
+소백산의 수묵 산수화.
+
+· 바위가 거의 없다. 둥글고 부드러운 능선이 끝없이 이어진다
+· 정상 부근은 나무가 없는 민둥 초원. 풀이 바람에 한쪽으로 눕는다
+· 능선 위에 고사목 몇 그루가 비틀린 채 서 있다
+· 바람이 세다는 게 느껴지게. 안개가 옆으로 흐른다
+· 휑하고 허허롭다
+
+앞뒤의 바위산들과 일부러 반대로. 부드럽되 쓸쓸하게.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">6</span>
+      <div class="meta">
+        <span class="t">덕유산 <small>51~60단계 · 기린</small></span>
+        <span class="d">넉넉하고 깊은 산. 겨울 상고대가 이 산의 얼굴입니다.</span>
+      </div>
+      <button class="copy" data-t="m6">복사</button>
+    </div>
+    <pre id="m6">[0번 화풍 블록을 먼저]
+
+덕유산의 수묵 산수화.
+
+· 산세가 크고 넉넉하다. 어깨가 넓은 산
+· 능선 위에 주목과 구상나무가 서 있다. 가지가 짧고 단단한 침엽수
+· 나뭇가지마다 서리가 하얗게 얹혔다. 가지 끝을 희게 비워 그린다
+· 겹겹이 포개진 능선이 멀리까지 이어진다
+· 공기가 차고 맑다
+
+덕이 있는 산이라는 이름답게, 사납지 않고 품이 크게.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">7</span>
+      <div class="meta">
+        <span class="t">지리산 <small>61~70단계 · 주작</small></span>
+        <span class="d">남한에서 가장 크고 깊은 산. 운해가 상징입니다.</span>
+      </div>
+      <button class="copy" data-t="m7">복사</button>
+    </div>
+    <pre id="m7">[0번 화풍 블록을 먼저]
+
+지리산의 수묵 산수화.
+
+· 거대하고 깊은 산. 능선이 지평선 끝까지 겹겹이 이어진다
+· 산허리 아래가 구름바다로 가득 찼다. 봉우리들이 구름 위로 섬처럼 솟는다
+· 구름을 아주 넓게, 먹을 옅게 번지게 해서 그린다
+· 가장 높은 봉우리 하나가 가운데가 아니라 한쪽에 솟아 있다
+· 깊고 아득하다
+
+지금까지 중 가장 규모가 커 보여야 한다. 끝이 안 보이게.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">8</span>
+      <div class="meta">
+        <span class="t">한라산 <small>71~80단계 · 백록</small></span>
+        <span class="d">섬의 화산. 다른 아홉 산과 생김새가 완전히 다릅니다.</span>
+      </div>
+      <button class="copy" data-t="m8">복사</button>
+    </div>
+    <pre id="m8">[0번 화풍 블록을 먼저]
+
+한라산의 수묵 산수화.
+
+· 방패를 엎어놓은 듯 완만하고 널찍한 화산. 뾰족하지 않다
+· 정상에 둥글게 파인 분화구. 그 안에 물이 고여 있다
+· 산자락에 작고 둥근 언덕(오름)들이 여럿 흩어져 있다
+· 바다에서 솟은 섬의 산이라, 아래쪽에 수평선 기운이 어린다
+· 구름이 산허리를 띠처럼 두른다
+
+다른 아홉 산은 바위산이다. 이 산만 혼자 둥글고 너그러워야 한다.</pre>
+  </div>
+
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">9</span>
+      <div class="meta">
+        <span class="t">금강산 <small>81~90단계 · 봉황</small></span>
+        <span class="d">일만이천봉. 봉우리의 '개수'가 압도하는 산입니다.</span>
+      </div>
+      <button class="copy" data-t="m9">복사</button>
+    </div>
+    <pre id="m9">[0번 화풍 블록을 먼저]
+
+금강산의 수묵 산수화.
+
+· 날카로운 바위 봉우리가 셀 수 없이 많다. 빽빽하게 숲처럼 들어찼다
+· 봉우리 하나하나가 가늘고 뾰족하다. 수정 기둥이 솟은 듯
+· 봉우리 사이로 가느다란 폭포가 몇 줄기 떨어진다
+· 바위 결을 세로로 촘촘하게 그어 날이 선 느낌을 낸다
+· 화려하고 기이하다
+
+하나의 큰 봉우리가 아니라 '무수히 많다'는 것이 이 산의 인상이다.</pre>
+  </div>
+
+  <div class="card key">
+    <div class="cardhead">
+      <span class="n">10</span>
+      <div class="meta">
+        <span class="t">백두산 <small>91~100단계 · 천지의 용</small></span>
+        <span class="d">최종 무대. 열 장 중 가장 압도적이어야 합니다.</span>
+      </div>
+      <button class="copy" data-t="m10">복사</button>
+    </div>
+    <pre id="m10">[0번 화풍 블록을 먼저]
+
+백두산의 수묵 산수화. 이 게임의 마지막 무대다.
+
+· 거대한 화산. 정상이 움푹 꺼져 커다란 칼데라 호수(천지)를 이룬다
+· 호수를 병풍처럼 둘러싼 봉우리들이 둥글게 늘어서 있다
+· 봉우리가 희다. 흰 화산재와 눈이 덮여 먹을 아주 옅게 남긴다
+· 하늘이 넓고 높다. 구름이 발아래 있다
+· 금박을 호수 수면에 한둘
+
+열 장 중 가장 웅장하고 신성해야 한다. 여기가 끝이라는 것이 느껴지게.
+다만 가운데에 용이 설 자리는 반드시 비워 둔다.</pre>
+  </div>
+</section>
+
+<section>
+  <h2>열 장 전부에 붙일 마무리 조항</h2>
+  <div class="card">
+    <div class="cardhead">
+      <span class="n">+</span>
+      <div class="meta">
+        <span class="t">UI 제약</span>
+        <span class="d">각 산 프롬프트 끝에 이어 붙이세요. 안 붙이면 다시 뽑게 됩니다.</span>
+      </div>
+      <button class="copy" data-t="mz">복사</button>
+    </div>
+    <pre id="mz">[반드시 지킬 것 — 이 그림 위에 캐릭터와 글자가 올라간다]
+
+· 화면 한가운데는 비워 둔다. 여기에 신수가 선다.
+  주봉을 정중앙에 두지 말고 한쪽으로 치우치게 배치한다
+· 위쪽 1/4은 안개나 빈 하늘로 어둡고 단순하게 둔다.
+  여기에 글자가 올라가므로 복잡하면 안 읽힌다
+· 아래쪽 1/4에는 시선을 끄는 세부를 두지 않는다. 가려질 영역이다
+· 붉은색·주홍색을 쓰지 않는다. 앞에 설 캐릭터의 붉은 표식이 묻힌다
+· 사람, 건물, 절, 탑, 배, 글자, 낙관을 넣지 않는다</pre>
+  </div>
+  <div class="tip">
+    <b>백두산부터 뽑으세요.</b> 가장 어렵고 가장 중요합니다. 백두산이 잘 나오는 화풍이면 나머지 아홉은 따라옵니다. 그리고 <b>북한산과 백두산을 나란히 놓고</b> 봤을 때 "같은 화가가 그린 다른 산"으로 보이는지가 합격 기준입니다.
+  </div>
+</section>
+
+<footer>
+  산과 신수의 짝은 <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 프로토타입</a>의 설정 그대로입니다. 뽑으신 배경을 주시면 전투 화면에 깔아 드리겠습니다.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = document.getElementById(btn.dataset.t);
+      if (!pre) return;
+      var done = function () {
+        btn.textContent = "복사됨"; btn.classList.add("done");
+        setTimeout(function () { btn.textContent = "복사"; btn.classList.remove("done"); }, 1600);
+      };
+      try {
+        navigator.clipboard.writeText(pre.textContent).then(done, function () { select(pre, btn); });
+      } catch (e) { select(pre, btn); }
+    });
+  });
+  // 클립보드가 막힌 뷰어에서는 대신 선택해 준다
+  function select(pre, btn) {
+    try {
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = "직접 복사";
+      setTimeout(function () { btn.textContent = "복사"; }, 2200);
+    } catch (e) {}
+  }
+})();
+</script>
