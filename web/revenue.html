@@ -1,0 +1,366 @@
+<title>낱말 용사 수익 모델</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: verdict first, then a calculator you can argue with, then the
+   benchmarks it rests on. Numbers are the visual, so no charts - tiles and tables. */
+:root {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232838; --code: #0D0F16;
+  --line: #333950; --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --warn: #E0683C;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.68; margin: 0; }
+.wrap {
+  max-width: 840px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 60px;
+}
+h1, h2 { margin: 0; text-wrap: balance; font-family: var(--font-display); font-weight: 700; }
+h1 { font-size: clamp(28px, 6.4vw, 40px); line-height: 1.18; }
+h2 { font-size: clamp(18px, 3.8vw, 23px); }
+p { margin: 0; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.lede { color: var(--fg-dim); max-width: 62ch; }
+header { display: flex; flex-direction: column; gap: 11px; margin-bottom: 24px; }
+section { margin-top: 36px; display: flex; flex-direction: column; gap: 14px; }
+.sec-head { display: flex; flex-direction: column; gap: 5px; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.verdict {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold);
+  border-radius: 13px; padding: 18px; display: flex; flex-direction: column; gap: 10px;
+}
+.verdict .big { font-family: var(--font-display); font-size: clamp(19px, 4.2vw, 24px); line-height: 1.4; }
+.verdict .big b { color: var(--gold); }
+.verdict p { font-size: 14px; color: var(--fg-dim); }
+
+/* ── calculator ── */
+.calc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.inp {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0;
+}
+.inp label { font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.inp label .v { font-family: var(--font-mono); color: var(--gold); font-variant-numeric: tabular-nums; }
+.inp input[type=range] { width: 100%; accent-color: var(--gold); margin: 0; }
+.inp .h { font-size: 11px; color: var(--fg-faint); font-family: var(--font-mono); }
+
+.presets { display: flex; gap: 7px; flex-wrap: wrap; }
+.presets button {
+  font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg-dim); border: 1px solid var(--line);
+  border-radius: 20px; padding: 6px 15px; cursor: pointer;
+}
+.presets button:hover { color: var(--fg); }
+.presets button.on { background: #2E2412; color: var(--gold); border-color: #4A3E18; }
+.presets button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.tile {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 15px; display: flex; flex-direction: column; gap: 3px; min-width: 0;
+}
+.tile .k { font-size: 11.5px; color: var(--fg-dim); letter-spacing: .02em; }
+.tile .n { font-family: var(--font-mono); font-size: clamp(20px, 4.4vw, 26px); font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tile .s { font-size: 11px; color: var(--fg-faint); font-family: var(--font-mono); }
+.tile.hero { border-color: #4A3E18; background: linear-gradient(180deg, #1F1B10, var(--surface) 70%); }
+.tile.hero .n { color: var(--gold); font-size: clamp(26px, 6vw, 34px); }
+.tile.neg .n { color: var(--accent); }
+.tile.pos .n { color: var(--jade); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 460px; }
+th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--fg-faint); font-weight: 600; background: var(--surface); }
+td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+td.g { color: var(--gold); }
+td.r { color: var(--accent); }
+td.j { color: var(--jade); }
+tbody tr:hover { background: #1C202C; }
+
+.note { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 13px 15px; font-size: 13.5px; color: var(--fg-dim); }
+.note b { color: var(--fg); }
+.warn { background: #2A1512; border: 1px solid #5A2A22; border-radius: 11px; padding: 14px 16px; font-size: 14px; display: flex; flex-direction: column; gap: 7px; }
+.warn b { color: #FF8B80; }
+.good { background: #15241F; border: 1px solid #2A5048; border-radius: 11px; padding: 14px 16px; font-size: 14px; display: flex; flex-direction: column; gap: 7px; }
+.good b { color: var(--jade); }
+
+ul.plain { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
+ul.plain li { display: grid; grid-template-columns: 16px 1fr; gap: 9px; font-size: 14.5px; align-items: start; }
+ul.plain li::before { content: "▸"; color: var(--accent); font-size: 12px; line-height: 1.7; }
+ul.plain li span { color: var(--fg-dim); }
+ul.plain li b { color: var(--fg); }
+
+a { color: var(--gold); }
+footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--fg-faint); }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">낱말 용사 · 사업성 검토</div>
+  <h1>이 게임, 돈이 될까</h1>
+  <p class="lede">시장 벤치마크를 가져다 계산한 결과입니다. 좋게 포장하지 않았습니다. 숫자를 직접 바꿔가며 보세요.</p>
+</header>
+
+<div class="verdict">
+  <div class="big">게임으로 <b>돈이 되는 장르는 맞습니다.</b> 문제는 게임이 아니라 <b>사람을 어떻게 모으냐</b>입니다.</div>
+  <p>낱말퀴즈는 이미 500만 다운로드급이 존재하는 검증된 수요입니다. 만들어놓은 게임의 완성도도 그 수준에 못 미치지 않습니다. 그런데 매출을 가르는 건 재미가 아니라 <b style="color:var(--fg)">DAU(하루 접속자)</b> 하나입니다. 아래 계산기에서 DAU만 움직여 보시면 바로 보입니다.</p>
+</div>
+
+<section>
+  <div class="sec-head">
+    <h2>직접 계산해 보세요</h2>
+    <p class="lede">기본값은 아래 벤치마크에서 가져온 "현실" 시나리오입니다.</p>
+  </div>
+
+  <div class="presets" id="presets">
+    <button data-p="low">비관</button>
+    <button data-p="mid" class="on">현실</button>
+    <button data-p="high">낙관</button>
+  </div>
+
+  <div class="calc">
+    <div class="inp">
+      <label for="dau">하루 접속자 (DAU) <span class="v" id="v-dau"></span></label>
+      <input type="range" id="dau" min="100" max="50000" step="100" value="3000">
+      <span class="h">이 숫자 하나가 전부를 정합니다</span>
+    </div>
+    <div class="inp">
+      <label for="arp">광고 ARPDAU <span class="v" id="v-arp"></span></label>
+      <input type="range" id="arp" min="10" max="120" step="5" value="45">
+      <span class="h">접속자 1명이 하루에 벌어주는 광고 수익</span>
+    </div>
+    <div class="inp">
+      <label for="pay">월 결제율 <span class="v" id="v-pay"></span></label>
+      <input type="range" id="pay" min="0" max="40" step="1" value="8">
+      <span class="h">접속자 중 한 달에 한 번이라도 결제하는 비율</span>
+    </div>
+    <div class="inp">
+      <label for="arppu">결제자 1인 월 결제액 <span class="v" id="v-arppu"></span></label>
+      <input type="range" id="arppu" min="3000" max="40000" step="1000" value="11000">
+      <span class="h">ARPPU</span>
+    </div>
+    <div class="inp">
+      <label for="ua">월 유료 유입 설치 <span class="v" id="v-ua"></span></label>
+      <input type="range" id="ua" min="0" max="50000" step="1000" value="0">
+      <span class="h">0이면 광고비 없이 입소문만으로 모은 것</span>
+    </div>
+    <div class="inp">
+      <label for="cpi">설치 1건당 광고비 (CPI) <span class="v" id="v-cpi"></span></label>
+      <input type="range" id="cpi" min="300" max="4000" step="100" value="1200">
+      <span class="h">한국 캐주얼 게임 통상 범위</span>
+    </div>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><span class="k">월 광고 매출</span><span class="n mono" id="o-ad"></span></div>
+    <div class="tile"><span class="k">월 결제 매출</span><span class="n mono" id="o-iap"></span><span class="s" id="o-iap-s"></span></div>
+    <div class="tile"><span class="k">월 마케팅비</span><span class="n mono" id="o-ua"></span></div>
+    <div class="tile hero"><span class="k">월 순이익 (세전)</span><span class="n mono" id="o-net"></span><span class="s" id="o-year"></span></div>
+  </div>
+
+  <div class="note" id="verdictline"></div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>세 가지 시나리오</h2>
+    <p class="lede">마케팅비를 쓰지 않고 입소문으로만 모았을 때입니다.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th></th><th class="n">DAU</th><th class="n">월 광고</th><th class="n">월 결제</th><th class="n">월 합계</th><th class="n">연 환산</th></tr></thead>
+      <tbody id="scen"></tbody>
+    </table>
+  </div>
+  <p class="note">결제 매출은 <b>앱마켓 수수료를 뺀 금액</b>입니다. 구글플레이 수수료는 2026년 3월 발표로 최대 30%에서 <b>20%</b>로 내려갔고, 구글 결제 시스템을 쓰면 5%가 더 붙습니다. <b>한국 적용은 12월</b>입니다. 여기서는 25%로 계산했습니다.</p>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>근거로 삼은 수치</h2>
+    <p class="lede">업계 공개 자료에서 반복해서 나오는 범위입니다. 출처마다 편차가 크다는 점을 감안하세요.</p>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>항목</th><th class="n">범위</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>캐주얼·퍼즐 ARPDAU (광고만)</td><td class="n g">$0.01 ~ 0.10</td><td>여러 출처 공통</td></tr>
+        <tr><td>캐주얼·퍼즐 ARPDAU (광고+결제)</td><td class="n g">$0.08 ~ 0.25</td><td>하이브리드형</td></tr>
+        <tr><td>보상형 동영상 eCPM · 한국</td><td class="n g">$6 ~ 14</td><td>한국은 Tier 2 분류</td></tr>
+        <tr><td>보상형 동영상 eCPM · 미국</td><td class="n">$10 ~ 25</td><td>참고용</td></tr>
+        <tr><td>Royal Match 결제 ARPDAU</td><td class="n j">$0.17</td><td>세계 최상위권</td></tr>
+        <tr><td>Candy Crush 결제 ARPDAU</td><td class="n j">$0.11</td><td>세계 최상위권</td></tr>
+        <tr><td>구글플레이 수수료</td><td class="n r">20 ~ 25%</td><td>2026년 12월 한국 적용</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="warn">
+    <span><b>⚠️ 이 숫자들은 확정값이 아닙니다</b></span>
+    <p>대부분 광고 플랫폼이나 마케팅 업체가 낸 추정치입니다. 한국 낱말게임만 따로 집계한 공개 수치는 찾지 못했습니다. <b>방향을 잡는 용도로만 쓰시고, 사업 결정은 실제 출시 후 자기 데이터로 하셔야 합니다.</b></p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>과금할까? 광고를 볼까?</h2>
+  </div>
+  <ul class="plain">
+    <li><b>과금은 기대하지 마세요.</b> <span>주 타깃이 40~60대입니다. 이 층은 모바일 게임 결제율이 낮습니다. 결제율 1%만 나와도 선방입니다.</span></li>
+    <li><b>대신 광고는 봅니다.</b> <span>"공짜로 쓰는 대신 광고는 본다"는 수용도가 높은 층입니다. 보상형 광고(힌트·이어하기)는 거부감이 적습니다.</span></li>
+    <li><b>그래서 광고 중심이 맞습니다.</b> <span>계산기 기본값도 광고가 매출의 90% 이상을 차지하도록 잡았습니다. 결제는 덤입니다.</span></li>
+    <li><b>확률 강화는 양날입니다.</b> <span>결제율을 올리는 가장 강한 장치지만, 이 타깃은 사행성에 민감합니다. <b>실패해도 단계가 안 내려가게</b> 해둔 이유입니다. 그 선을 넘으면 리뷰가 먼저 무너집니다.</span></li>
+    <li><b>팔 만한 것은 셋입니다.</b> <span>광고 제거(₩3,000~5,000 1회성) · 힌트 묶음 · 강화 성공률 부적. 이 순서로 잘 팔립니다.</span></li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>진짜 위험은 여기입니다</h2>
+  </div>
+  <div class="warn">
+    <span><b>마케팅비를 쓰는 순간 적자입니다</b></span>
+    <p>계산기에서 <b>월 유료 유입</b>을 올려보세요. 설치 1건에 ₩1,200을 쓰는데, 그 1명이 평생 벌어다 주는 돈(LTV)이 그보다 작으면 쓸수록 손해입니다. 캐주얼 게임의 LTV는 보통 <b>₩500~2,000</b> 수준입니다.</p>
+    <p>대형 게임사가 광고비를 쏟아붓는 건 LTV가 CPI보다 확실히 높다는 걸 데이터로 확인한 뒤입니다. <b>그 확인 전에는 한 푼도 쓰면 안 됩니다.</b></p>
+  </div>
+  <div class="good">
+    <span><b>그래서 유기적 유입이 전부입니다</b></span>
+    <p>"오늘의 낱말" 같은 <b>공유되는 모드</b>가 중요한 이유가 이것입니다. 카톡 오픈채팅방에 결과가 돌면 설치 비용이 0원입니다. 워들이 광고 한 푼 없이 수천만 명에게 퍼진 게 그 구조였습니다.</p>
+    <p>그리고 <b>ASO</b>(스토어 검색 최적화). "낱말퀴즈" "단어게임" 검색에서 위로 올라가는 것 — 이게 캐주얼 게임 무료 유입의 절반입니다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <h2>솔직한 가능성</h2>
+  </div>
+  <ul class="plain">
+    <li><b>장르 수요는 검증됐습니다.</b> <span>경쟁작이 500만·100만 다운로드를 찍고 있습니다. 시장이 없는 게 아닙니다.</span></li>
+    <li><b>경쟁작의 약점도 명확합니다.</b> <span>평점 4.8인데 리뷰는 "3분 광고" "무과금 벽" "보상 미지급"으로 가득합니다. 덜 밉게 만들면 들어갈 자리가 있습니다.</span></li>
+    <li><b>하지만 대부분의 신작은 실패합니다.</b> <span>스토어에 묻혀서 DAU 100을 못 넘기는 게 가장 흔한 결말입니다. 재미가 없어서가 아니라 아무도 몰라서입니다.</span></li>
+    <li><b>현실적인 1년 목표는 이렇습니다.</b> <span>출시 후 6개월에 <b>DAU 1,000</b>을 넘기면 "이 게임은 된다"는 신호입니다. 거기부터 광고비를 태울지 판단하세요. 그 전엔 돈을 쓰지 마시고요.</span></li>
+    <li><b>최악을 각오하되 비용은 묶어두세요.</b> <span>지금처럼 직접 만들면 현금 지출이 거의 없습니다. 외주 일러스트와 등록비 정도. <b>잃을 돈을 작게 유지하는 것</b>이 이 단계의 전략입니다.</span></li>
+  </ul>
+</section>
+
+<footer>
+  벤치마크 출처: <a href="https://revenueflex.com/blog/arpdau-calculator-benchmark-guide/">RevenueFlex ARPDAU 가이드</a> · <a href="https://naavik.co/digest/what-leading-match-3-and-merge-games-do-differently/">Naavik 매치3 분석</a> · <a href="https://mwm.ai/ko/glossary/ecpm">MWM eCPM 용어집</a> · <a href="https://byline.network/2026/03/9-409/">바이라인네트워크 구글 수수료 인하</a>. 모두 추정치이며 한국 낱말게임 전용 집계는 공개된 것이 없습니다.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var IDS = ["dau", "arp", "pay", "arppu", "ua", "cpi"];
+  var el = {};
+  IDS.forEach(function (id) { el[id] = document.getElementById(id); el["v_" + id] = document.getElementById("v-" + id); });
+  ["o-ad", "o-iap", "o-iap-s", "o-ua", "o-net", "o-year", "verdictline", "scen"].forEach(function (id) {
+    el[id.replace(/-/g, "_")] = document.getElementById(id);
+  });
+
+  var FEE = 0.25;   // 앱마켓 수수료. 2026년 12월 한국 적용 기준 20%+5%
+  var won = function (n) { return "₩" + Math.round(n).toLocaleString("ko-KR"); };
+  var man = function (n) {
+    if (Math.abs(n) >= 100000000) return (n / 100000000).toFixed(1) + "억";
+    if (Math.abs(n) >= 10000) return Math.round(n / 10000).toLocaleString("ko-KR") + "만";
+    return Math.round(n).toLocaleString("ko-KR");
+  };
+
+  function model(v) {
+    var ad = v.dau * v.arp * 30;
+    var iapGross = v.dau * (v.pay / 1000) * v.arppu;   // pay 슬라이더는 0.1% 단위
+    var iap = iapGross * (1 - FEE);
+    var ua = v.ua * v.cpi;
+    return { ad: ad, iapGross: iapGross, iap: iap, ua: ua, net: ad + iap - ua };
+  }
+
+  var PRESETS = {
+    low:  { dau: 300,   arp: 25, pay: 3,  arppu: 7000,  ua: 0, cpi: 1200 },
+    mid:  { dau: 3000,  arp: 45, pay: 8,  arppu: 11000, ua: 0, cpi: 1200 },
+    high: { dau: 20000, arp: 65, pay: 15, arppu: 14000, ua: 0, cpi: 1200 }
+  };
+
+  function read() {
+    var v = {};
+    IDS.forEach(function (id) { v[id] = +el[id].value; });
+    return v;
+  }
+
+  function paint() {
+    var v = read();
+    el.v_dau.textContent = v.dau.toLocaleString("ko-KR") + "명";
+    el.v_arp.textContent = "₩" + v.arp;
+    el.v_pay.textContent = (v.pay / 10).toFixed(1) + "%";
+    el.v_arppu.textContent = won(v.arppu);
+    el.v_ua.textContent = v.ua.toLocaleString("ko-KR") + "건";
+    el.v_cpi.textContent = won(v.cpi);
+
+    var r = model(v);
+    el.o_ad.textContent = won(r.ad);
+    el.o_iap.textContent = won(r.iap);
+    el.o_iap_s.textContent = "수수료 25% 전 " + won(r.iapGross);
+    el.o_ua.textContent = r.ua ? "−" + won(r.ua) : "₩0";
+    el.o_net.textContent = (r.net < 0 ? "−" : "") + won(Math.abs(r.net));
+    el.o_year.textContent = "연 " + (r.net < 0 ? "−" : "") + man(Math.abs(r.net * 12)) + "원";
+
+    var tile = el.o_net.parentElement;
+    tile.classList.toggle("neg", r.net < 0);
+    tile.classList.toggle("hero", r.net >= 0);
+
+    var adShare = r.ad / Math.max(1, r.ad + r.iap) * 100;
+    el.verdictline.innerHTML = r.net < 0
+      ? "<b>지금 설정은 적자입니다.</b> 마케팅비 " + won(r.ua) + "을 쓰는데 매출이 " + won(r.ad + r.iap) + "입니다. 설치 1건에 쓴 돈보다 그 사람이 벌어다 주는 돈이 적다는 뜻입니다."
+      : "매출의 <b>" + adShare.toFixed(0) + "%가 광고</b>에서 나옵니다. 이 장르는 원래 그렇습니다. 결제는 덤이고, <b>DAU를 올리는 것이 유일한 지렛대</b>입니다.";
+
+    document.querySelectorAll("#presets button").forEach(function (b) {
+      var p = PRESETS[b.dataset.p];
+      var same = IDS.every(function (id) { return p[id] === v[id]; });
+      b.classList.toggle("on", same);
+    });
+  }
+
+  IDS.forEach(function (id) { el[id].addEventListener("input", paint); });
+  document.querySelectorAll("#presets button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var p = PRESETS[b.dataset.p];
+      IDS.forEach(function (id) { el[id].value = p[id]; });
+      paint();
+    });
+  });
+
+  // 시나리오 표 — 마케팅비 0 기준
+  var rows = [["비관", "low"], ["현실", "mid"], ["낙관", "high"]];
+  el.scen.textContent = "";
+  rows.forEach(function (row) {
+    var p = PRESETS[row[1]], r = model(p);
+    var tr = document.createElement("tr");
+    var tds = [
+      ["<b>" + row[0] + "</b>", ""],
+      [p.dau.toLocaleString("ko-KR"), "n"],
+      [won(r.ad), "n"],
+      [won(r.iap), "n"],
+      [won(r.ad + r.iap), "n g"],
+      [man((r.ad + r.iap) * 12) + "원", "n j"]
+    ];
+    tds.forEach(function (t) {
+      var td = document.createElement("td");
+      td.className = t[1];
+      td.innerHTML = t[0];
+      tr.appendChild(td);
+    });
+    el.scen.appendChild(tr);
+  });
+
+  paint();
+})();
+</script>
