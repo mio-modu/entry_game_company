@@ -46,6 +46,53 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   transition: transform .09s ease; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .portrait.hit { transform: translateX(-6px) scale(.95); }
+
+/* ---- 쓰러지는 연출 ----
+   이기는 순간을 숫자로만 알려주면 아무 느낌이 없다. 수호신이 휘청하다가
+   옆으로 나동그라지고, 머리 위에 별이 돌고, 한마디 남기고 나가야
+   "내가 이겼다"가 몸으로 온다. 이 1초가 다음 단계를 누르게 만든다. */
+.portrait.down { animation: tumble 1.05s cubic-bezier(.3, 1.3, .5, 1) forwards; }
+@keyframes tumble {
+  0%   { transform: rotate(0) translate(0, 0); }
+  16%  { transform: rotate(13deg) translate(4px, -12px); }   /* 휘청 */
+  30%  { transform: rotate(-10deg) translate(-4px, -6px); }
+  58%  { transform: rotate(-74deg) translate(-14px, 18px); }
+  74%  { transform: rotate(-97deg) translate(-20px, 30px); } /* 쿵 */
+  86%  { transform: rotate(-84deg) translate(-18px, 24px); } /* 튕김 */
+  100% { transform: rotate(-90deg) translate(-19px, 29px);
+         filter: grayscale(.5) brightness(.78); }
+}
+.dizzy {
+  position: absolute; left: 34px; top: 26px; width: 58px; height: 58px;
+  pointer-events: none; animation: spin 1.1s linear infinite; opacity: 0;
+}
+.dizzy.on { opacity: 1; }
+.dizzy i {
+  position: absolute; font-style: normal; font-size: 15px; color: var(--gold);
+  text-shadow: 0 0 8px rgba(201,162,39,.9);
+}
+.dizzy i:nth-child(1) { left: 0;    top: 20px; }
+.dizzy i:nth-child(2) { left: 22px; top: 0; }
+.dizzy i:nth-child(3) { left: 44px; top: 22px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.speech {
+  position: absolute; left: 104px; top: 34px; z-index: 5;
+  background: #ECEAE3; color: #1A1206; border-radius: 13px;
+  padding: 6px 13px; font-family: var(--font-display); font-weight: 700;
+  font-size: 15px; white-space: nowrap; box-shadow: 0 6px 18px -6px #000;
+  animation: say .5s cubic-bezier(.2, 1.6, .4, 1) forwards;
+}
+.speech::after {
+  content: ""; position: absolute; left: -6px; top: 13px;
+  border: 7px solid transparent; border-right-color: #ECEAE3; border-left: 0;
+}
+@keyframes say { from { opacity: 0; transform: scale(.5) translateX(-8px); } }
+body.quake { animation: shake .42s ease-out; }
+@keyframes shake {
+  0%,100% { transform: translate(0,0) }
+  20% { transform: translate(-4px, 3px) } 40% { transform: translate(4px,-3px) }
+  60% { transform: translate(-3px,-2px) } 80% { transform: translate(3px, 2px) }
+}
 .bossinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 .bossname { font-family: var(--font-display); font-size: 16px; }
 .bossname small { display: block; font-family: var(--font-body); font-size: 11px; color: var(--fg-faint); }
@@ -557,13 +604,47 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     draw();
   }
 
+  // 수호신이 남기는 한마디. 무섭기보다 우스꽝스러워야 아이도 웃고 어른도
+  // 다음 판을 누른다. 분한 척하는 쪽이 통쾌하다.
+  var LAST_WORDS = [
+    "졌다\u2026", "내가 졌소", "이럴 수가\u2026", "다음엔 안 봐준다",
+    "으윽\u2026 낱말이\u2026", "기억해 두마", "한 수 배웠다"
+  ];
+
+  function tumble(after) {
+    el.portrait.classList.add("down");
+    document.body.classList.add("quake");
+    setTimeout(function () { document.body.classList.remove("quake"); }, 440);
+
+    var dz = document.createElement("div");
+    dz.className = "dizzy";
+    dz.innerHTML = "<i>\u2726</i><i>\u2726</i><i>\u2726</i>";
+    document.querySelector(".arena").appendChild(dz);
+    setTimeout(function () { dz.classList.add("on"); }, 620);
+
+    var sp = document.createElement("div");
+    sp.className = "speech";
+    sp.textContent = LAST_WORDS[Math.floor(Math.random() * LAST_WORDS.length)];
+    setTimeout(function () {
+      document.querySelector(".arena").appendChild(sp);
+    }, 780);
+
+    setTimeout(function () { dz.remove(); sp.remove(); after(); }, 1700);
+  }
+
   function finish(won) {
     if (timerId) { clearInterval(timerId); timerId = null; }
     var r = run; run = null;
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
+    if (won) { tumble(function () { result(r, true); }); return; }
+    result(r, false);
+  }
+
+  function result(r, won) {
     var reward = won ? Math.round(40 + r.max * 0.3 + r.perfect * 40) : 0;
     gold += reward;
     if (won) stage = Math.min(99, stage + 1);
+    el.gold.textContent = gold;
 
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
@@ -590,7 +671,11 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     }
     var b1 = document.createElement("button"); b1.className = "btn";
     b1.textContent = won ? "다음 단계로" : "다시 도전";
-    b1.addEventListener("click", function () { ov.remove(); start(); });
+    b1.addEventListener("click", function () {
+      ov.remove();
+      el.portrait.classList.remove("down");
+      start();
+    });
     card.appendChild(b1);
     ov.appendChild(card); document.body.appendChild(ov); b1.focus();
   }
