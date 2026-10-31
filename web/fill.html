@@ -149,7 +149,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
       <div class="bossinfo">
         <div class="bossname"><span id="bossName">불가사리</span><small id="bossHint"></small></div>
         <div class="hpbar"><i id="hp"></i></div>
-        <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span></div>
+        <div class="hpnum">기세 <span id="hpNow">0</span> / <span id="hpMax">0</span>
+          <span style="opacity:.7">· 남은 빈칸</span></div>
       </div>
     </div>
     <div class="floaters" id="floaters"></div>
@@ -157,8 +158,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   <div class="grid">
     <div class="gridtop">
-      <span>채울 낱말 <b id="gFound">0</b> / <span id="gTotal">0</span></span>
-      <span id="gNote">빈칸을 모두 채우면 한 판이 끝납니다</span>
+      <span>이 글자판 <b id="gFound">0</b> / <span id="gTotal">0</span></span>
+      <span id="gNote">글자판 1 / 1</span>
     </div>
     <div id="slots"></div>
   </div>
@@ -174,10 +175,12 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   <div class="panel">
     <h2>규칙</h2>
-    <p>아래 글자로 위의 <b>빈칸</b>을 채웁니다. 몇 글자짜리가 몇 개 숨어 있는지
-       처음부터 보이고, <b>다 채우면 한 판이 끝납니다.</b></p>
-    <p>빈칸에 없는 낱말이라도 <b>사전에 있으면 보너스</b>로 인정합니다 —
-       아는 낱말이 헛되지 않습니다.</p>
+    <p>아래 글자로 위의 <b>빈칸</b>을 채웁니다. 수호신의 <b>기세가 곧 남은 빈칸</b>이라,
+       네 글자를 채우면 기세가 넷 줄어듭니다. 글자판을 다 채우면 다음 글자판으로,
+       <b>마지막 글자판까지 채우면 이깁니다.</b></p>
+    <p>빈칸에 없는 낱말이라도 <b>사전에 있으면 보너스</b>입니다. 기세는 깎이지 않지만
+       <b>시간을 3초 벌고 냥을 받습니다</b> — 아는 낱말이 헛되지 않습니다.</p>
+    <p>지는 길은 <b>시간이 다 되는 것</b> 하나뿐입니다.</p>
     <p class="cite">낱말·뜻풀이 자료: 국립국어원 <b>한국어 학습용 어휘 목록</b>,
       <b>한국어기초사전</b>, <b>표준국어대사전</b> (CC BY-SA 2.0 KR).</p>
   </div>
@@ -280,31 +283,54 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
   var stage = 0, gold = 0, run = null, picked = [], timerId = null, toastT = null;
 
+  // 받침이 있으면 '을', 없으면 '를'. "불가사리을 물리쳤습니다"는 눈에 걸린다.
+  function eul(n) {
+    var c = n.charCodeAt(n.length - 1);
+    if (c < 0xAC00 || c > 0xD7A3) return n + "을";
+    return n + (((c - 0xAC00) % 28) ? "을" : "를");
+  }
+
   function stageInfo(k) {
     var M = MOUNTAINS[Math.floor(k / 10)], sub = k % 10, boss = sub === 9;
+    // 수호신의 두께는 체력 숫자가 아니라 '글자판 몇 개'로 정한다.
+    // 그래야 화면에 보이는 빈칸과 기세가 끝까지 같은 것을 가리킨다.
+    var boards = boss ? 3 + Math.floor(k / 40) : 1 + Math.floor(sub / 4);
     return { n: boss ? M.n + " 수호신" : TITLES[sub] + M.n, art: M.a, m: M.m, boss: boss,
-             no: k + 1, hp: Math.round(300 * Math.pow(1.08, k) * (boss ? 2.4 : 1)),
-             t: boss ? 75 : 60 };
+             no: k + 1, boards: boards, t: boards * (boss ? 52 : 48) };
   }
 
   function start() {
     var b = stageInfo(stage);
-    run = { b: b, hp: b.hp, max: b.hp, left: b.t, combo: 0, bonus: [], cleared: 0 };
+    // 기세 = 이 수호신의 글자판 전체에 뚫린 빈칸의 칸수.
+    //
+    // 전에는 체력바와 빈칸이 따로 놀았다. 화면은 "빈칸을 다 채우면 끝"이라
+    // 하는데 기세가 먼저 바닥나 끝나기도 하고, 다 채워도 안 끝나고 새
+    // 글자판이 깔리기도 했다. 같은 행동을 재는 진행바가 둘이었으니 당연하다.
+    // 이제는 하나다 — 네 글자를 채우면 기세가 정확히 넷 줄고, 마지막 칸을
+    // 채우는 순간이 곧 기세 0이다.
+    var boards = [], cells = 0;
+    for (var i = 0; i < b.boards; i++) {
+      var p = makePuzzle();
+      boards.push(p);
+      p.ans.forEach(function (w) { cells += w.length; });
+    }
+    run = { b: b, boards: boards, bi: 0, hp: cells, max: cells,
+            left: b.t, combo: 0, bonus: [], cleared: 0 };
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
-    el.bossHint.textContent = b.m + " · 낱말 채우기";
+    el.bossHint.textContent = b.m + " · 글자판 " + b.boards + "개";
     el.stageNo.textContent = b.no;
     el.mtName.textContent = b.m;
-    el.hpMax.textContent = b.hp;
+    el.hpMax.textContent = cells;
     el.bonus.textContent = "";
-    newBoard();
+    loadBoard();
     if (timerId) clearInterval(timerId);
     timerId = setInterval(onSecond, 1000);
     draw();
   }
 
-  function newBoard() {
-    var p = makePuzzle();
+  function loadBoard() {
+    var p = run.boards[run.bi];
     run.tiles = p.tiles;
     run.ans = p.ans;
     run.got = Object.create(null);
@@ -321,9 +347,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     el.hp.style.width = Math.max(0, (run.hp / run.max) * 100) + "%";
     el.hpNow.textContent = Math.max(0, run.hp);
     el.gold.textContent = gold;
-    var got = run.ans.length - remaining().length;
-    el.gFound.textContent = got;
+    el.gFound.textContent = run.ans.length - remaining().length;
     el.gTotal.textContent = run.ans.length;
+    el.gNote.textContent = "글자판 " + (run.bi + 1) + " / " + run.boards.length;
     el.timer.textContent = run.left;
     el.timer.classList.toggle("low", run.left <= 10);
   }
@@ -383,15 +409,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var ok = isSlot || isBonus;
     el.slot.classList.toggle("ok", ok);
     el.btnGo.disabled = !ok;
-    el.goSub.textContent = isSlot ? "빈칸을 채웁니다 +" + damage(w, true)
-      : isBonus ? "보너스 낱말 +" + damage(w, false)
+    el.goSub.textContent = isSlot ? "빈칸을 채웁니다 · 기세 -" + w.length
+      : isBonus ? "보너스 · 시간 +3초, " + (w.length * 3) + "냥"
       : w.length < 2 ? "낱말을 만드세요"
       : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
-  }
-
-  function damage(w, isSlot) {
-    var d = 15 * Math.pow(w.length, 1.8) * (1 + Math.min(run.combo, 10) * 0.10);
-    return Math.round(isSlot ? d : d * 0.5);   // 보너스는 절반 — 빈칸이 본줄기다
   }
 
   function tap(i) {
@@ -401,10 +422,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     draw();
   }
 
-  function floatDmg(n, bonus) {
+  function floatDmg(txt, bonus) {
     var d = document.createElement("div");
     d.className = "dmg" + (bonus ? " bonus" : "");
-    d.textContent = "-" + n;
+    d.textContent = txt;
     d.style.left = (20 + Math.random() * 42) + "%";
     d.style.top = "40%";
     el.floaters.appendChild(d);
@@ -423,31 +444,34 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (!run || el.btnGo.disabled) return;
     var w = word();
     var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
-    var dmg = damage(w, isSlot);
-    run.hp -= dmg; run.combo++;
-    if (isSlot) run.got[w] = 1;
-    else {
+
+    if (isSlot) {
+      run.got[w] = 1;
+      run.hp -= w.length;              // 채운 칸수만큼, 정확히
+      floatDmg("-" + w.length, false);
+      if (window.SFX) { SFX.word(w.length); SFX.hit(); }
+      el.portrait.classList.add("hit");
+      setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
+    } else {
+      // 보너스는 기세를 건드리지 않는다. 건드리면 다시 "빈칸을 다 안 채웠는데
+      // 끝나는" 그 혼란으로 돌아간다. 대신 시간과 돈으로 갚는다.
       run.bonus.push(w);
+      run.left += 3;
+      gold += w.length * 3;
       var s = document.createElement("span"); s.textContent = w; el.bonus.appendChild(s);
+      floatDmg("+3초", true);
+      if (window.SFX) { SFX.word(w.length); SFX.tap(); }
     }
-    floatDmg(dmg, !isSlot);
-    if (window.SFX) { SFX.word(w.length); isSlot ? SFX.hit() : SFX.tap(); }
-    el.portrait.classList.add("hit");
-    setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
     picked = [];
     draw();
-    if (run.hp <= 0) return finish(true);
+
     if (!remaining().length) {
-      // 다 채웠다. 이 순간이 이 게임의 보상이다.
       run.cleared++;
-      var bonus = Math.round(run.max * 0.18);
-      run.hp -= bonus;
-      floatDmg(bonus);
       if (window.SFX) SFX.clear();
-      toast("빈칸을 모두 채웠습니다 · 보너스 +" + bonus);
-      draw();
-      if (run.hp <= 0) return finish(true);
-      setTimeout(function () { if (run) { newBoard(); draw(); } }, 700);
+      if (run.bi + 1 >= run.boards.length) return finish(true);
+      toast("글자판을 다 채웠습니다 · 남은 글자판 "
+            + (run.boards.length - run.bi - 1) + "개");
+      setTimeout(function () { if (run) { run.bi++; loadBoard(); draw(); } }, 750);
     }
   }
 
@@ -462,7 +486,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     var r = run; run = null;
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
-    var reward = won ? Math.round(30 + r.max * 0.25) : 0;
+    var reward = won ? Math.round(40 + r.max * 4) : 0;
     gold += reward;
     if (won) stage = Math.min(99, stage + 1);
 
@@ -470,14 +494,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
     var card = document.createElement("div"); card.className = "card";
     var h = document.createElement("h2");
     h.className = won ? "win" : "lose";
-    h.textContent = won ? r.b.n + "을 물리쳤습니다" : "시간이 다 됐습니다";
+    h.textContent = won ? eul(r.b.n) + " 물리쳤습니다" : "시간이 다 됐습니다";
     card.appendChild(h);
     var big = document.createElement("div"); big.className = "big";
-    big.textContent = r.cleared + "판";
+    big.textContent = r.cleared + " / " + r.boards.length + "판";
     card.appendChild(big);
     var lead = document.createElement("p"); lead.className = "lead";
-    lead.textContent = "다 채운 글자판 " + r.cleared + "개 · 보너스 낱말 " + r.bonus.length + "개"
-      + (won ? " · " + reward + "냥" : "");
+    lead.textContent = "다 채운 글자판 " + r.cleared + "개 · 보너스 낱말 "
+      + r.bonus.length + "개" + (won ? " · " + reward + "냥" : "");
     card.appendChild(lead);
     if (!won) {
       var miss = document.createElement("p"); miss.className = "lead";
