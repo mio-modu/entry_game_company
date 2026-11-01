@@ -464,7 +464,13 @@ body.quake { animation: shake .42s ease-out; }
   // 서버를 두지 않는다. 계정이 있어야 쓸 수 있는 저장소는 지인 열 명에게
   // 통하지 않는다. 기기 안에만 쌓고, 본인이 단추를 눌렀을 때만 글로 바꿔 준다.
   var LKEY = "nathero-test-log";
-  var LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [] };
+  var LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [], src: "" };
+
+  // 어디서 온 사람인지. 링크 끝에 #band, #kakao 처럼 붙여 두면 기록에 찍힌다.
+  // 이게 없으면 여러 곳에 뿌려도 무엇이 통했는지 알 수 없다.
+  // 처음 들어온 곳만 기억한다 — 나중에 다른 링크로 또 들어와도 덮어쓰지 않는다.
+  var SRC = { band: "밴드", kakao: "카톡", cafe: "카페", friend: "지인",
+              blog: "블로그", cmty: "커뮤니티", qr: "QR" };
 
   function logLoad() {
     try {
@@ -472,6 +478,10 @@ body.quake { animation: shake .42s ease-out; }
       if (raw) { var v = JSON.parse(raw); if (v && v.id) LOG = v; }
     } catch (e) {}
     if (!LOG.id) { LOG.id = Math.random().toString(36).slice(2, 6).toUpperCase(); LOG.t0 = Date.now(); }
+    if (!LOG.src) {
+      var h = (location.hash || "").replace("#", "").toLowerCase();
+      LOG.src = SRC[h] || (h ? h.slice(0, 8) : "직접");
+    }
     if (!LOG.secs) LOG.secs = [];
     if (!LOG.ev) LOG.ev = [];
   }
@@ -490,7 +500,7 @@ body.quake { animation: shake .42s ease-out; }
   }
   function logText() {
     var span = LOG.at && LOG.t0 ? (LOG.at - LOG.t0) / 1000 : 0;
-    return "낱말용사 시험 " + LOG.id + "\n"
+    return "낱말용사 시험 " + LOG.id + " · " + (LOG.src || "직접") + "\n"
       + "판 " + LOG.n + " · 최고 " + LOG.best + "단계 · 머문 시간 " + mmss(span) + "\n"
       + "단계별 초 " + (LOG.secs.length ? LOG.secs.join(" ") : "-") + "\n"
       + "힌트 " + LOG.hint + " · 마무리 " + LOG.end + " · 덤낱말 " + LOG.bonus + "\n"
@@ -1023,7 +1033,7 @@ body.quake { animation: shake .42s ease-out; }
   });
   el.btnLogClear.addEventListener("click", function () {
     try { localStorage.removeItem(LKEY); } catch (e) {}
-    LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [] };
+    LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [], src: "" };
     logLoad(); drawLog();
     toast("기록을 지웠습니다");
   });
