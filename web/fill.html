@@ -732,7 +732,7 @@ body.quake { animation: shake .42s ease-out; }
   var up = { atk: 0, time: 0, combo: 0 };
   var fails = { atk: 0, time: 0, combo: 0 };
 
-  // ── 문방사우 ────────────────────────────────────────────────────────
+  // ── 장비 ────────────────────────────────────────────────────────
   //
   // 강화가 '꾸준히 쌓는 축'이라면 이쪽은 '운으로 뛰는 축'이다. 둘이 다른
   // 감정을 준다. 보물함에 대박이 없으면 상자를 여는 손맛도 없다.
@@ -1731,7 +1731,7 @@ body.quake { animation: shake .42s ease-out; }
     { p:  8, k: "기", t: "기름 한 병",   d: "마무리 시간 +15초",     go: function () { bag.ink++; } },
     { p:  5, k: "숫", t: "숫돌",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } }
   ];
-  var GEAR_P = 23;                               // 나머지 23%가 문방구
+  var GEAR_P = 23;                               // 나머지 23%가 장비
   var TIER_W = [0, 13, 6, 3, 0.89, 0.1, 0.01];   // 예사(0)는 나오지 않는다
 
   function rollTier(mt) {
@@ -1748,12 +1748,12 @@ body.quake { animation: shake .42s ease-out; }
     for (i = 1; i <= cap; i++) tot += TIER_W[i];
     for (i = 1; i <= cap; i++) {
       var pc = GEAR_P * TIER_W[i] / tot;
-      out.push("문방구(" + TIER[i] + ") " + (pc < 1 ? pc.toFixed(2) : pc.toFixed(1)) + "%");
+      out.push("장비(" + TIER[i] + ") " + (pc < 1 ? pc.toFixed(2) : pc.toFixed(1)) + "%");
     }
     return out.join("  ·  ");
   }
 
-  // 문방구가 나오면 어느 것인지 다시 한 번 뽑는다. 이미 가진 것보다 낮으면
+  // 장비가 나오면 어느 것인지 다시 한 번 뽑는다. 이미 가진 것보다 낮으면
   // 냥으로 바꿔 준다 — 중복이 꽝이 되면 상자를 여는 일이 벌이 된다.
   function grantGear(tier) {
     var ids = ["atk", "time", "combo"];
