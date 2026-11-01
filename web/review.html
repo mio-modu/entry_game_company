@@ -1,0 +1,475 @@
+<title>낱말 용사 기획 점검</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 한 칸짜리 세로 흐름. 게임과 같은 수묵 세계를 두 빛으로 — 낮에는 한지, 밤에는 먹. */
+:root {
+  --bg: #F3EFE4;
+  --surface: #FBF8F0;
+  --surface-2: #EEE8D8;
+  --line: #DBD2BD;
+  --line-soft: #E7E0CE;
+  --fg: #201C16;
+  --fg-dim: #6A6254;
+  --fg-faint: #938B7B;
+  --accent: #B23A2E;
+  --gold: #8A6A12;
+  --jade: #2C6659;
+  --warn: #99650C;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+    --line-soft: #272C3C; --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+    --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --warn: #D9A33C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+  --line-soft: #272C3C; --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --warn: #D9A33C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.72;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 780px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); }
+
+/* ---- 머리 ---- */
+.head { padding-block: 44px 30px; border-bottom: 2px solid var(--fg); }
+.seal {
+  display: inline-grid; place-items: center; width: 54px; height: 54px;
+  border-radius: 10px; background: var(--accent); color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 17px;
+  line-height: 1.1; transform: rotate(-4deg); margin-bottom: 18px;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+}
+.head h1 { font-size: clamp(30px, 7vw, 44px); line-height: 1.2; }
+.head .sub {
+  margin-top: 12px; font-size: 16px; color: var(--fg-dim); max-width: 60ch;
+}
+.head .meta {
+  margin-top: 16px; font-family: var(--font-mono); font-size: 11.5px;
+  letter-spacing: .08em; color: var(--fg-faint); text-transform: uppercase;
+}
+
+/* ---- 공통 구역 ---- */
+section { padding-block: 34px; border-bottom: 1px solid var(--line-soft); }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 9px;
+}
+section > h2 { font-size: clamp(21px, 4.4vw, 26px); }
+section > h2 + p { margin-top: 10px; color: var(--fg-dim); max-width: 64ch; }
+h3 { font-size: 16.5px; margin-top: 26px; }
+.body { margin-top: 14px; display: flex; flex-direction: column; gap: 13px; }
+.body p { max-width: 66ch; }
+strong { font-weight: 700; }
+
+/* ---- 숫자 타일 ---- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 11px; margin-top: 20px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 15px 16px; }
+.tile .n { font-family: var(--font-mono); font-size: 25px; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; line-height: 1.15; }
+.tile .k { font-size: 12px; color: var(--fg-dim); margin-top: 4px; }
+
+/* ---- 표 ---- */
+.scroll { overflow-x: auto; margin-top: 18px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 460px; }
+th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+thead th {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--fg-faint); border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.name { font-family: var(--font-display); font-weight: 700; white-space: nowrap; }
+
+/* ---- 상태 표시 ---- */
+.chip {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: .05em; padding: 1px 8px; border-radius: 20px; white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.chip.ok { color: var(--jade); }
+.chip.mid { color: var(--warn); }
+.chip.no { color: var(--accent); }
+
+/* ---- 강조 상자 ---- */
+.call {
+  margin-top: 20px; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.call .t { font-family: var(--font-display); font-weight: 700; font-size: 16.5px; }
+.call p { font-size: 14px; color: var(--fg-dim); max-width: 64ch; }
+.call.gold { border-left-color: var(--gold); }
+.call.jade { border-left-color: var(--jade); }
+
+/* ---- 두 칸 ---- */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 14px; margin-top: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 17px; min-width: 0; }
+.card h3 { margin: 0 0 7px; font-size: 15.5px; }
+.card p { font-size: 13.5px; color: var(--fg-dim); }
+.card ul { margin: 8px 0 0; padding-left: 17px; font-size: 13.5px; color: var(--fg-dim); }
+.card li { margin-bottom: 5px; }
+
+/* ---- 로드맵 (여기는 진짜 순서라 번호를 쓴다) ---- */
+.steps { margin-top: 20px; display: flex; flex-direction: column; gap: 0; }
+.step { display: grid; grid-template-columns: 42px 1fr; gap: 15px; padding-block: 15px; border-top: 1px solid var(--line-soft); }
+.step:first-child { border-top: 0; }
+.step .no {
+  font-family: var(--font-mono); font-size: 19px; font-weight: 600; color: var(--accent);
+  font-variant-numeric: tabular-nums; line-height: 1.3;
+}
+.step .t { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.step p { font-size: 13.5px; color: var(--fg-dim); margin-top: 4px; max-width: 60ch; }
+.step .why { font-size: 12.5px; color: var(--fg-faint); margin-top: 6px; }
+
+/* ---- 링크 목록 ---- */
+.links { display: flex; flex-direction: column; gap: 9px; margin-top: 18px; }
+.links a {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 11px 14px; text-decoration: none; color: var(--fg); font-size: 14px;
+}
+.links a span.r { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-faint); }
+.links a:hover { border-color: var(--accent); }
+.links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.foot { padding-block: 30px 0; font-size: 12.5px; color: var(--fg-faint); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="seal">낱말<br>용사</div>
+  <h1>낱말 용사 기획 점검</h1>
+  <p class="sub">세 갈래로 갈라졌던 시험판을 하나로 좁히고, 이 게임이 무엇이고 어디까지 왔고
+    무엇이 비어 있는지 한자리에 정리했습니다.</p>
+  <p class="meta">2026.11.01 기준 · 시험판 3종 · 커밋 20</p>
+</header>
+
+<section>
+  <p class="eyebrow">한눈에</p>
+  <h2>지금 가진 것</h2>
+  <p>두 달치 작업이 아니라 실제로 손에 쥔 자산만 셉니다. 아래는 모두 저장소에 들어 있고 지금 돌아갑니다.</p>
+  <div class="tiles">
+    <div class="tile"><div class="n">191,684</div><div class="k">인정 사전 (낱말)</div></div>
+    <div class="tile"><div class="n">25,869</div><div class="k">한국어 뜻풀이</div></div>
+    <div class="tile"><div class="n">10종</div><div class="k">신수 그림 · 100단계</div></div>
+    <div class="tile"><div class="n">3,106</div><div class="k">게임 코드 (줄)</div></div>
+  </div>
+  <div class="call jade">
+    <div class="t">결론부터</div>
+    <p>코어는 정해졌습니다. 재미의 뼈대와 콘텐츠 원재료는 이미 경쟁작과 동급 이상입니다.
+      남은 격차는 게임 설계가 아니라 <strong>운영과 유통</strong>입니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">경로 선택</p>
+  <h2>세 갈래를 돌아보고 하나로 좁혔습니다</h2>
+  <p>어느 것이 재미있는지 말로 따지지 않고, 셋을 다 만들어 손으로 비교했습니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>시험판</th><th>코어</th><th>강점</th><th>약점</th><th>판정</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">찾기형</td>
+          <td>글자판에서 아무 낱말이나 찾기</td>
+          <td>자유도</td>
+          <td>목표도 끝도 없어 발견이 아니라 눈으로 훑는 일이 됨</td>
+          <td><span class="chip no">보류</span></td>
+        </tr>
+        <tr>
+          <td class="name">끝말잇기</td>
+          <td>수호신과 번갈아 낱말 주고받기</td>
+          <td>룰 설명 0초 · 대결이 룰 안에 내장</td>
+          <td>혼자 하면 수명이 짧고, 공유할 그림이 안 나옴</td>
+          <td><span class="chip mid">도전 모드로 보존</span></td>
+        </tr>
+        <tr>
+          <td class="name">빈칸형</td>
+          <td>글자로 빈칸 채우기</td>
+          <td>목표·단서·완결이 한 화면에 · 100단계를 받칠 수 있음</td>
+          <td>절차 생성이라 손으로 다듬은 판의 맛은 덜함</td>
+          <td><span class="chip ok">본체 확정</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call">
+    <div class="t">찾기형에 빠져 있던 것은 「빈칸」 하나였습니다</div>
+    <p>빈칸을 두면 세 가지가 한꺼번에 생깁니다. <strong>목표</strong>(몇 개 남았나),
+      <strong>단서</strong>(몇 글자인가), <strong>완결</strong>(다 채우면 끝난다).
+      500만 다운로드급 워드퍼즐이 바로 그 위에 서 있습니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">정체성</p>
+  <h2>이 게임이 다른 낱말 게임과 갈라지는 네 지점</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>싸우는 낱말 게임</h3>
+      <p>목표가 추상적인 «레벨 숫자»가 아니라 눈앞의 수호신입니다.
+        낱말을 채우면 기세가 깎이고, 쓰러뜨리면 네 발을 들고 나동그라지며 한마디 남깁니다.</p>
+    </div>
+    <div class="card">
+      <h3>수묵 세계관</h3>
+      <p>북한산 불가사리부터 백두산 천지의 용까지 열 개 산, 열 종의 신수.
+        한지에 그린 실제 그림 열 장이 족자처럼 걸립니다. 귀신·미신 소재는 쓰지 않습니다.</p>
+    </div>
+    <div class="card">
+      <h3>성장이 있다</h3>
+      <p>붓끝(공격) · 먹물(시간) · 인장(연속)을 확률로 강화하고,
+        세 축의 평균이 «수련 단수»가 됩니다. 한 축만 밀어서는 단수가 오르지 않습니다.</p>
+    </div>
+    <div class="card">
+      <h3>«내 낱말이 왜 안 되냐»가 없다</h3>
+      <p>빈칸은 찾아야 할 것, 사전에 있는 그 밖의 낱말은 보너스로 인정합니다.
+        19만 낱말을 판정에 쓰므로 아는 낱말이 헛되지 않습니다.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">규칙</p>
+  <h2>지금의 설계</h2>
+  <p>설계를 세 번 갈아엎으며 걸렀습니다. 지금 구조는 모순이 없습니다.</p>
+  <div class="body">
+    <p><strong>이기는 길은 하나입니다.</strong> 수호신의 기세를 0으로 만들면 그 자리에서 끝납니다.
+      빈칸을 다 채워야 하는 것이 아닙니다. 승리 조건이 둘이면 화면이 거짓말을 하게 됩니다.</p>
+    <p><strong>빈칸은 가장 잘 드는 무기입니다.</strong> 긴 낱말일수록 깊게 들어가고,
+      빈칸에 없는 낱말도 절반만큼 들어갑니다. 막혔을 때 아는 낱말로 길을 낼 수 있습니다.</p>
+    <p><strong>격파 뒤에는 보너스 시간이 이어집니다.</strong> 남은 빈칸을 채우면 냥을 더 받고,
+      다 채우면 완전 격파입니다. 생각이 안 나면 «여기서 마무리»로 바로 끝냅니다 —
+      떠오르지 않는 낱말을 붙잡고 시계만 보는 시간이 게임을 가장 빨리 지루하게 만듭니다.</p>
+    <p><strong>기세는 공식으로 찍지 않습니다.</strong> «가장 짧은 N개를 채우면 정확히 0»이 되도록
+      글자판에서 거꾸로 계산합니다. 그래야 «둘만 맞춰도 깨진다»는 약속이 어느 판에서나 지켜집니다.</p>
+  </div>
+
+  <h3>열 개 산 — 구간마다 얼굴이 다릅니다</h3>
+  <p style="font-size:13.5px;color:var(--fg-dim);margin-top:6px;max-width:64ch">
+    단조롭게 어려워지기만 하면 중반에 지칩니다. «적지만 깊은 산»과 «넓은 산»을 번갈아 뒀습니다.
+    한 산 안에서도 올라갈수록 빈칸과 채울 개수는 늘고 시간은 줄어듭니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>산</th><th>신수</th><th class="num">단계</th><th>글자</th>
+        <th class="num">타일</th><th class="num">빈칸</th><th class="num">채우면 격파</th>
+        <th class="num">시간</th><th>성격</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="name">북한산</td><td>불가사리</td><td class="num">1–10</td><td>2자만</td><td class="num">6</td><td class="num">3→5</td><td class="num">2→3</td><td class="num">70→56</td><td>배우는 산</td></tr>
+        <tr><td class="name">속리산</td><td>삼족오</td><td class="num">11–20</td><td>2자만</td><td class="num">7</td><td class="num">4→6</td><td class="num">3→4</td><td class="num">66→52</td><td>글자판이 넓어진다</td></tr>
+        <tr><td class="name">계룡산</td><td>해태</td><td class="num">21–30</td><td>2–3자</td><td class="num">7</td><td class="num">4→6</td><td class="num">3→4</td><td class="num">62→50</td><td>세 글자가 섞인다</td></tr>
+        <tr><td class="name">설악산</td><td>현무</td><td class="num">31–40</td><td>2–3자</td><td class="num">7</td><td class="num">5→7</td><td class="num">3→5</td><td class="num">58→46</td><td>세 글자가 늘어난다</td></tr>
+        <tr><td class="name">소백산</td><td>백호</td><td class="num">41–50</td><td>2–4자</td><td class="num">7</td><td class="num">5→7</td><td class="num">4→5</td><td class="num">54→44</td><td>네 글자 등장</td></tr>
+        <tr><td class="name">덕유산</td><td>기린</td><td class="num">51–60</td><td>3–4자</td><td class="num">7</td><td class="num">3→4</td><td class="num">2→3</td><td class="num">52→42</td><td>적지만 깊다</td></tr>
+        <tr><td class="name">지리산</td><td>주작</td><td class="num">61–70</td><td>3–4자</td><td class="num">8</td><td class="num">3→5</td><td class="num">3→4</td><td class="num">48→40</td><td>글자판이 커진다</td></tr>
+        <tr><td class="name">한라산</td><td>백록</td><td class="num">71–80</td><td>2–4자</td><td class="num">8</td><td class="num">6→8</td><td class="num">4→6</td><td class="num">46→38</td><td>빈칸이 가장 많다</td></tr>
+        <tr><td class="name">금강산</td><td>봉황</td><td class="num">81–90</td><td>3–4자</td><td class="num">8</td><td class="num">4→5</td><td class="num">3→4</td><td class="num">42→34</td><td>시간이 촉박하다</td></tr>
+        <tr><td class="name">백두산</td><td>천지의 용</td><td class="num">91–100</td><td>2–4자</td><td class="num">8</td><td class="num">7→9</td><td class="num">5→7</td><td class="num">38→30</td><td>모든 것이 한꺼번에</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">기술 자산</p>
+  <h2>소스와 데이터</h2>
+  <p>전부 저장소 <span class="num" style="font-family:var(--font-mono);font-size:13px">web/</span> 아래에 있고,
+    외부 서버 없이 정적 파일로 돌아갑니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>파일</th><th class="num">규모</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td class="name">fill.html</td><td class="num">816줄</td><td>빈칸형 본체 — 100단계, 보너스 시간, 격파 연출</td></tr>
+        <tr><td class="name">wordhero.html</td><td class="num">1,624줄</td><td>찾기형 — 강화·수련 단수·오늘의 낱말·공유 카드</td></tr>
+        <tr><td class="name">kkutu.html</td><td class="num">666줄</td><td>끝말잇기 — 두음법칙, 수호신 AI</td></tr>
+        <tr><td class="name">words.js</td><td class="num">1.7MB</td><td>두 층 사전 — 출제용 3,392 / 인정용 191,684</td></tr>
+        <tr><td class="name">defs.js</td><td class="num">1.9MB</td><td>뜻풀이 25,869 (초급 1,168 · 중급 4,884 · 고급 18,895)</td></tr>
+        <tr><td class="name">sfx.js</td><td class="num">162줄</td><td>효과음 — 음원 없이 국악 평조로 합성</td></tr>
+        <tr><td class="name">art/</td><td class="num">10장 664KB</td><td>신수 그림</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>두 층 사전이 핵심 설계입니다</h3>
+  <div class="body">
+    <p><strong>출제는 좁게, 판정은 넓게.</strong> 빈칸에 넣을 낱말은 국립국어원 학습용 어휘와
+      기초사전 초·중급에서만 고릅니다. 19만 낱말에서 고르면 빈칸이 영영 안 채워지고,
+      그건 퍼즐이 아니라 벌입니다. 반대로 판정은 19만 전체로 하므로 아는 낱말이 거부당하지 않습니다.</p>
+  </div>
+  <div class="call gold">
+    <div class="t">출시 전 반드시 지켜야 할 라이선스</div>
+    <p>사전과 뜻풀이는 국립국어원 자료로 <strong>CC BY-SA 2.0 KR</strong>입니다. 상업 이용은 되지만
+      두 가지 의무가 있습니다. ① 앱 안에 출처 표시 ② 이 <strong>데이터 파일</strong>은 같은 라이선스로 공개.
+      게임 코드 자체는 해당 없습니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">시장</p>
+  <h2>우리는 어디쯤인가</h2>
+  <p>스토어 표기 구간 기준입니다. 정확한 수치가 아니라 자릿수를 보는 용도입니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>앱</th><th>유형</th><th class="num">다운로드</th><th>시사점</th></tr></thead>
+      <tbody>
+        <tr><td class="name">워드퍼즐</td><td>빈칸 채우기</td><td class="num">500만+</td><td>우리와 같은 코어 — 천장이 여기</td></tr>
+        <tr><td class="name">낱말퀴즈</td><td>뜻풀이 크로스워드</td><td class="num">100만+</td><td>뜻풀이 자산의 가치를 증명</td></tr>
+        <tr><td class="name">끝말잇기 한방단어</td><td>끝말잇기</td><td class="num">10만+</td><td rowspan="3" style="vertical-align:middle">앱은 많은데 아무도 100만을 못 넘김 —
+          경쟁이 센 게 아니라 <strong>천장이 낮다</strong></td></tr>
+        <tr><td class="name">끝말잇기 AI 대결</td><td>끝말잇기</td><td class="num">1만+</td></tr>
+        <tr><td class="name">끝말잇기 온라인</td><td>끝말잇기</td><td class="num">1천+</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="call">
+    <div class="t">500만은 게임성으로 만든 숫자가 아닙니다</div>
+    <p>2019년 출시 이후 6~7년 누적, 유료 광고비, 리뷰 수만 건이 만든 스토어 랭킹,
+      그리고 시즌·이벤트·출석 같은 라이브 운영이 쌓인 결과입니다.
+      리뷰 수만 건은 곧 <strong>공짜 노출</strong>이라, 신작은 출발선이 다릅니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">반응 예측</p>
+  <h2>사람들이 좋아할 것 / 떠날 지점</h2>
+  <div class="cols">
+    <div class="card">
+      <h3 style="color:var(--jade)">어필할 것</h3>
+      <ul>
+        <li><strong>«왜 계속하나»의 답이 있다.</strong> 경쟁작은 레벨 숫자가 올라갈 뿐, 우리는 수호신을 쓰러뜨리고 강해진다.</li>
+        <li><strong>진입이 아주 쉽다.</strong> 1단계는 두 글자 세 개 중 둘만 맞추면 깨진다. 40~60대도 첫 판에 이긴다.</li>
+        <li><strong>볼 것이 있다.</strong> 한지에 그린 신수 열 장과 격파 연출은 이 장르에 거의 없다.</li>
+        <li><strong>자랑거리가 나온다.</strong> 칭호 낙관과 카톡 공유 글이 이미 돌아간다.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--accent)">떠날 지점</h3>
+      <ul>
+        <li><strong>절차 생성의 단조로움.</strong> 50판쯤 하면 «비슷한 글자판»으로 느껴질 위험. 산별 성격으로 눌렀지만 완전하지 않다.</li>
+        <li><strong>기록이 날아간다.</strong> 지금은 내 폰 안에만 저장된다. 기기를 바꾸면 끝.</li>
+        <li><strong>혼자 하는 게임.</strong> 친구·랭킹·대전이 없어 돌아올 이유가 약하다.</li>
+        <li><strong>돌아올 장치가 없다.</strong> 출석·일일 퀘스트·알림이 전부 비어 있다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">결손</p>
+  <h2>아직 없는 것</h2>
+  <p>게임성이 아니라 <strong>상품</strong>으로서 비어 있는 칸들입니다. 위에서부터 치명적입니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>항목</th><th>지금</th><th>왜 치명적인가</th></tr></thead>
+      <tbody>
+        <tr><td class="name">보상형 광고</td><td><span class="chip no">없음</span></td><td>이 장르 매출의 약 70%가 여기서 나옵니다</td></tr>
+        <tr><td class="name">서버 저장</td><td><span class="chip no">없음</span></td><td>기기를 바꾸면 100단계 기록이 사라집니다</td></tr>
+        <tr><td class="name">진짜 리더보드</td><td><span class="chip no">없음</span></td><td>지금 기록은 내 폰 안에만 있어 비교가 성립하지 않습니다</td></tr>
+        <tr><td class="name">출석 · 일일 퀘스트</td><td><span class="chip no">없음</span></td><td>재방문의 뼈대. 이게 없으면 하루 쓰고 끝납니다</td></tr>
+        <tr><td class="name">앱 패키징</td><td><span class="chip no">웹</span></td><td>스토어에 올릴 형태가 아직 아닙니다</td></tr>
+        <tr><td class="name">결제 상품</td><td><span class="chip no">없음</span></td><td>광고 제거·옥 꾸러미 등 과금 접점이 설계만 있고 미구현</td></tr>
+        <tr><td class="name">튜토리얼</td><td><span class="chip mid">규칙문만</span></td><td>1단계가 쉬워 당장은 버티지만, 첫 30초 이탈을 좌우합니다</td></tr>
+        <tr><td class="name">산 배경 그림</td><td><span class="chip mid">프롬프트만</span></td><td>구간의 얼굴을 눈으로도 바꿔 줄 자산</td></tr>
+        <tr><td class="name">오늘의 낱말(뜻풀이)</td><td><span class="chip mid">자료 확보</span></td><td>돈 없이 퍼질 수 있는 사실상 유일한 길</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">다음 순서</p>
+  <h2>로드맵</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="no">1</div>
+      <div>
+        <div class="t">통합 — 빈칸형을 본체로</div>
+        <p>지금 흩어진 세 시험판을 하나로 합칩니다. 빈칸형 위에 수호신 100단계,
+          강화 3종과 수련 단수, 오늘의 낱말, 효과음, 공유 카드를 전부 얹습니다.</p>
+        <p class="why">세 개를 따로 두면 어느 것도 완성되지 않습니다.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="no">2</div>
+      <div>
+        <div class="t">오늘의 낱말을 뜻풀이 퍼즐로</div>
+        <p>확보한 뜻풀이 2.6만 개로 하루 한 판. 초·중급 6,052개만 써도 하루 10문항 기준
+          1.6년치입니다. 칭호 낙관과 카톡 공유가 여기에 붙습니다.</p>
+        <p class="why">광고비 없이 퍼질 수 있는 유일한 경로입니다.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="no">3</div>
+      <div>
+        <div class="t">끝말잇기를 도전 모드로</div>
+        <p>주 1회 이벤트나 수호신전 변주로 넣습니다. 상시 모드로 두지 않습니다.</p>
+        <p class="why">티키타카는 좋지만 메인으로 두면 10만에서 막힙니다. 질리기 전에 끝내면 장점만 남습니다.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="no">4</div>
+      <div>
+        <div class="t">상품화</div>
+        <p>서버 저장과 리더보드, 출석과 일일 퀘스트, 보상형 광고, 결제 상품, 앱 패키징.</p>
+        <p class="why">여기부터는 게임 만들기가 아니라 사업 만들기입니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">전망</p>
+  <h2>솔직한 결론</h2>
+  <div class="body">
+    <p><strong>코어 재미는 이미 경쟁작을 넘어섰다고 봅니다.</strong> 워드퍼즐에는 «왜 계속하나»의 답이
+      레벨 숫자뿐인데, 우리에게는 쓰러뜨릴 대상과 강해지는 축이 있습니다.</p>
+    <p><strong>그러나 «금방 500만을 따라간다»는 어렵습니다.</strong> 그 숫자는 게임성이 아니라
+      시간·자본·운영이 만든 것이기 때문입니다. 앞서 만든 수익 계산에서도 확인했듯,
+      개인이 유료 광고를 돌리면 매출보다 광고비가 큽니다.</p>
+    <p><strong>현실적인 1년 목표는 5만~20만 설치입니다.</strong> 그 구간에서 월 수백만 원 규모는
+      가능합니다. 그 위로 가는 길은 둘뿐입니다 — 3년 이상 꾸준히 쌓거나,
+      오늘의 낱말이 카톡방에서 터지거나.</p>
+  </div>
+  <div class="call jade">
+    <div class="t">그래서 다음 한 수는 통합입니다</div>
+    <p>지금 가장 큰 손실은 기능이 모자란 것이 아니라, <strong>잘 만든 조각들이 서로 떨어져 있다는 것</strong>입니다.
+      하나로 합치는 순간 «시험판 세 개»가 «게임 한 개»가 됩니다.</p>
+  </div>
+</section>
+
+<section style="border-bottom:0">
+  <p class="eyebrow">지금 해볼 수 있는 것</p>
+  <h2>시험판 모음</h2>
+  <div class="links">
+    <a href="https://claude.ai/artifact/Nrw7EuTbFoxX8Go3n3ujxC">낱말 채우기 — 본체 후보<span class="r">빈칸형</span></a>
+    <a href="https://claude.ai/artifact/554NkBtZXZ3cioMU3c99EH">낱말 용사 — 강화·오늘의 낱말<span class="r">찾기형</span></a>
+    <a href="https://claude.ai/artifact/C64ZWZ7G7DDTqvuGWGTCeo">끝말 용사 — 수호신과 대국<span class="r">끝말잇기</span></a>
+    <a href="https://claude.ai/artifact/BF8kVSH1hn84mz12u4Xhfk">수익 가능성 계산<span class="r">분석</span></a>
+    <a href="https://claude.ai/artifact/9HApB3JumjUMN8pAU1iphd">산 배경 10종 프롬프트<span class="r">미생성</span></a>
+  </div>
+  <p class="foot">낱말·뜻풀이 자료: 국립국어원 한국어 학습용 어휘 목록, 한국어기초사전, 표준국어대사전 (CC BY-SA 2.0 KR).
+    다운로드 수치는 각 스토어의 구간 표기를 옮긴 것으로, 정확한 설치 수가 아닙니다.</p>
+</section>
+
+</div>
