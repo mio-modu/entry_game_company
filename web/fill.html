@@ -206,6 +206,12 @@ body.quake { animation: shake .42s ease-out; }
 .panel p { font-size: 12.5px; color: var(--fg-dim); }
 .panel p b { color: var(--fg); font-weight: 600; }
 .cite { font-size: 10.5px; color: var(--fg-faint); line-height: 1.6; }
+.tlog { border-color: var(--gold); }
+.tlog h2 { color: var(--gold); }
+.tlog p#logSum { font-family: var(--font-mono); font-size: 12px; color: var(--fg);
+  line-height: 1.8; white-space: pre-wrap; }
+.trow { display: grid; grid-template-columns: 1.4fr 1fr; gap: 7px; }
+.btn.ghost { background: transparent; color: var(--fg-faint); font-size: 12.5px; }
 
 .ov { position: fixed; inset: 0; z-index: 30; background: rgba(8,9,13,.92);
   display: grid; place-items: center; padding: 16px; }
@@ -269,6 +275,18 @@ body.quake { animation: shake .42s ease-out; }
     <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
+
+  <div class="panel tlog">
+    <h2>시험판 기록</h2>
+    <p id="logSum">아직 기록이 없습니다.</p>
+    <div class="trow">
+      <button class="btn" id="btnLog">기록 복사</button>
+      <button class="btn ghost" id="btnLogClear">기록 지우기</button>
+    </div>
+    <p class="cite">이 시험판은 <b>어느 단계에서 그만두는지</b>를 알아보려고
+      플레이 기록을 이 기기 안에만 남깁니다. 이름·연락처 같은 것은 일절 담지 않고,
+      <b>「기록 복사」를 누르셨을 때만</b> 글로 만들어 드립니다. 그 글을 보내 주시면 됩니다.</p>
+  </div>
 
   <div class="panel">
     <h2>규칙</h2>
@@ -433,9 +451,57 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
-   "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail"].forEach(function (id) { el[id] = document.getElementById(id); });
+   "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
+   "logSum","btnLog","btnLogClear"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   var stage = 0, gold = 0, run = null, picked = [], timerId = null, toastT = null;
+
+  // ── 시험판 기록 ─────────────────────────────────────────────────────
+  //
+  // 열 명에게 물어서 받을 수 있는 건 "재미있었다"뿐이다. 알아야 하는 건
+  // "몇 판째에 껐는가" 하나이고, 그건 물어서는 안 나오고 기록으로만 나온다.
+  //
+  // 서버를 두지 않는다. 계정이 있어야 쓸 수 있는 저장소는 지인 열 명에게
+  // 통하지 않는다. 기기 안에만 쌓고, 본인이 단추를 눌렀을 때만 글로 바꿔 준다.
+  var LKEY = "nathero-test-log";
+  var LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [] };
+
+  function logLoad() {
+    try {
+      var raw = localStorage.getItem(LKEY);
+      if (raw) { var v = JSON.parse(raw); if (v && v.id) LOG = v; }
+    } catch (e) {}
+    if (!LOG.id) { LOG.id = Math.random().toString(36).slice(2, 6).toUpperCase(); LOG.t0 = Date.now(); }
+    if (!LOG.secs) LOG.secs = [];
+    if (!LOG.ev) LOG.ev = [];
+  }
+  function logSave() {
+    LOG.at = Date.now();
+    try { localStorage.setItem(LKEY, JSON.stringify(LOG)); } catch (e) {}
+  }
+  function logEv(code, v) {
+    LOG.ev.push(code + (v == null ? "" : v));
+    if (LOG.ev.length > 600) LOG.ev.splice(0, 200);
+    logSave();
+  }
+  function mmss(sec) {
+    sec = Math.max(0, Math.round(sec));
+    return Math.floor(sec / 60) + "분 " + (sec % 60) + "초";
+  }
+  function logText() {
+    var span = LOG.at && LOG.t0 ? (LOG.at - LOG.t0) / 1000 : 0;
+    return "낱말용사 시험 " + LOG.id + "\n"
+      + "판 " + LOG.n + " · 최고 " + LOG.best + "단계 · 머문 시간 " + mmss(span) + "\n"
+      + "단계별 초 " + (LOG.secs.length ? LOG.secs.join(" ") : "-") + "\n"
+      + "힌트 " + LOG.hint + " · 마무리 " + LOG.end + " · 덤낱말 " + LOG.bonus + "\n"
+      + "흐름 " + LOG.ev.slice(-40).join(" ");
+  }
+  function drawLog() {
+    if (!el.logSum) return;
+    el.logSum.textContent = LOG.n
+      ? logText()
+      : "아직 기록이 없습니다.\n한 판만 해 보셔도 여기에 쌓입니다.";
+  }
 
   // 받침이 있으면 '을', 없으면 '를'. "불가사리을 물리쳤습니다"는 눈에 걸린다.
   function eul(n) {
@@ -497,6 +563,11 @@ body.quake { animation: shake .42s ease-out; }
     picked = [];
     el.bonusBar.hidden = true;
     el.portrait.classList.remove("down");
+    run.t0 = Date.now();
+    LOG.n++;
+    LOG.best = Math.max(LOG.best, b.no);
+    logEv("S", b.no);
+    drawLog();
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
     var rn = ruleName(b);
@@ -758,6 +829,8 @@ body.quake { animation: shake .42s ease-out; }
     var wasWeak = weakHit();
     run.hp -= dmg;
     run.combo++;
+    logEv(isSlot ? "F" : "B", w.length);
+    if (!isSlot) LOG.bonus++;
     if (isSlot) {
       run.got[w] = 1;
       run.shown++;                            // 안개가 한 칸 걷힌다
@@ -884,6 +957,10 @@ body.quake { animation: shake .42s ease-out; }
 
   function result(r, won) {
     if (timerId) { clearInterval(timerId); timerId = null; }
+    var took = r.t0 ? Math.round((Date.now() - r.t0) / 1000) : 0;
+    LOG.secs.push(took);
+    if (LOG.secs.length > 60) LOG.secs.shift();
+    logEv(won ? "W" : "L", r.b.no + ":" + took);
     run = null;
     el.bonusBar.hidden = true;
     var reward = won ? Math.round(40 + r.max * 0.3) : 0;
@@ -928,8 +1005,37 @@ body.quake { animation: shake .42s ease-out; }
   // ── 조작 ────────────────────────────────────────────────────────────
   el.btnGo.addEventListener("click", attack);
   el.btnEnd.addEventListener("click", function () {
-    if (run && run.phase === "bonus") result(run, true);
+    if (run && run.phase === "bonus") { LOG.end++; logEv("E"); result(run, true); }
   });
+
+  // 기록 단추
+  el.btnLog.addEventListener("click", function () {
+    var t = logText();
+    var done = function () { el.btnLog.textContent = "복사됨 · 보내 주세요"; };
+    try {
+      navigator.clipboard.writeText(t).then(done, function () {
+        var r = document.createRange(); r.selectNodeContents(el.logSum);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        el.btnLog.textContent = "위 글을 직접 복사해 주세요";
+      });
+    } catch (e) { el.btnLog.textContent = "위 글을 직접 복사해 주세요"; }
+    setTimeout(function () { el.btnLog.textContent = "기록 복사"; }, 3500);
+  });
+  el.btnLogClear.addEventListener("click", function () {
+    try { localStorage.removeItem(LKEY); } catch (e) {}
+    LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [] };
+    logLoad(); drawLog();
+    toast("기록을 지웠습니다");
+  });
+
+  // 화면을 떠나는 순간이 가장 중요한 기록이다. 어디서 손을 놓았는지가 거기 남는다.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      logEv("X", run ? run.b.no : 0);
+      drawLog();
+    }
+  });
+  window.addEventListener("pagehide", function () { logEv("X", run ? run.b.no : 0); });
   el.btnClear.addEventListener("click", function () {
     if (!picked.length) return;
     picked.pop();
@@ -939,6 +1045,7 @@ body.quake { animation: shake .42s ease-out; }
   // 힌트는 글자가 아니라 뜻을 준다. 답을 알려주면 채우는 맛이 사라진다.
   el.btnHint.addEventListener("click", function () {
     if (!run) return;
+    LOG.hint++; logEv("H");
     var rest = remaining();
     if (!rest.length) { toast("남은 빈칸이 없습니다"); return; }
     var withMean = rest.filter(function (w) { return MEAN[w]; });
@@ -951,6 +1058,8 @@ body.quake { animation: shake .42s ease-out; }
     toast(w.length + "글자 · " + MEAN[w]);
   });
 
+  logLoad();
+  drawLog();
   start();
 })();
 </script>

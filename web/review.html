@@ -161,7 +161,7 @@ td.name { font-family: var(--font-display); font-weight: 700; white-space: nowra
   <h1>낱말 용사 기획 점검</h1>
   <p class="sub">세 갈래로 갈라졌던 시험판을 하나로 좁히고, 이 게임이 무엇이고 어디까지 왔고
     무엇이 비어 있는지 한자리에 정리했습니다.</p>
-  <p class="meta">2026.11.01 · 3판 — 외부 AI 검토 5건 반영</p>
+  <p class="meta">2026.11.01 · 4판 — 외부 검토 종합 · 테스트 배포 준비 완료</p>
 </header>
 
 <section>
@@ -446,6 +446,139 @@ td.name { font-family: var(--font-display); font-weight: 700; white-space: nowra
         <li><strong>돌아올 장치가 없다.</strong> 출석·일일 퀘스트·알림이 전부 비어 있다.</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">외부 검토</p>
+  <h2>다섯 분석을 받아 하나하나 확인했습니다</h2>
+  <p>칭찬은 세지 않았습니다. <strong>검증 가능한 주장만</strong> 추려 사실을 확인하고,
+    맞은 것은 코드와 문서에 반영했습니다. 넷이 «잘 만들었다»고 했고 하나만
+    «코드가 틀렸다»고 했는데, 게임을 고친 것은 그 하나였습니다.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>지적</th><th>출처</th><th>판정</th><th>조치</th></tr></thead>
+      <tbody>
+        <tr><td>빈칸 밖 낱말의 절반 피해가 기세 역산을 무너뜨린다</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>측정해 보니 더 심각 — 두 글자 구간 30조합 중 51~68%가 사전 인정.
+            <strong>빈칸 밖 피해를 0으로</strong> 바꿈</td></tr>
+        <tr><td>두 글자 구간은 퍼즐이 아니라 완전 탐색이다</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>위 수정으로 함께 해결 — 30 중 3~5개를 찾는 탐색 문제가 됨.
+            덕분에 1~20단계 두 글자 설계는 유지</td></tr>
+        <tr><td>«경쟁작은 레벨 숫자뿐»이라 했는데 우리도 파라미터만 바뀐다</td><td>Genspark</td>
+          <td><span class="chip mid">이미 수정</span></td>
+          <td>검토 전에 금빛 글자·봉인·안개를 넣음. 예로 든 «타일이 얼어붙는다»가
+            실제로 넣은 봉인과 같음</td></tr>
+        <tr><td>학습용 어휘 목록은 CC BY-SA가 아니라 공공누리 1유형</td><td>ChatGPT</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>세 자료를 분리해 표로 정리하고 DICTIONARY-LICENSE.md 작성</td></tr>
+        <tr><td>«장르 매출의 70%가 보상형 광고»는 근거가 없다</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>삭제. 근거 없이 쓴 수치였음</td></tr>
+        <tr><td>«월 수백만 원»은 가정을 열어야 한다</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>DAU·eCPM 가정을 표로 공개, 전부 미검증임을 명시</td></tr>
+        <tr><td>«코어 재미가 경쟁작을 넘어섰다»는 자만</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>«넘어선 것은 구조다»로 고침. 재미는 플레이 데이터로만 증명됨</td></tr>
+        <tr><td>이벤트 로깅이 광고보다 급하다</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td><strong>구현 완료</strong> — 아래 «테스트 배포» 참고</td></tr>
+        <tr><td>비공개 테스트 12명 × 14일이 실제 병목</td><td>Perplexity</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>아무도 짚지 않은 일정 병목. 결손표에 추가</td></tr>
+        <tr><td>오늘의 낱말은 1.6년치가 아니라 순환·복습이 중요</td><td>Genspark</td>
+          <td><span class="chip ok">맞음</span></td>
+          <td>30일치 300문항 + 순환 구조로 축소</td></tr>
+        <tr><td>words.js도 경쟁자가 그대로 가져갈 수 있다</td><td>Genspark</td>
+          <td><span class="chip no">틀림</span></td>
+          <td>출제 3,392은 공공누리 1유형 — 동일조건 공개 의무 없음</td></tr>
+        <tr><td>워드퍼즐 500만은 글로벌 영어권 누적</td><td>Genspark</td>
+          <td><span class="chip no">근거 없음</span></td>
+          <td>패키지가 com.wordpuzzle.kr인 한국어 앱.
+            다만 «따라간다»는 프레임을 내려놓자는 결론은 수용</td></tr>
+        <tr><td>커밋 20개라 되돌릴 지점이 없다</td><td>Genspark</td>
+          <td><span class="chip no">사실 아님</span></td>
+          <td>전용 브랜치에 커밋 26개, 매 단계 되돌릴 수 있음</td></tr>
+        <tr><td>통합부터 속도감 있게 밀어붙이자</td><td>Grok · Gemini · Perplexity</td>
+          <td><span class="chip no">채택 안 함</span></td>
+          <td>세 곳이 같은 말을 했지만 따르지 않습니다. 두 달 써서 통합한 뒤
+            «15분을 못 버틴다»를 알면 늦습니다. 다수결이 아니라 비용 구조의 문제</td></tr>
+        <tr><td>Capacitor로 웹을 그대로 앱으로 포장하라</td><td>Perplexity</td>
+          <td><span class="chip ok">채택</span></td>
+          <td>코드를 다시 쓰지 않아도 됩니다. 다만 지표가 나온 뒤에</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">테스트 배포</p>
+  <h2>이제 열 명에게 보냅니다</h2>
+  <p>«재미있었다»는 말은 받아도 쓸 데가 없습니다. 알아야 하는 것은
+    <strong>몇 판째에 껐는가</strong> 하나이고, 그건 물어서는 안 나옵니다. 그래서 기록을 붙였습니다.</p>
+
+  <h3>무엇이 기록되나</h3>
+  <div class="body">
+    <p>기기 안에만 쌓입니다. 서버로 가지 않고, 이름·연락처는 담지 않습니다.
+      플레이어가 <strong>「기록 복사」를 눌렀을 때만</strong> 글로 만들어집니다.
+      실제로 나오는 모양입니다.</p>
+  </div>
+  <div class="share" style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px;font-family:var(--font-mono);font-size:12.5px;line-height:1.8;white-space:pre-wrap;margin-top:12px">낱말용사 시험 OWVW
+판 12 · 최고 13단계 · 머문 시간 18분 32초
+단계별 초 34 41 29 52 38 44 61 27 55 40 48 36
+힌트 3 · 마무리 5 · 덤낱말 24
+흐름 S7 F3 B2 F2 H F3 W7:44 S8 F2 X8</div>
+  <div class="body" style="margin-top:12px">
+    <p><strong>흐름 기호:</strong> <span style="font-family:var(--font-mono)">S</span> 단계 시작 ·
+      <span style="font-family:var(--font-mono)">F</span> 빈칸 채움 ·
+      <span style="font-family:var(--font-mono)">B</span> 덤 낱말 ·
+      <span style="font-family:var(--font-mono)">H</span> 힌트 ·
+      <span style="font-family:var(--font-mono)">E</span> 여기서 마무리 ·
+      <span style="font-family:var(--font-mono)">W</span> 격파 ·
+      <span style="font-family:var(--font-mono)">L</span> 시간 초과 ·
+      <span style="font-family:var(--font-mono)">X</span> 화면을 떠남</p>
+    <p><strong>X가 가장 중요합니다.</strong> 어느 단계에서 손을 놓았는지가 거기 남습니다.</p>
+  </div>
+
+  <div class="call gold">
+    <div class="t">보내기 전에 — 링크 공개 설정부터</div>
+    <p>지금 시험판은 <strong>비공개</strong>라 받은 사람이 열지 못합니다.
+      아티팩트 화면의 <strong>Share 메뉴에서 «링크가 있는 모든 사용자»</strong>로 바꾸셔야 합니다.
+      이걸 빼먹으면 열 명이 전부 «안 열려요»라고 답합니다.</p>
+  </div>
+
+  <h3>보낼 때 쓸 말</h3>
+  <div class="body">
+    <p>설명을 하면 안 됩니다. 설명을 듣고 한 사람의 이탈 지점은 실제 사용자의 것과 다릅니다.</p>
+  </div>
+  <div class="share" style="background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13.5px;line-height:1.9;white-space:pre-wrap;margin-top:12px">낱말 게임 하나 만들고 있는데 한번만 해봐 주실래요?
+설명은 일부러 안 할게요. 하시다가 그만두고 싶을 때 그만두시면 됩니다.
+다 하신 뒤에 화면 맨 아래 「기록 복사」를 누르시고,
+복사된 글만 그대로 보내 주시면 됩니다.</div>
+
+  <h3>무엇으로 판정하나</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>열 명의 판수 중앙값</th><th>판정</th><th>다음</th></tr></thead>
+      <tbody>
+        <tr><td class="num">8판 이상</td><td><span class="chip ok">코어 합격</span></td>
+          <td>통합으로 넘어갑니다</td></tr>
+        <tr><td class="num">5~7판</td><td><span class="chip mid">경계</span></td>
+          <td>X가 몰린 구간을 먼저 수리하고 다시 보냅니다</td></tr>
+        <tr><td class="num">4판 이하</td><td><span class="chip no">코어 수리</span></td>
+          <td>통합을 멈춥니다. 판 생성이나 루프 자체를 고쳐야 합니다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="body" style="margin-top:14px">
+    <p>함께 볼 것 두 가지입니다. <strong>단계별 초가 뒤로 갈수록 늘어나는지</strong> —
+      줄어들면 익숙해진 것이고, 급격히 늘면 그 구간이 벽입니다.
+      그리고 <strong>마무리 횟수</strong> — 보너스 시간을 거의 안 쓰면 그 장치가 헛돈 것입니다.</p>
+    <p><strong>기록을 모으면 제게 그대로 붙여 주십시오.</strong> 열 개를 한 번에 분석해
+      이탈 지점과 벽 구간을 짚어 드리겠습니다.</p>
   </div>
 </section>
 
