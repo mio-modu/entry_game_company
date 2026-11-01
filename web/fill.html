@@ -364,9 +364,16 @@ body.quake { animation: shake .42s ease-out; }
 }
 .chest i, .chest u {
   position: absolute; left: 0; right: 0; display: block;
-  background: linear-gradient(180deg, #8A6A2E, #5E4518);
-  box-shadow: inset 0 0 0 2px #C9A227, 0 8px 20px -8px #000;
+  background: linear-gradient(180deg, var(--cw1, #8A6A2E), var(--cw2, #5E4518));
+  box-shadow: inset 0 0 0 2px var(--cb, #C9A227), 0 8px 20px -8px #000;
 }
+/* 산이 높을수록 함도 귀해진다. 열기 전에 이미 눈으로 알 수 있어야 한다. */
+.chest.c1 { --cw1:#7A6141; --cw2:#4E3C22; --cb:#A98B52; }
+.chest.c2 { --cw1:#8A6A2E; --cw2:#5E4518; --cb:#C9A227; }
+.chest.c3 { --cw1:#6E7784; --cw2:#424A57; --cb:#C3CBD6; }
+.chest.c4 { --cw1:#9A7B1E; --cw2:#6A520C; --cb:#F0D98A; }
+.chest.c5 { --cw1:#8C3A2E; --cw2:#5C2018; --cb:#F0D98A; }
+.chest.c6 { --cw1:#6C3A86; --cw2:#3E1E52; --cb:#FFD76A; }
 .chest i { top: 26px; bottom: 0; border-radius: 4px 4px 10px 10px; overflow: visible; }
 .chest u {
   top: 0; height: 32px; border-radius: 10px 10px 4px 4px;
@@ -1704,19 +1711,47 @@ body.quake { animation: shake .42s ease-out; }
   //
   // 확률은 숨기지 않는다. 화면에 그대로 적는다. 숨기는 순간 재미가 아니라
   // 의심이 되고, 유료로 팔 때는 법으로도 공개해야 한다.
+  // 보물함은 산 등급을 그대로 따른다. 별도 등급 체계를 또 만들지 않는다 —
+  // 이미 산이 열 개이고 그게 곧 난이도다.
+  //
+  //   북한산·속리산   양품까지     계룡산·설악산  귀품까지
+  //   소백산·덕유산   명품까지     지리산·한라산  신물까지
+  //   금강산          전설까지     백두산         신화까지
+  //
+  // 그래서 "백두산까지 가야 천뢰고를 본다". 올라가는 일 자체에 값이 붙고,
+  // 광고로 받는 낮은 함에서는 좋은 것이 아예 나오지 않는다.
+  function tierCap(mt) {
+    return mt <= 1 ? 1 : mt <= 3 ? 2 : mt <= 5 ? 3 : mt <= 7 ? 4 : mt === 8 ? 5 : 6;
+  }
+
   var CHEST = [
-    { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",             go: function () { gold += 120; } },
-    { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",           go: function () { gem += 2; } },
-    { p: 12, k: "반", t: "반딧불",   d: "빈칸 하나를 비춰 준다", go: function () { bag.brush++; } },
-    { p:  8, k: "기", t: "기름 한 병", d: "덤 시간 +15초",        go: function () { bag.ink++; } },
-    { p:  5, k: "숫", t: "숫돌",     d: "강화 성공률 +20%p",     go: function () { bag.charm++; } },
-    { p: 13,   k: "양", tier: 1 },
-    { p:  6,   k: "귀", tier: 2 },
-    { p:  3,   k: "명", tier: 3 },
-    { p:  0.89, k: "신", tier: 4 },
-    { p:  0.1,  k: "전", tier: 5 },   // 1년 열심히 하면 셋 중 둘은 본다
-    { p:  0.01, k: "화", tier: 6 }    // 전국에 몇 명. 순위표가 생겨야 뜻이 산다
+    { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",              go: function () { gold += 120; } },
+    { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",            go: function () { gem += 2; } },
+    { p: 12, k: "반", t: "반딧불",       d: "빈칸 하나를 비춰 준다", go: function () { bag.brush++; } },
+    { p:  8, k: "기", t: "기름 한 병",   d: "마무리 시간 +15초",     go: function () { bag.ink++; } },
+    { p:  5, k: "숫", t: "숫돌",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } }
   ];
+  var GEAR_P = 23;                               // 나머지 23%가 문방구
+  var TIER_W = [0, 13, 6, 3, 0.89, 0.1, 0.01];   // 예사(0)는 나오지 않는다
+
+  function rollTier(mt) {
+    var cap = tierCap(mt), tot = 0, i;
+    for (i = 1; i <= cap; i++) tot += TIER_W[i];
+    var r = Math.random() * tot, acc = 0;
+    for (i = 1; i <= cap; i++) { acc += TIER_W[i]; if (r < acc) return i; }
+    return 1;
+  }
+
+  function chestOdds(mt) {
+    var cap = tierCap(mt), tot = 0, i, out = [];
+    CHEST.forEach(function (c) { out.push(c.t + " " + c.p + "%"); });
+    for (i = 1; i <= cap; i++) tot += TIER_W[i];
+    for (i = 1; i <= cap; i++) {
+      var pc = GEAR_P * TIER_W[i] / tot;
+      out.push("문방구(" + TIER[i] + ") " + (pc < 1 ? pc.toFixed(2) : pc.toFixed(1)) + "%");
+    }
+    return out.join("  ·  ");
+  }
 
   // 문방구가 나오면 어느 것인지 다시 한 번 뽑는다. 이미 가진 것보다 낮으면
   // 냥으로 바꿔 준다 — 중복이 꽝이 되면 상자를 여는 일이 벌이 된다.
@@ -1739,14 +1774,15 @@ body.quake { animation: shake .42s ease-out; }
     return { t: nm, d: oldName + " → " + nm + " · " + eff, tier: tier, got: true };
   }
 
-  function openChest(after) {
+  function openChest(mt, after) {
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
-    var h = document.createElement("h2"); h.textContent = "수호신의 보물함";
+    var h = document.createElement("h2");
+    h.textContent = MOUNTAINS[mt].m + "의 보물함";
     card.appendChild(h);
 
     var box = document.createElement("button");
-    box.className = "chest";
+    box.className = "chest c" + tierCap(mt);
     box.setAttribute("aria-label", "보물함 열기");
     box.innerHTML = "<i></i><u></u>";
     card.appendChild(box);
@@ -1756,9 +1792,7 @@ body.quake { animation: shake .42s ease-out; }
     card.appendChild(tip);
 
     var odds = document.createElement("p"); odds.className = "lead odds";
-    odds.textContent = CHEST.map(function (c) {
-      return (c.tier != null ? "문방구(" + TIER[c.tier] + ")" : c.t) + " " + c.p + "%";
-    }).join("  ·  ");
+    odds.textContent = chestOdds(mt);
     card.appendChild(odds);
 
     var next = document.createElement("button"); next.className = "btn";
@@ -1771,14 +1805,14 @@ body.quake { animation: shake .42s ease-out; }
     box.addEventListener("click", function () {
       if (opened) return;
       opened = true;
-      var roll = Math.random() * 100, acc = 0, got = CHEST[CHEST.length - 1];
+      var roll = Math.random() * 100, acc = 0, got = null, tier = null;
       for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p; if (roll < acc) { got = CHEST[i]; break; } }
-      var title = got.t, body = got.d, tier = got.tier;
-      if (got.tier != null) { var g = grantGear(got.tier); title = g.t; body = g.d; }
-      else got.go();
+      var title, body;
+      if (got) { got.go(); title = got.t; body = got.d; }
+      else { tier = rollTier(mt); var g = grantGear(tier); title = g.t; body = g.d; }
       saveS();
       drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
-      logEv("T", got.k);
+      logEv("T", got ? got.k : "g" + tier);
       box.classList.add("open");
       if (window.SFX) SFX.up();
       h.textContent = title;
@@ -1858,7 +1892,7 @@ body.quake { animation: shake .42s ease-out; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     r.leftAtEnd = Math.max(0, r.left);
     run = null;
-    if (r.b.boss) openChest(function () { result(r, true); });
+    if (r.b.boss) openChest(Math.floor((r.b.no - 1) / 10), function () { result(r, true); });
     else result(r, true);
   }
 
