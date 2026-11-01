@@ -291,6 +291,16 @@ body.quake { animation: shake .42s ease-out; }
 #ups .up:first-child { border-top: 0; }
 .up > div { flex: 1; min-width: 0; }
 .up .t { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; }
+.gear {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .03em;
+  border-radius: 20px; padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+  border: 1px solid currentColor;
+}
+.gear.g0 { color: var(--fg-faint); }
+.gear.g1 { color: #7FA86B; }
+.gear.g2 { color: #6FA8C8; }
+.gear.g3 { color: var(--gold); }
+.gear.g4 { color: #C77BE0; text-shadow: 0 0 10px rgba(199,123,224,.6); }
 .up .d { font-size: 12px; color: var(--fg-dim); }
 .up .d.rate { font-family: var(--font-mono); font-size: 11px; }
 .up .d.rate.hi { color: var(--jade); }
@@ -372,6 +382,12 @@ body.quake { animation: shake .42s ease-out; }
 .chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 .card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
 .card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
+/* 명품 이상이 나오면 제목부터 다르게 — 이 순간이 상자를 여는 이유다 */
+.card h2.rare {
+  color: #C77BE0; text-shadow: 0 0 22px rgba(199,123,224,.75);
+  animation: rareIn .6s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes rareIn { from { transform: scale(.7); opacity: 0 } }
 
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
 .words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
@@ -662,14 +678,40 @@ body.quake { animation: shake .42s ease-out; }
   var CAP_PER_CYCLE = 9;
   var UPGRADES = [
     { id: "atk",   t: "붓끝",  w: "공격력",   base: 40,  r: 1.16,
-      desc: function () { return "빈칸 피해 x" + Math.pow(ATK_STEP, up.atk).toFixed(2); } },
+      desc: function () { return "빈칸 피해 x" + (gearVal("atk") * Math.pow(ATK_STEP, up.atk)).toFixed(2); } },
     { id: "time",  t: "먹물",  w: "제한시간", base: 90,  r: 1.22,
-      desc: function () { return "+" + (up.time * TIME_STEP) + "초"; } },
+      desc: function () { return "제한시간 +" + (up.time * TIME_STEP + gearVal("time")) + "초"; } },
     { id: "combo", t: "인장",  w: "연속 배수", base: 150, r: 1.22,
-      desc: function () { return "연속마다 +" + Math.round((0.08 + up.combo * COMBO_STEP) * 100) + "%"; } }
+      desc: function () { return "연속마다 +"
+        + Math.round((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100) + "%"; } }
   ];
   var up = { atk: 0, time: 0, combo: 0 };
   var fails = { atk: 0, time: 0, combo: 0 };
+
+  // ── 문방사우 ────────────────────────────────────────────────────────
+  //
+  // 강화가 '꾸준히 쌓는 축'이라면 이쪽은 '운으로 뛰는 축'이다. 둘이 다른
+  // 감정을 준다. 보물함에 대박이 없으면 상자를 여는 손맛도 없다.
+  //
+  // 칼이나 장갑을 쥐여 주지 않는다. 이 게임은 낱말로 싸우고, 그러니 붓이
+  // 곧 칼이다. 거기가 이 게임의 유일한 차별점이라 흔들면 안 된다.
+  //
+  // 장착이라는 개념은 두지 않는다. 가진 것 중 가장 좋은 것이 저절로 쓰인다.
+  // 인벤토리와 장착 화면은 40~60대에게 그 자체로 벽이고, 우리가 파는 것은
+  // 관리가 아니라 낱말이다.
+  var GEAR = {
+    atk:   { t: "붓", names: ["몽당붓", "족제비붓", "황모붓", "금니붓", "일필휘지"],
+             val: [1, 1.15, 1.35, 1.6, 2.0], unit: "빈칸 피해 x" },
+    time:  { t: "먹", names: ["먹동강", "송연묵", "유연묵", "금니묵", "천년묵"],
+             val: [0, 4, 8, 13, 20], unit: "제한시간 +", suf: "초" },
+    combo: { t: "인장", names: ["나무도장", "황동인", "옥인", "금인", "어보"],
+             val: [0, 0.02, 0.04, 0.07, 0.11], unit: "연속마다 +", pct: true }
+  };
+  var TIER = ["평범", "양품", "귀품", "명품", "신물"];
+  var gear = { atk: 0, time: 0, combo: 0 };
+
+  function gearVal(id) { return GEAR[id].val[gear[id]]; }
+  function gearName(id) { return GEAR[id].names[gear[id]]; }
 
   function upCap() { return CAP_PER_CYCLE * (Math.floor(stage / 100) + 1); }
   function trainLv() { return Math.floor((up.atk + up.time + up.combo) / 3); }
@@ -687,7 +729,7 @@ body.quake { animation: shake .42s ease-out; }
   function saveS() {
     try {
       localStorage.setItem(SKEY, JSON.stringify(
-        { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails }));
+        { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails, gear: gear }));
     } catch (e) {}
   }
   function loadS() {
@@ -700,6 +742,7 @@ body.quake { animation: shake .42s ease-out; }
       if (v.bag) bag = v.bag;
       if (v.up) up = v.up;
       if (v.fails) fails = v.fails;
+      if (v.gear) gear = v.gear;
     } catch (e) {}
   }
 
@@ -784,7 +827,7 @@ body.quake { animation: shake .42s ease-out; }
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
       need: lerp(M.k0, M.k1, sub),
       // 수호신은 가장 많이 요구하는 자리라 숨 쉴 틈을 조금 돌려준다
-      t: lerp(M.s0, M.s1, sub) + (boss ? 8 : 0) + up.time * TIME_STEP
+      t: lerp(M.s0, M.s1, sub) + (boss ? 8 : 0) + up.time * TIME_STEP + gearVal("time")
     };
   }
 
@@ -798,8 +841,9 @@ body.quake { animation: shake .42s ease-out; }
     // 기세를 그대로 두면 두 개 채우기 전에 쓰러져 빈칸이 다시 장식이 된다.
     for (var i = 0; i < need && i < byLen.length; i++) {
       hp += Math.round(16 * Math.pow(byLen[i].length, 1.8)
-        * Math.pow(ATK_STEP, up.atk)
-        * (1 + Math.min(i, COMBO_CAP) * (0.08 + up.combo * COMBO_STEP)));
+        * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
+        * (1 + Math.min(i, COMBO_CAP)
+               * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
     }
     return hp;
   }
@@ -1071,8 +1115,10 @@ body.quake { animation: shake .42s ease-out; }
     drawStatsOnly();
   }
   function kDamage(w) {
-    return Math.round(14 * Math.pow(w.length, 1.8) * Math.pow(ATK_STEP, up.atk)
-      * (1 + Math.min(run.combo, COMBO_CAP) * (0.08 + up.combo * COMBO_STEP)));
+    return Math.round(14 * Math.pow(w.length, 1.8)
+      * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
+      * (1 + Math.min(run.combo, COMBO_CAP)
+             * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
   }
   function kCheck() {
     if (!run || !run.chain) return;
@@ -1392,8 +1438,9 @@ body.quake { animation: shake .42s ease-out; }
     if (!isSlot) return 0;
     if (run.daily) return w.length;      // 오늘의 낱말은 '남은 빈칸'이 곧 기세다
     var d = 16 * Math.pow(w.length, 1.8)
-          * Math.pow(ATK_STEP, up.atk)
-          * (1 + Math.min(run.combo, COMBO_CAP) * (0.08 + up.combo * COMBO_STEP));
+          * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
+          * (1 + Math.min(run.combo, COMBO_CAP)
+                 * (0.08 + gearVal("combo") + up.combo * COMBO_STEP));
     if (weakHit()) d *= 1.8;               // 금빛 글자를 끼워 넣으면 크게 들어간다
     return Math.round(d);
   }
@@ -1602,12 +1649,37 @@ body.quake { animation: shake .42s ease-out; }
   // 확률은 숨기지 않는다. 화면에 그대로 적는다. 숨기는 순간 재미가 아니라
   // 의심이 되고, 유료로 팔 때는 법으로도 공개해야 한다.
   var CHEST = [
-    { p: 40, k: "냥",  t: "냥 꾸러미",   d: "냥 +120",            go: function () { gold += 120; } },
-    { p: 28, k: "옥",  t: "옥 두 알",     d: "힌트 두 번",          go: function () { gem += 2; } },
-    { p: 15, k: "붓",  t: "붓 한 획",     d: "빈칸 하나를 짚어 준다", go: function () { bag.brush++; } },
-    { p: 11, k: "먹",  t: "먹물 한 모금", d: "덤 시간 +15초",       go: function () { bag.ink++; } },
-    { p:  6, k: "부",  t: "부적",         d: "강화 성공률 +20%p",    go: function () { bag.charm++; } }
+    { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",             go: function () { gold += 120; } },
+    { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",           go: function () { gem += 2; } },
+    { p: 12, k: "획", t: "붓 한 획",     d: "빈칸 하나를 짚어 준다", go: function () { bag.brush++; } },
+    { p:  8, k: "물", t: "먹물 한 모금", d: "덤 시간 +15초",        go: function () { bag.ink++; } },
+    { p:  5, k: "부", t: "부적",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } },
+    { p: 13, k: "양", tier: 1 },
+    { p:  6, k: "귀", tier: 2 },
+    { p:  3, k: "명", tier: 3 },
+    { p:  1, k: "신", tier: 4 }
   ];
+
+  // 문방구가 나오면 어느 것인지 다시 한 번 뽑는다. 이미 가진 것보다 낮으면
+  // 냥으로 바꿔 준다 — 중복이 꽝이 되면 상자를 여는 일이 벌이 된다.
+  function grantGear(tier) {
+    var ids = ["atk", "time", "combo"];
+    var id = ids[Math.floor(Math.random() * 3)];
+    var G = GEAR[id], nm = G.names[tier];
+    if (tier <= gear[id]) {
+      var back = 60 + tier * 60;
+      gold += back;
+      var why = tier === gear[id] ? "이미 쓰고 계신 것입니다" : "지금 것이 더 좋습니다";
+      return { t: nm, d: why + " · 냥 +" + back + "으로 바꿨습니다", tier: tier };
+    }
+    var oldName = G.names[gear[id]];
+    gear[id] = tier;
+    var v = G.val[tier];
+    var eff = G.pct ? G.unit + Math.round(v * 100) + "%"
+            : G.suf ? G.unit + v + G.suf
+            : G.unit + v.toFixed(2);
+    return { t: nm, d: oldName + " → " + nm + " · " + eff, tier: tier, got: true };
+  }
 
   function openChest(after) {
     var ov = document.createElement("div"); ov.className = "ov";
@@ -1626,7 +1698,9 @@ body.quake { animation: shake .42s ease-out; }
     card.appendChild(tip);
 
     var odds = document.createElement("p"); odds.className = "lead odds";
-    odds.textContent = CHEST.map(function (c) { return c.t + " " + c.p + "%"; }).join("  ·  ");
+    odds.textContent = CHEST.map(function (c) {
+      return (c.tier != null ? "문방구(" + TIER[c.tier] + ")" : c.t) + " " + c.p + "%";
+    }).join("  ·  ");
     card.appendChild(odds);
 
     var next = document.createElement("button"); next.className = "btn";
@@ -1641,14 +1715,17 @@ body.quake { animation: shake .42s ease-out; }
       opened = true;
       var roll = Math.random() * 100, acc = 0, got = CHEST[CHEST.length - 1];
       for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p; if (roll < acc) { got = CHEST[i]; break; } }
-      got.go();
+      var title = got.t, body = got.d, tier = got.tier;
+      if (got.tier != null) { var g = grantGear(got.tier); title = g.t; body = g.d; }
+      else got.go();
       saveS();
+      drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
       logEv("T", got.k);
       box.classList.add("open");
       if (window.SFX) SFX.up();
-      h.textContent = got.t;
-      h.className = "win";
-      tip.textContent = got.d;
+      h.textContent = title;
+      h.className = "win" + (tier != null && tier >= 3 ? " rare" : "");
+      tip.textContent = body;
       tip.className = "lead got";
       next.hidden = false;
       drawStatsOnly();
@@ -1680,6 +1757,10 @@ body.quake { animation: shake .42s ease-out; }
       var left = document.createElement("div");
       var t = document.createElement("div"); t.className = "t";
       t.textContent = u.t + " (" + u.w + ") · " + lvl + " / " + cap + "단계";
+      var g = document.createElement("span");
+      g.className = "gear g" + gear[u.id];
+      g.textContent = gearName(u.id);
+      t.appendChild(g);
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
       var r2 = document.createElement("div");
       r2.className = "d rate" + (maxed ? "" : pr >= 0.8 ? " hi" : pr >= 0.5 ? " mid" : " lo");
