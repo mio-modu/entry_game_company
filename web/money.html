@@ -1,0 +1,247 @@
+<title>과금 경계선</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root {
+  --bg: #F3EFE4; --surface: #FBF8F0; --surface-2: #EEE8D8; --line: #DBD2BD;
+  --fg: #201C16; --fg-dim: #6A6254; --fg-faint: #938B7B;
+  --accent: #B23A2E; --gold: #8A6A12; --jade: #2C6659;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+    --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+    --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+  --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 740px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; text-wrap: balance; }
+p { margin: 0; }
+.head { padding-block: 42px 26px; border-bottom: 2px solid var(--fg); }
+.head h1 { font-size: clamp(28px, 6.6vw, 40px); line-height: 1.2; }
+.head .one {
+  margin-top: 16px; font-family: var(--font-display); font-size: clamp(17px, 4vw, 21px);
+  line-height: 1.6; color: var(--fg);
+}
+.head .one b { color: var(--accent); }
+section { padding-block: 32px; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+}
+section > h2 { font-size: clamp(19px, 4.4vw, 25px); }
+h3 { font-size: 16px; margin-top: 26px; }
+.body { margin-top: 13px; display: flex; flex-direction: column; gap: 12px; }
+.body p { max-width: 66ch; }
+.body p b { color: var(--fg); }
+.split { display: grid; gap: 14px; margin-top: 18px; }
+@media (min-width: 640px) { .split { grid-template-columns: 1fr 1fr; } }
+.side {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+  padding: 17px 18px; display: flex; flex-direction: column; gap: 9px;
+}
+.side.pay { border-left: 3px solid var(--gold); }
+.side.skill { border-left: 3px solid var(--jade); }
+.side .t { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.side.pay .t { color: var(--gold); } .side.skill .t { color: var(--jade); }
+.side p { font-size: 13.5px; color: var(--fg-dim); }
+.side ul { margin: 2px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--fg-dim); }
+.side li { margin-bottom: 5px; }
+.scroll { overflow-x: auto; margin-top: 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 440px; }
+th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--fg-faint); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.name { font-family: var(--font-display); font-weight: 700; white-space: nowrap; }
+td.num { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+.bad { color: var(--accent); } .ok { color: var(--jade); }
+.call {
+  margin-top: 20px; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 4px 13px 13px 4px;
+  padding: 16px 18px; display: flex; flex-direction: column; gap: 8px;
+}
+.call .t { font-family: var(--font-display); font-weight: 700; font-size: 16.5px; }
+.call p { font-size: 13.5px; color: var(--fg-dim); max-width: 64ch; }
+.price {
+  margin-top: 18px; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 14px; padding: 20px; text-align: center;
+}
+.price .n { font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+.price .w { font-family: var(--font-mono); font-size: 30px; color: var(--gold); margin-top: 4px; }
+.price .s { font-size: 12.5px; color: var(--fg-faint); margin-top: 3px; }
+.price ul { margin: 14px auto 0; padding-left: 18px; max-width: 300px; text-align: left;
+  font-size: 13.5px; color: var(--fg-dim); }
+ul.plain { margin: 12px 0 0; padding-left: 19px; color: var(--fg-dim); font-size: 14px; }
+ul.plain li { margin-bottom: 7px; }
+ul.plain b { color: var(--fg); }
+.note { margin-top: 14px; font-size: 12.5px; color: var(--fg-faint); max-width: 64ch; }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <h1>과금 경계선</h1>
+  <p class="one">산 오르기는 <b>돈으로 편해져도 된다.</b><br>
+    리그는 <b>한 푼도 닿지 않는다.</b></p>
+</header>
+
+<section>
+  <p class="eyebrow">왜 이 선인가</p>
+  <h2>혼자 오르는 산과 겨루는 자리는 다르다</h2>
+  <div class="split">
+    <div class="side pay">
+      <div class="t">산 오르기 — 돈이 닿아도 된다</div>
+      <p>혼자 오르는 길입니다. 내가 등불을 하나 더 든다고 남이 늦어지지 않습니다.
+        돈으로 편해지는 것이 누구의 손해도 아닙니다.</p>
+    </div>
+    <div class="side skill">
+      <div class="t">리그 — 한 푼도 닿으면 안 된다</div>
+      <p>등수입니다. 내가 올라가면 누군가 내려갑니다. 여기 돈이 닿는 순간
+        <b>등수가 실력이 아니라 지갑</b>이 되고, 그러면 자랑할 것도 없어집니다.
+        “나 이번 주 3등”이 자랑이 아니게 되면 공유도 멈춥니다.</p>
+    </div>
+  </div>
+  <div class="call">
+    <div class="t">이 선을 지키면 나쁜 리뷰 한 줄이 안 생긴다</div>
+    <p>별 하나짜리 리뷰에서 가장 많이 보이는 문장이 “돈 쓴 사람만 이기는 게임”입니다.
+      그 문장이 나올 자리를 아예 만들지 않는 것이 이 설계의 목적입니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">확인함</p>
+  <h2>이 선은 이미 코드에 있었다</h2>
+  <div class="body">
+    <p>리그의 씨앗인 <b>오늘의 낱말</b>을 열어서 하나하나 확인했습니다.
+      강화와 장비가 닿는 자리가 있는지 전부 봤습니다.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>닿을 수 있는 곳</th><th>실제</th><th>왜</th></tr></thead>
+      <tbody>
+        <tr><td class="name">제한시간</td><td class="ok">안 닿음</td>
+            <td>90초 고정. 등불 강화·장비가 더해지지 않는다</td></tr>
+        <tr><td class="name">피해량</td><td class="ok">안 닿음</td>
+            <td>기세 = 빈칸 글자 수, 피해 = 낱말 길이. 검·북이 끼어들 식이 없다</td></tr>
+        <tr><td class="name">글자판</td><td class="ok">안 닿음</td>
+            <td>날짜를 씨앗으로 뽑아 모두 같은 판</td></tr>
+        <tr><td class="name">힌트</td><td class="bad">닿았음 → 막음</td>
+            <td>옥·반딧불은 보물함에서 나오고, 보물함은 산에서 나온다.
+                즉 <b>산을 많이 돈 사람이 리그에서 유리</b>했다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="body">
+    <p>힌트 한 군데가 새고 있었습니다. 오늘의 낱말에서는 힌트 단추를 아예 감추고,
+      눌러도 막히게 고쳤습니다.</p>
+  </div>
+  <div class="call">
+    <div class="t">리그는 새로 만들 것이 없다</div>
+    <p>오늘의 낱말을 <b>주 단위로 합산하면 그것이 리그</b>입니다. 새 화면도, 새 규칙도,
+      새 개념도 필요 없습니다. 이미 모두 같은 글자판에서 같은 시간으로 겨루고 있습니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">파는 것</p>
+  <h2>하나만 판다</h2>
+  <div class="price">
+    <div class="n">길동무</div>
+    <div class="w">3,300원</div>
+    <div class="s">한 번 사면 끝 · 월정액 아님</div>
+    <ul>
+      <li>광고 없음 (영구)</li>
+      <li>하루 보물함 하나 더</li>
+      <li>옥 스무 알</li>
+    </ul>
+  </div>
+  <div class="body">
+    <p><b>왜 하나인가.</b> 상품이 여럿이면 열 때마다 “또 뭘 사라고?”가 됩니다.
+      하나면 “이거 하나 사면 끝”입니다. 40~60대에게는 이 차이가 결제율보다 큽니다.
+      한 번 납득하면 두 번 묻지 않습니다.</p>
+    <p><b>왜 가챠를 안 파는가.</b> 이 나이대는 확률에 돈을 쓰지 않습니다.
+      보물함은 확률을 전부 적어 두었지만(2024년 3월부터 법적 의무입니다)
+      <b>거기에 돈을 받지는 않습니다.</b> 보물함은 광고와 플레이로만 엽니다.</p>
+    <p><b>왜 단계를 안 파는가.</b> 단계를 팔면 산이 사라집니다. 산이 사라지면
+      이 게임이 왜 있는지가 사라집니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">광고</p>
+  <h2>광고로는 낮은 등급까지만</h2>
+  <div class="body">
+    <p>보물함 등급은 <b>산 등급</b>을 따릅니다. 북한산에서는 양품까지, 백두산에서는
+      신화까지 나옵니다. 광고로 받는 함은 <b>1~2등급 산의 함</b>으로 고정합니다.</p>
+    <p>그러면 광고를 아무리 봐도 전설은 안 나옵니다. <b>좋은 장비는 산을 올라야만
+      나옵니다.</b> 시간으로도 돈으로도 등급을 살 수 없고, 오직 올라가야 합니다.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>여는 길</th><th>함 등급</th><th>하루 한도</th></tr></thead>
+      <tbody>
+        <tr><td class="name">수호신 격파</td><td>그 산의 등급 (예사~신화)</td><td class="num">무제한</td></tr>
+        <tr><td class="name">광고 1회</td><td>양품까지</td><td class="num">3</td></tr>
+        <tr><td class="name">길동무</td><td>양품까지</td><td class="num">+1</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">숫자</p>
+  <h2>이렇게 하면 얼마가 되는가</h2>
+  <div class="body">
+    <p>정직하게 적습니다. 상품 하나에 3,300원이면 <b>많이 벌 수 없습니다.</b>
+      대신 나쁜 리뷰가 안 생기고, 오래 남고, 사람이 사람을 데려옵니다.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>받는 수</th><th>결제 2%</th><th>결제 4%</th><th>광고(월, 대략)</th></tr></thead>
+      <tbody>
+        <tr><td class="name">1만</td><td class="num">66만원</td><td class="num">132만원</td><td class="num">10~30만원</td></tr>
+        <tr><td class="name">5만</td><td class="num">330만원</td><td class="num">660만원</td><td class="num">50~150만원</td></tr>
+        <tr><td class="name">10만</td><td class="num">660만원</td><td class="num">1,320만원</td><td class="num">100~300만원</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">결제율 2~4%는 캐주얼 장르에서 흔히 쓰는 범위를 가정한 것이고,
+    광고 수익은 하루 사용 시간과 지면 수에 따라 크게 달라집니다.
+    <b>실제 숫자는 시험 배포로 직접 재야 합니다.</b> 여기 표는 자릿수를 가늠하는 용도입니다.</p>
+</section>
+
+<section>
+  <p class="eyebrow">덧붙임</p>
+  <h2>나중에 생길 유혹</h2>
+  <ul class="plain">
+    <li><b>“리그 참가권을 팔면 어떨까”</b> — 안 됩니다. 돈 낸 사람만 등수에 들어가면
+      그게 돈으로 산 등수입니다.</li>
+    <li><b>“리그에서 쓸 힌트를 팔면”</b> — 같은 이유로 안 됩니다.</li>
+    <li><b>“전설 장비를 직접 팔면”</b> — 장비는 산에만 영향을 주니 팔아도 선은 안 깨집니다.
+      다만 <b>팔지 않기를 권합니다.</b> 함에서 나오는 기쁨이 통째로 사라지고,
+      “그거 돈 주고 산 거잖아”가 됩니다.</li>
+    <li><b>“이어하기를 팔면”</b> — 실패가 돈이 되는 순간 실패는 벌이 됩니다.
+      이 게임은 <b>실패를 길로 바꾸는 쪽</b>을 골랐습니다.</li>
+  </ul>
+</section>
+
+</div>

@@ -216,6 +216,14 @@ body.quake { animation: shake .42s ease-out; }
   border: 1px solid var(--gold); color: var(--gold); margin-left: 6px;
   vertical-align: middle; white-space: nowrap;
 }
+/* 발자국은 산이 내건 규칙이 아니라 내가 쌓은 것이라 색이 다르다 */
+.rulechip.step { border-color: #4A9E8F; color: #6FC3B3; }
+.card .lead.foot {
+  margin-top: 14px; padding: 11px 14px; border-radius: 10px;
+  background: rgba(74,158,143,.1); border: 1px solid rgba(74,158,143,.4);
+  color: #9FD8CE; font-size: 13.5px; line-height: 1.75;
+}
+.card .lead.foot b { color: #6FC3B3; }
 .acts { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 6px; }
 .btn { border-radius: 11px; padding: 12px 8px; font-size: 14px; font-weight: 600;
   background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
@@ -364,6 +372,9 @@ body.quake { animation: shake .42s ease-out; }
   align-self: center; position: relative; width: 190px; aspect-ratio: 520 / 511;
   max-width: 100%; background: transparent; border: 0; padding: 0; cursor: pointer;
   border-radius: 12px; overflow: visible;
+  /* 열리면 뚜껑이 칸 위로 42px 자란다. 그 자리를 미리 비워 두지 않으면
+     뚜껑이 제목을 덮는다. 열릴 때 칸을 내리면 발이 같이 내려가므로 안 된다. */
+  margin-top: 48px;
 }
 .chest img {
   position: absolute; left: 0; bottom: 0; width: 100%; height: auto; display: block;
@@ -391,6 +402,42 @@ body.quake { animation: shake .42s ease-out; }
 .chest.c5 img { filter: saturate(1.6) hue-rotate(-22deg) brightness(1.02); }
 .chest.c6 img { filter: saturate(1.35) hue-rotate(228deg) brightness(1.06); }
 
+/* 전설·신화가 나오면 함 위로 빛이 두 번 쓸고 지나가고 잔별이 돈다.
+   이 연출은 몇백 판에 한 번 보는 것이라 아낄 이유가 없다. */
+.chest .shine {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  border-radius: 12px; overflow: hidden; pointer-events: none; opacity: 0;
+}
+.chest.open .shine { top: -48px; }
+.chest.gleam .shine { opacity: 1; }
+.chest .shine { mix-blend-mode: screen; }   /* 덧칠이 아니라 번지게 */
+.chest.gleam .shine::before {
+  content: ""; position: absolute; top: -40%; bottom: -40%; width: 52%;
+  background: linear-gradient(100deg, transparent 6%,
+    rgba(255,248,224,.5) 34%, rgba(255,255,255,.95) 50%,
+    rgba(255,248,224,.5) 66%, transparent 94%);
+  transform: translateX(-160%) rotate(14deg);
+  animation: sweep 1.6s cubic-bezier(.35,.08,.3,1) .25s 2;
+}
+@keyframes sweep { to { transform: translateX(330%) rotate(14deg); } }
+.chest .sp {
+  position: absolute; width: 7px; height: 7px; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle, #fff 0 22%, rgba(255,240,190,.85) 40%, transparent 70%);
+}
+.chest .sp::after {
+  content: ""; position: absolute; inset: -3px;
+  background: radial-gradient(circle, rgba(255,255,255,.9) 0 8%, transparent 60%);
+}
+.chest.gleam .sp { animation: twinkle 1.7s ease-in-out infinite; }
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+  45%      { opacity: 1; transform: scale(1.5) rotate(60deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chest.gleam .shine::before, .chest.gleam .sp { animation: none; }
+  .chest.gleam .sp { opacity: .9; }
+}
+
 .chest.open { transform: scale(1.03); transform-origin: 50% 100%; }
 .chest.open::after {
   top: -48px;                 /* 520x627 그림이 520x511 칸보다 42px 높다 */
@@ -398,6 +445,28 @@ body.quake { animation: shake .42s ease-out; }
 }
 .chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; }
 .chest { transition: transform .45s cubic-bezier(.2,1.4,.4,1); }
+/* 함에서 나온 물건 — 등급 띠를 두르고 한지 조각처럼 걸린다 */
+.gearshot {
+  align-self: center; position: relative; margin-top: 14px;
+  height: 118px; border-radius: 10px; overflow: hidden;
+  border: 2px solid var(--gb, #8A7250); background: #F3EFE4;
+  box-shadow: 0 0 var(--gg, 0px) 1px var(--ggc, transparent);
+  animation: gearIn .55s cubic-bezier(.2,1.5,.35,1);
+}
+.gearshot img { height: 100%; width: auto; display: block; }
+.gearshot .tag {
+  position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
+  font-size: 10.5px; letter-spacing: .1em; padding: 2px 0;
+  background: var(--gb, #8A7250); color: #140F06; font-weight: 700;
+}
+@keyframes gearIn { from { opacity: 0; transform: translateY(10px) scale(.9) } }
+.gearshot.t1 { --gb:#C9A227; --gg:14px; --ggc:rgba(201,162,39,.45); }
+.gearshot.t2 { --gb:#C3CBD6; --gg:16px; --ggc:rgba(195,203,214,.5); }
+.gearshot.t3 { --gb:#F0D98A; --gg:22px; --ggc:rgba(240,217,138,.6); }
+.gearshot.t4 { --gb:#E6705C; --gg:26px; --ggc:rgba(230,112,92,.65); }
+.gearshot.t5 { --gb:#C77BE0; --gg:32px; --ggc:rgba(199,123,224,.75); }
+.gearshot.t6 { --gb:#FFD76A; --gg:40px; --ggc:rgba(255,215,106,.85);
+  animation: gearIn .55s cubic-bezier(.2,1.5,.35,1), chestAura 2.2s ease-in-out .6s infinite; }
 .card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
 .card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
 /* 명품 이상이 나오면 제목부터 다르게 — 이 순간이 상자를 여는 이유다 */
@@ -577,17 +646,17 @@ body.quake { animation: shake .42s ease-out; }
     { m:"계룡산", n:"해태",      a:"haetae",    t:7, lo:2, hi:3, mod:"weak",
       w0:4, w1:6, k0:3, k1:4, s0:62, s1:50, d:"금빛 글자를 쓰면 크게 들어갑니다" },
     { m:"설악산", n:"현무",      a:"hyeonmu",   t:7, lo:2, hi:3, mod:"weak",
-      w0:5, w1:7, k0:3, k1:5, s0:58, s1:46, d:"금빛 글자 · 빈칸이 늘어납니다" },
+      w0:5, w1:7, k0:4, k1:5, s0:58, s1:46, d:"금빛 글자 · 빈칸이 늘어납니다" },
     { m:"소백산", n:"백호",      a:"baekho",    t:7, lo:2, hi:4, mod:"seal",
       w0:5, w1:7, k0:4, k1:5, s0:54, s1:44, d:"백호가 글자를 하나씩 눌러 둡니다" },
     { m:"덕유산", n:"기린",      a:"kirin",     t:7, lo:3, hi:4, mod:"weak",
-      w0:3, w1:4, k0:2, k1:3, s0:52, s1:42, d:"긴 낱말만 · 금빛 글자가 함께" },
+      w0:4, w1:4, k0:3, k1:3, s0:48, s1:42, d:"긴 낱말만 · 금빛 글자가 함께" },
     { m:"지리산", n:"주작",      a:"jujak",     t:8, lo:3, hi:4, mod:"fog",
       w0:3, w1:5, k0:3, k1:4, s0:48, s1:40, d:"안개 · 빈칸이 하나씩만 드러납니다" },
     { m:"한라산", n:"백록",      a:"baekrok",   t:8, lo:2, hi:4, mod:"seal",
-      w0:6, w1:8, k0:4, k1:6, s0:46, s1:38, d:"빈칸이 가장 많고 글자가 잠깁니다" },
+      w0:6, w1:8, k0:4, k1:6, s0:40, s1:38, d:"빈칸이 가장 많고 글자가 잠깁니다" },
     { m:"금강산", n:"봉황",      a:"bonghwang", t:8, lo:3, hi:4, mod:"fog",
-      w0:4, w1:5, k0:3, k1:4, s0:42, s1:34, d:"안개 속 긴 낱말 · 시간이 촉박합니다" },
+      w0:4, w1:5, k0:3, k1:4, s0:37, s1:34, d:"안개 속 긴 낱말 · 시간이 촉박합니다" },
     { m:"백두산", n:"천지의 용", a:"yong",      t:8, lo:2, hi:4, mod:"weak", mod2:"seal",
       w0:7, w1:9, k0:5, k1:7, s0:38, s1:30, d:"금빛 글자와 봉인이 한꺼번에" }
   ];
@@ -773,7 +842,8 @@ body.quake { animation: shake .42s ease-out; }
   function saveS() {
     try {
       localStorage.setItem(SKEY, JSON.stringify(
-        { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails, gear: gear }));
+        { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
+          gear: gear, steps: steps }));
     } catch (e) {}
   }
   function loadS() {
@@ -787,6 +857,7 @@ body.quake { animation: shake .42s ease-out; }
       if (v.up) up = v.up;
       if (v.fails) fails = v.fails;
       if (v.gear) gear = v.gear;
+      if (v.steps) steps = v.steps;
     } catch (e) {}
   }
 
@@ -860,15 +931,61 @@ body.quake { animation: shake .42s ease-out; }
 
   function lerp(a, b, sub) { return Math.round(a + (b - a) * (sub / 9)); }
 
+  // 등불은 산이 정한 시간의 절반까지만 밝힌다.
+  //
+  // 전에는 강화와 장비를 그냥 더했다. 강화 9에 장명등이면 +47초인데,
+  // 백두산이 38초로 조여 놓은 자리가 85초가 되어 북한산보다 느긋해졌다.
+  // 산마다 70초에서 30초로 좁혀 온 설계가 통째로 지워진 셈이다.
+  // 비율로 묶으면 등불은 어느 산에서나 똑같이 고마운 물건이 되고,
+  // 깊은 산은 끝까지 깊은 산으로 남는다.
+  //
+  // 딱 잘라 막으면 또 다른 구멍이 난다. 백두산 38초에 상한 +19를 걸면
+  // 강화 4(+20)가 이미 상한이라 5단계부터 9단계까지가 전부 같아진다.
+  // 그래서 자르지 않고 서서히 눕힌다 — 올릴수록 덜 오르되, 결코 멈추지는
+  // 않고, 산이 정한 시간의 60%를 넘지도 않는다.
+  var TIME_RATIO = 0.6;
+  function timeBonus(base) {
+    var raw = up.time * TIME_STEP + gearVal("time");
+    if (raw <= 0) return 0;
+    var cap = base * TIME_RATIO;
+    return Math.round(cap * (1 - Math.exp(-raw / cap)));
+  }
+
+  // 아무리 벼려도 산이 요구하는 것의 절반은 채워야 한다.
+  //
+  // 하한이 없으면 검과 북이 쌓이는 대로 '한 낱말'로 수렴한다. 실제로
+  // 강화 9에 장비 4를 갖추면 1단계부터 70단계까지 전부 한 개였다.
+  // 오르는 맛이 사라지는 자리가 바로 거기다.
+  function floorNeed(need) { return Math.max(1, Math.ceil(need * 0.5)); }
+
+  // ── 발자국 ────────────────────────────────────────────────────────
+  //
+  // 같은 자리에서 미끄러질 때마다 그 단계가 조금씩 눅어진다. 다섯 번까지,
+  // 한 번에 4초씩. 깨고 나면 0으로 돌아간다.
+  //
+  // 단계를 내리거나 돈을 받지 않는다. 실패에 값을 매기는 순간 실패가
+  // 벌이 되고, 40~60대는 벌을 받으면 앱을 지운다. 여기서 실패는 길이다.
+  var STEP_MAX = 5, STEP_SEC = 4;
+  var ORD = ["", "첫", "두", "세", "네", "다섯"];
+  var steps = {};
+  function stepsAt(k) { return steps[k] || 0; }
+  function stepBonus(k) { return Math.min(STEP_MAX, stepsAt(k)) * STEP_SEC; }
+
+  // 지금 강화로 i번째 낱말이 넣는 피해. damage()와 같은 식을 쓴다.
+  // 금빛 글자 배수는 자리를 타는 것이라 여기서는 세지 않는다.
+  function dmgOf(len, i) {
+    return Math.round(16 * Math.pow(len, 1.8)
+      * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
+      * (1 + Math.min(i, COMBO_CAP)
+             * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
+  }
+
   // 지금 강화로는 몇 개면 쓰러지는가. 짧은 것부터 채운다고 보고 센다.
   function needNow(ans, hp) {
     var byLen = ans.slice().sort(function (a, b) { return a.length - b.length; });
     var acc = 0;
     for (var i = 0; i < byLen.length; i++) {
-      acc += Math.round(16 * Math.pow(byLen[i].length, 1.8)
-        * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
-        * (1 + Math.min(i, COMBO_CAP)
-               * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
+      acc += dmgOf(byLen[i].length, i);
       if (acc >= hp) return i + 1;
     }
     return byLen.length;
@@ -884,8 +1001,10 @@ body.quake { animation: shake .42s ease-out; }
       spec: { t: M.t, lo: M.lo, hi: M.hi,
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
       need: lerp(M.k0, M.k1, sub),
+      step: stepBonus(k),
       // 수호신은 가장 많이 요구하는 자리라 숨 쉴 틈을 조금 돌려준다
-      t: lerp(M.s0, M.s1, sub) + (boss ? 8 : 0) + up.time * TIME_STEP + gearVal("time")
+      t: (function (base) { return base + timeBonus(base) + stepBonus(k); })(
+           lerp(M.s0, M.s1, sub) + (boss ? 8 : 0))
     };
   }
 
@@ -906,6 +1025,15 @@ body.quake { animation: shake .42s ease-out; }
       hp += Math.round(16 * Math.pow(byLen[i].length, 1.8)
         * (1 + Math.min(i, COMBO_CAP) * 0.08));
     }
+
+    // 그리고 바닥을 깐다 — 다 갖춰도 산이 요구하는 것의 절반은 채워야 한다.
+    //
+    // 화면이 "N개면 쓰러집니다"라고 적는 N은 기세에서 거꾸로 나온 값이다.
+    // 그러니 바닥은 표시가 아니라 기세에 둬야 한다. 표시에만 두면 화면은
+    // 네 개라고 하는데 두 개에 쓰러지는, 전에 한 번 겪은 그 어긋남이 또 난다.
+    var lo = floorNeed(need), acc = 0;
+    for (var j = 0; j < lo - 1 && j < byLen.length; j++) acc += dmgOf(byLen[j].length, j);
+    if (lo > 1 && acc >= hp) hp = acc + 1;
     return hp;
   }
 
@@ -943,7 +1071,8 @@ body.quake { animation: shake .42s ease-out; }
     el.bossName.textContent = b.n;
     var rn = ruleName(b);
     el.bossHint.innerHTML = b.m + " \u00b7 " + needNow(p.ans, hp) + "개면 쓰러집니다"
-      + (rn ? '<span class="rulechip">' + rn + '</span>' : "");
+      + (rn ? '<span class="rulechip">' + rn + '</span>' : "")
+      + (b.step ? '<span class="rulechip step">발자국 +' + b.step + '초</span>' : "");
     el.stageNo.textContent = b.no;
     el.stageUnit.textContent = "단계";
     el.mtName.textContent = b.m;
@@ -1763,7 +1892,7 @@ body.quake { animation: shake .42s ease-out; }
       var back = 60 + tier * 90;
       gold += back;
       var why = tier === gear[id] ? "이미 쓰고 계신 것입니다" : "지금 것이 더 좋습니다";
-      return { t: nm, d: why + " · 냥 +" + back + "으로 바꿨습니다", tier: tier };
+      return { t: nm, d: why + " · 냥 +" + back + "으로 바꿨습니다", tier: tier, id: id };
     }
     var oldName = G.names[gear[id]];
     gear[id] = tier;
@@ -1771,8 +1900,11 @@ body.quake { animation: shake .42s ease-out; }
     var eff = G.pct ? G.unit + Math.round(v * 100) + "%"
             : G.suf ? G.unit + v + G.suf
             : G.unit + v.toFixed(2);
-    return { t: nm, d: oldName + " → " + nm + " · " + eff, tier: tier, got: true };
+    return { t: nm, d: oldName + " → " + nm + " · " + eff, tier: tier, got: true, id: id };
   }
+
+  // 잔별이 앉는 자리 — 왼쪽/위/오른쪽/아래로 흩고 시간차를 준다
+  var SPARK = [[12, 18, 0], [78, 10, .45], [90, 52, .9], [26, 74, .25], [58, 88, .65]];
 
   function openChest(mt, after) {
     var ov = document.createElement("div"); ov.className = "ov";
@@ -1786,8 +1918,17 @@ body.quake { animation: shake .42s ease-out; }
     var box = document.createElement("button");
     box.className = "chest c" + tierCap(mt);
     box.setAttribute("aria-label", "보물함 열기");
-    box.innerHTML = '<img src="art/chest.jpg" alt="">';
+    box.innerHTML = '<img src="art/chest.jpg" alt=""><span class="shine"></span>'
+      + SPARK.map(function (q) {
+          return '<i class="sp" style="left:' + q[0] + '%;top:' + q[1]
+               + '%;animation-delay:' + q[2] + 's"></i>';
+        }).join("");
     card.appendChild(box);
+
+    // 함이 열린 자리에 나온 물건을 띄운다. 이름만 적어 두면 무엇을 얻었는지
+    // 글로만 남아서, 일곱 등급을 그린 보람이 화면에 하나도 안 나타난다.
+    var shot = document.createElement("div"); shot.className = "gearshot"; shot.hidden = true;
+    card.appendChild(shot);
 
     var tip = document.createElement("p"); tip.className = "lead";
     tip.textContent = "눌러서 여세요";
@@ -1809,17 +1950,27 @@ body.quake { animation: shake .42s ease-out; }
       opened = true;
       var roll = Math.random() * 100, acc = 0, got = null, tier = null;
       for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p; if (roll < acc) { got = CHEST[i]; break; } }
-      var title, body;
+      var title, body, gid = null;
       if (got) { got.go(); title = got.t; body = got.d; }
-      else { tier = rollTier(mt); var g = grantGear(tier); title = g.t; body = g.d; }
+      else {
+        tier = rollTier(mt);
+        var g = grantGear(tier); title = g.t; body = g.d; gid = g.id;
+      }
       saveS();
       drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
       logEv("T", got ? got.k : "g" + tier);
       box.querySelector("img").src = "art/chest-open.jpg";
       box.classList.add("open");
+      if (tier != null && tier >= 5) box.classList.add("gleam");   // 전설·신화
       if (window.SFX) SFX.up();
       h.textContent = title;
       h.className = "win" + (tier != null && tier >= 5 ? " myth" : tier != null && tier >= 3 ? " rare" : "");
+      if (gid) {
+        shot.className = "gearshot t" + tier;
+        shot.innerHTML = '<img src="art/gear/' + gid + '-' + tier + '.jpg" alt="">'
+          + '<span class="tag">' + TIER[tier] + '</span>';
+        shot.hidden = false;
+      }
       tip.textContent = body;
       tip.className = "lead got";
       next.hidden = false;
@@ -1914,6 +2065,9 @@ body.quake { animation: shake .42s ease-out; }
     // 채우는 쪽이 늘 이득이고, 그래서 "더 채울까"가 매번 진짜 선택이 된다.
     var timePay = won ? Math.max(0, r.leftAtEnd || 0) : 0;
     gold += reward + timePay;
+    // 깨면 발자국은 지워진다. 길을 냈으니 더 필요 없다.
+    if (won) delete steps[stage];
+    else steps[stage] = Math.min(STEP_MAX, stepsAt(stage) + 1);
     if (won) stage = Math.min(99, stage + 1);
     saveS();
     el.gold.textContent = gold;
@@ -1963,6 +2117,17 @@ body.quake { animation: shake .42s ease-out; }
         var s = document.createElement("span"); s.textContent = w; ws.appendChild(s);
       });
       card.appendChild(ws);
+
+      // 진 자리에서 빈손으로 돌려보내지 않는다. 다음이 어떻게 달라지는지
+      // 눈에 보여야 "한 번 더"가 나온다.
+      var st = stepsAt(stage);
+      if (st) {
+        var fp = document.createElement("p"); fp.className = "lead foot";
+        fp.innerHTML = ORD[Math.min(st, STEP_MAX)] + " 걸음 \u00b7 미끄러진 자리에 길이 납니다<br>"
+          + "<b>이 단계 제한시간 +" + stepBonus(stage) + "초</b>"
+          + (st >= STEP_MAX ? " (여기까지)" : "");
+        card.appendChild(fp);
+      }
     }
     var b1 = document.createElement("button"); b1.className = "btn";
     b1.textContent = won ? "다음 단계로" : "다시 도전";
@@ -2083,6 +2248,8 @@ body.quake { animation: shake .42s ease-out; }
     document.querySelector(".acts").hidden = board;
     el.bonus.hidden = board;
 
+    el.btnHint.hidden = (m !== "quest");
+
     if (m === "chain") { el.hpTail.textContent = "· 0이 되면 이깁니다"; startChain(); }
     else if (m === "daily") startDaily();
     else { el.hpTail.textContent = "· 0이 되면 이깁니다"; el.stageUnit.textContent = "단계"; start(); }
@@ -2168,6 +2335,10 @@ body.quake { animation: shake .42s ease-out; }
   // 힌트는 글자가 아니라 뜻을 준다. 답을 알려주면 채우는 맛이 사라진다.
   el.btnHint.addEventListener("click", function () {
     if (!run) return;
+    // 오늘의 낱말은 리그의 씨앗이다. 여기 힌트가 통하면 보물함을 많이 연
+    // 사람이, 즉 돈과 시간을 더 쓴 사람이 순위에서 앞선다. 그 순간 등수는
+    // 실력이 아니라 지갑이 되고, 공유할 이유도 같이 사라진다.
+    if (run.daily) { toast("오늘의 낱말은 모두 같은 조건입니다"); return; }
     // 힌트가 공짜면 보물함에서 나온 옥이 아무 값어치가 없다.
     // 옥을 쓰게 해야 보물함을 여는 손맛이 생기고, 나중에 광고·결제가
     // 붙을 자리도 여기 하나로 모인다.
@@ -2181,7 +2352,7 @@ body.quake { animation: shake .42s ease-out; }
       }
     }
     if (gem < 1) { toast("옥이 없습니다 · 수호신을 쓰러뜨리면 보물함에서 나옵니다"); return; }
-    gem--; saveS();
+    gem--; saveS(); drawStatsOnly();   // 쓴 것이 바로 줄어야 쓴 줄 안다
     LOG.hint++; logEv("H");
     var rest = remaining();
     if (!rest.length) { toast("남은 빈칸이 없습니다"); return; }
