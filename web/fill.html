@@ -253,9 +253,11 @@ body.quake { animation: shake .42s ease-out; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 22px; max-width: 360px; width: 100%; display: flex; flex-direction: column;
   gap: 13px; text-align: center; }
-.card h2 { font-size: 23px; } .card h2.win { color: var(--jade); }
+.card h2 { font-size: clamp(17px, 4.6vw, 22px); line-height: 1.35; text-wrap: balance; }
+.card h2.win { color: var(--jade); }
 .card h2.lose { color: var(--danger); }
 .card .lead { font-size: 13.5px; color: var(--fg-dim); }
+.card .lead.pay { font-family: var(--font-mono); color: var(--gold); font-size: 14px; }
 .card .big { font-family: var(--font-mono); font-size: 32px; font-weight: 600;
   color: var(--gold); line-height: 1.1; }
 /* 글자 수별 결과표. 공유 글의 이모지 블록과 같은 것을 화면용으로 그린다. */
@@ -272,6 +274,43 @@ body.quake { animation: shake .42s ease-out; }
 .c3 { background: #4A79D8; }
 .c4 { background: #9B5BD6; }
 
+/* 보물함. 그림을 쓰지 않고 네모 둘로 궤짝을 세운다 — 용량이 0이고
+   열릴 때 뚜껑만 젖히면 되니 움직임도 자연스럽다. */
+.chest {
+  align-self: center; position: relative; width: 112px; height: 86px;
+  background: transparent; border: 0; padding: 0; cursor: pointer;
+}
+.chest i, .chest u {
+  position: absolute; left: 0; right: 0; display: block;
+  background: linear-gradient(180deg, #8A6A2E, #5E4518);
+  box-shadow: inset 0 0 0 2px #C9A227, 0 8px 20px -8px #000;
+}
+.chest i { top: 26px; bottom: 0; border-radius: 4px 4px 10px 10px; overflow: visible; }
+.chest u {
+  top: 0; height: 32px; border-radius: 10px 10px 4px 4px;
+  transform-origin: 50% 100%; transition: transform .45s cubic-bezier(.2,1.5,.4,1);
+}
+.chest::after {
+  content: ""; position: absolute; left: 50%; top: 24px; width: 16px; height: 20px;
+  margin-left: -8px; border-radius: 3px; background: #2A1E08;
+  box-shadow: inset 0 0 0 1.5px #C9A227; z-index: 2;
+  transition: opacity .25s ease;
+}
+.chest.open::after { opacity: 0; }
+/* 열리면 안에서 빛이 샌다 */
+.chest.open i::before {
+  content: ""; position: absolute; left: 8px; right: 8px; top: -6px; height: 14px;
+  border-radius: 50%; background: #FFE9A8;
+  box-shadow: 0 0 26px 10px rgba(255,224,138,.85);
+}
+/* 뚜껑은 경첩처럼 돌리지 않고 위로 튕겨 올린다. 2차원에서 회전시키면
+   몸통을 가로질러 누워 무엇이 열린 건지 알아보기 어렵다. */
+.chest.open u { transform: translateY(-40px) rotate(-10deg); }
+.chest.open i { box-shadow: inset 0 0 0 2px #F0D98A, 0 0 42px 2px rgba(201,162,39,.75); }
+.chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
+.card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
+
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
 .words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
   border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
@@ -284,7 +323,7 @@ body.quake { animation: shake .42s ease-out; }
 <div class="wrap">
   <div class="hud">
     <div class="brand">낱말 채우기 <small>시험판</small></div>
-    <div class="purse">냥 <b id="gold">0</b></div>
+    <div class="purse">냥 <b id="gold">0</b> · 옥 <b id="gem">0</b></div>
   </div>
   <div class="modes">
     <button class="mode on" id="mQuest">산 오르기</button>
@@ -320,11 +359,11 @@ body.quake { animation: shake .42s ease-out; }
   <div class="tiles" id="tiles"></div>
   <div class="acts">
     <button class="btn" id="btnClear">지우기<small>한 글자씩</small></button>
-    <button class="btn" id="btnHint">힌트<small>뜻풀이</small></button>
+    <button class="btn" id="btnHint">힌트<small>옥 1개</small></button>
     <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><small id="goSub">낱말을 만드세요</small></button>
   </div>
   <div class="bonusbar" id="bonusBar" hidden>
-    <span><b id="bLeft">1</b>개 남은 빈칸은 <b>보너스</b>입니다</span>
+    <span><b id="bLeft">1</b>개 남은 빈칸 · <b>덤 시간</b></span>
     <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
@@ -527,9 +566,9 @@ body.quake { animation: shake .42s ease-out; }
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
-   "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit"].forEach(function (id) { el[id] = document.getElementById(id); });
+   "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem"].forEach(function (id) { el[id] = document.getElementById(id); });
 
-  var stage = 0, gold = 0, run = null, picked = [], timerId = null, toastT = null;
+  var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
   // ── 시험판 기록 ─────────────────────────────────────────────────────
   //
@@ -641,7 +680,7 @@ body.quake { animation: shake .42s ease-out; }
     var p = makePuzzle(b.spec);
     var hp = hpFor(p.ans, b.need);
     run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
-            bonus: [], cleared: 0, perfect: 0, found: 0, extra: 0,
+            bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
             // 산의 규칙에 쓰는 것들
             weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 1 };
@@ -837,17 +876,18 @@ body.quake { animation: shake .42s ease-out; }
       el.bLeft.textContent = remaining().length;
       el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다";
       run.sealed = -1; run.weak = -1;
-      el.hpTail.textContent = "· 보너스 시간";
+      el.hpTail.textContent = "· 덤 시간";
       el.goLabel.textContent = "채우기";
     } else {
       el.hpTail.textContent = "· 0이 되면 이깁니다";
       el.goLabel.textContent = "공격";
     }
     el.gold.textContent = gold;
+    el.gem.textContent = gem;
     var left = remaining().length;
     el.gFound.textContent = run.ans.length - left;
     el.gTotal.textContent = run.ans.length;
-    el.gNote.textContent = run.phase === "bonus" ? "보너스 시간"
+    el.gNote.textContent = run.phase === "bonus" ? "덤 시간"
       : left === 1 ? "하나 남았습니다 · 완전 격파!" : "다 채우면 완전 격파";
     el.hpNow.parentNode.title = run.b.need + "개를 채우면 쓰러집니다";
     el.timer.textContent = run.left;
@@ -1010,7 +1050,7 @@ body.quake { animation: shake .42s ease-out; }
         gold += 80; run.extra += 80;
         if (window.SFX) SFX.clear();
         toast("완전 격파 · +80냥");
-        setTimeout(function () { if (run) result(run, true); }, 700);
+        setTimeout(function () { if (run) victory(run); }, 700);
       }
       return;
     }
@@ -1020,7 +1060,7 @@ body.quake { animation: shake .42s ease-out; }
     run.hp -= dmg;
     run.combo++;
     logEv(isSlot ? "F" : "B", w.length);
-    if (!isSlot) LOG.bonus++;
+    if (isSlot) run.slots++; else LOG.bonus++;
     if (isSlot) {
       run.got[w] = 1;
       run.shown++;                            // 안개가 한 칸 걷힌다
@@ -1082,7 +1122,7 @@ body.quake { animation: shake .42s ease-out; }
     tumble(function () {
       if (!run) return;
       el.bonusBar.hidden = false;
-      toast("물리쳤습니다! 남은 빈칸은 보너스입니다");
+      toast("물리쳤습니다! 남은 빈칸은 덤으로 채우실 수 있습니다");
       draw();
     }, true);
   }
@@ -1098,7 +1138,7 @@ body.quake { animation: shake .42s ease-out; }
     if (run.left <= 0) {
       run.left = 0; draw();
       // 보너스 시간에 시계가 멈춘 것은 진 게 아니다. 이미 이겨 둔 판이다.
-      return run.phase === "bonus" ? result(run, true) : finish(false);
+      return run.phase === "bonus" ? victory(run) : finish(false);
     }
     draw();
   }
@@ -1151,8 +1191,87 @@ body.quake { animation: shake .42s ease-out; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     var r = run; run = null;
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
-    if (won) { tumble(function () { result(r, true); }); return; }
+    // 수호신(열 단계마다)만 보물함을 남긴다. 매 판 나오면 값이 떨어진다.
+    if (won) { tumble(function () { victory(r); }); return; }
     result(r, false);
+  }
+
+  // ── 보물함 ──────────────────────────────────────────────────────────
+  //
+  // 수호신을 쓰러뜨린 뒤 보상이 냥뿐이라 밋밋했다. 열 단계를 올라온 보람이
+  // 숫자 하나로 끝나면 안 된다. 상자를 하나 두고 직접 열게 한다.
+  //
+  // 확률은 숨기지 않는다. 화면에 그대로 적는다. 숨기는 순간 재미가 아니라
+  // 의심이 되고, 유료로 팔 때는 법으로도 공개해야 한다.
+  var CHEST = [
+    { p: 40, k: "냥",  t: "냥 꾸러미",   d: "냥 +120",            go: function () { gold += 120; } },
+    { p: 28, k: "옥",  t: "옥 두 알",     d: "힌트 두 번",          go: function () { gem += 2; } },
+    { p: 15, k: "붓",  t: "붓 한 획",     d: "빈칸 하나를 짚어 준다", go: function () { bag.brush++; } },
+    { p: 11, k: "먹",  t: "먹물 한 모금", d: "덤 시간 +15초",       go: function () { bag.ink++; } },
+    { p:  6, k: "부",  t: "부적",         d: "강화 성공률 +20%p",    go: function () { bag.charm++; } }
+  ];
+
+  function openChest(after) {
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.textContent = "수호신의 보물함";
+    card.appendChild(h);
+
+    var box = document.createElement("button");
+    box.className = "chest";
+    box.setAttribute("aria-label", "보물함 열기");
+    box.innerHTML = "<i></i><u></u>";
+    card.appendChild(box);
+
+    var tip = document.createElement("p"); tip.className = "lead";
+    tip.textContent = "눌러서 여세요";
+    card.appendChild(tip);
+
+    var odds = document.createElement("p"); odds.className = "lead odds";
+    odds.textContent = CHEST.map(function (c) { return c.t + " " + c.p + "%"; }).join("  ·  ");
+    card.appendChild(odds);
+
+    var next = document.createElement("button"); next.className = "btn";
+    next.textContent = "계속";
+    next.hidden = true;
+    next.addEventListener("click", function () { ov.remove(); after(); });
+    card.appendChild(next);
+
+    var opened = false;
+    box.addEventListener("click", function () {
+      if (opened) return;
+      opened = true;
+      var roll = Math.random() * 100, acc = 0, got = CHEST[CHEST.length - 1];
+      for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p; if (roll < acc) { got = CHEST[i]; break; } }
+      got.go();
+      logEv("T", got.k);
+      box.classList.add("open");
+      if (window.SFX) SFX.up();
+      h.textContent = got.t;
+      h.className = "win";
+      tip.textContent = got.d;
+      tip.className = "lead got";
+      next.hidden = false;
+      drawStatsOnly();
+      next.focus();
+    });
+
+    ov.appendChild(card); document.body.appendChild(ov); box.focus();
+  }
+
+  function drawStatsOnly() {
+    el.gold.textContent = gold;
+    el.gem.textContent = gem;
+  }
+
+  // 이기는 길이 네 갈래다 — 마지막 빈칸으로 바로 눕히기, 덤 시간에 다 채우기,
+  // 「여기서 마무리」, 덤 시간 종료. 보물함을 한 갈래에만 붙여 두면 나머지
+  // 셋으로 이긴 사람은 상자를 구경도 못 한다. 그래서 전부 여기로 모은다.
+  function victory(r) {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    run = null;
+    if (r.b.boss) openChest(function () { result(r, true); });
+    else result(r, true);
   }
 
   function result(r, won) {
@@ -1175,13 +1294,17 @@ body.quake { animation: shake .42s ease-out; }
     h.textContent = won ? eul(r.b.n) + " 물리쳤습니다" : "시간이 다 됐습니다";
     card.appendChild(h);
     var big = document.createElement("div"); big.className = "big";
-    big.textContent = r.found + "낱말";
+    big.textContent = r.slots + "빈칸";
     card.appendChild(big);
     var lead = document.createElement("p"); lead.className = "lead";
-    lead.textContent = (r.perfect ? "완전 격파 · " : "")
-      + "보너스 낱말 " + r.bonus.length + "개"
-      + (won ? " · " + reward + "냥" + (r.extra ? " (+보너스 " + r.extra + "냥)" : "") : "");
+    lead.textContent = (r.perfect ? "완전 격파 · " : "") + "덤 낱말 " + r.bonus.length + "개";
     card.appendChild(lead);
+    if (won) {
+      var pay = document.createElement("p"); pay.className = "lead pay";
+      pay.textContent = r.extra ? reward + "냥 + 덤 시간 " + r.extra + "냥"
+                                : reward + "냥";
+      card.appendChild(pay);
+    }
     if (!won) {
       var miss = document.createElement("p"); miss.className = "lead";
       miss.textContent = "못 채운 낱말"; card.appendChild(miss);
@@ -1307,7 +1430,9 @@ body.quake { animation: shake .42s ease-out; }
   el.mDaily.addEventListener("click", function () { if (mode !== "daily") setMode("daily"); });
   el.btnGo.addEventListener("click", attack);
   el.btnEnd.addEventListener("click", function () {
-    if (run && run.phase === "bonus") { LOG.end++; logEv("E"); result(run, true); }
+    if (!run || run.phase !== "bonus") return;
+    LOG.end++; logEv("E");
+    victory(run);
   });
 
   // 기록 단추
@@ -1347,6 +1472,20 @@ body.quake { animation: shake .42s ease-out; }
   // 힌트는 글자가 아니라 뜻을 준다. 답을 알려주면 채우는 맛이 사라진다.
   el.btnHint.addEventListener("click", function () {
     if (!run) return;
+    // 힌트가 공짜면 보물함에서 나온 옥이 아무 값어치가 없다.
+    // 옥을 쓰게 해야 보물함을 여는 손맛이 생기고, 나중에 광고·결제가
+    // 붙을 자리도 여기 하나로 모인다.
+    if (bag.brush > 0) {
+      bag.brush--;
+      var rest0 = remaining();
+      if (rest0.length) {
+        var w0 = rest0[Math.floor(Math.random() * rest0.length)];
+        toast("붓 한 획 · " + w0.length + "글자, 첫 글자는 “" + w0.charAt(0) + "”");
+        LOG.hint++; logEv("H"); draw(); return;
+      }
+    }
+    if (gem < 1) { toast("옥이 없습니다 · 수호신을 쓰러뜨리면 보물함에서 나옵니다"); return; }
+    gem--;
     LOG.hint++; logEv("H");
     var rest = remaining();
     if (!rest.length) { toast("남은 빈칸이 없습니다"); return; }
