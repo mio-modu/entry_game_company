@@ -330,6 +330,16 @@ body.quake { animation: shake .42s ease-out; }
 .card h2.lose { color: var(--danger); }
 .card .lead { font-size: 13.5px; color: var(--fg-dim); }
 .card .lead.pay { font-family: var(--font-mono); color: var(--gold); font-size: 14px; }
+.paylist { display: flex; flex-direction: column; gap: 0; text-align: left;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px;
+  padding: 4px 13px; }
+.payrow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding-block: 7px; font-size: 13px; color: var(--fg-dim);
+  border-top: 1px solid rgba(255,255,255,.05); }
+.payrow:first-child { border-top: 0; }
+.payrow b { font-family: var(--font-mono); color: var(--fg); font-weight: 600; white-space: nowrap; }
+.payrow.total { border-top: 1px solid var(--line); color: var(--fg); font-weight: 600; }
+.payrow.total b { color: var(--gold); font-size: 16px; }
 .card .big { font-family: var(--font-mono); font-size: 32px; font-weight: 600;
   color: var(--gold); line-height: 1.1; }
 /* 글자 수별 결과표. 공유 글의 이모지 블록과 같은 것을 화면용으로 그린다. */
@@ -388,6 +398,21 @@ body.quake { animation: shake .42s ease-out; }
   animation: rareIn .6s cubic-bezier(.2,1.6,.4,1);
 }
 @keyframes rareIn { from { transform: scale(.7); opacity: 0 } }
+/* 전설 이상. 평생 몇 번 볼 일이라 화면이 통째로 반응해야 한다. */
+.card h2.myth {
+  color: #FFD76A; font-size: clamp(22px, 6vw, 30px);
+  text-shadow: 0 0 10px #FFD76A, 0 0 34px rgba(255,215,106,.9), 0 0 70px rgba(255,160,40,.7);
+  animation: mythIn .9s cubic-bezier(.15,1.8,.35,1);
+}
+@keyframes mythIn {
+  0% { transform: scale(.4) rotate(-6deg); opacity: 0 }
+  55% { transform: scale(1.18) rotate(2deg) }
+  100% { transform: scale(1) rotate(0) }
+}
+.gear.g5 { color: #FFD76A; text-shadow: 0 0 12px rgba(255,215,106,.8); }
+.gear.g6 { color: #FF9D5C; text-shadow: 0 0 14px rgba(255,157,92,.95);
+  border-color: #FF9D5C; animation: mythGlow 1.8s ease-in-out infinite; }
+@keyframes mythGlow { 50% { opacity: .6 } }
 
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
 .words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
@@ -458,7 +483,7 @@ body.quake { animation: shake .42s ease-out; }
     <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><small id="goSub">낱말을 만드세요</small></button>
   </div>
   <div class="bonusbar" id="bonusBar" hidden>
-    <span><b id="bLeft">1</b>개 남은 빈칸 · <b>덤 시간</b></span>
+    <span>쓰러뜨렸습니다 · 남은 시간에 <b id="bLeft">1</b>개 더 채우실 수 있습니다</span>
     <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
@@ -486,7 +511,7 @@ body.quake { animation: shake .42s ease-out; }
 
   <div class="panel">
     <h2>규칙</h2>
-    <p>이기는 길은 하나입니다 — <b>수호신의 기세를 0으로 만들면</b> 그 자리에서 끝납니다.
+    <p>이기는 길은 하나입니다 — <b>수호신의 기세를 0으로 만들면</b> 쓰러집니다.
        빈칸이 다섯이어도 <b>정해진 개수만 채우면</b> 쓰러집니다. 몇 개인지는
        수호신 이름 아래에 적혀 있습니다.</p>
     <p>산마다 <b>규칙이 다릅니다.</b> 계룡산부터 <b>금빛 글자</b>가 하나 뜹니다 —
@@ -496,13 +521,14 @@ body.quake { animation: shake .42s ease-out; }
        하나 채울 때마다 하나씩 걷힙니다.</p>
     <p>같은 산 안에서도 올라갈수록 <b>빈칸과 채울 개수는 늘고 시간은 줄어듭니다.</b></p>
     <p>기세를 깎는 것은 <b>빈칸뿐</b>입니다. 긴 낱말일수록 깊게 들어갑니다.
-       빈칸에 없는 낱말도 사전에 있으면 <b>덤</b>으로 인정해 <b>연속을 이어 주고
+       빈칸에 없는 낱말도 사전에 있으면 <b>보너스</b>로 인정해 <b>연속을 이어 주고
        시간과 냥</b>을 줍니다 — 기세는 깎이지 않지만 <b>다음 빈칸 한 방이 더 크게</b>
        들어갑니다. 아는 낱말이 헛되지 않습니다.</p>
-    <p>수호신이 쓰러져도 빈칸이 남았다면 <b>보너스 시간</b>이 이어집니다.
-       남은 빈칸을 채우면 냥을 더 받고, 다 채우면 <b>완전 격파</b>입니다.
-       생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내면 됩니다 —
-       기다릴 필요가 없습니다.</p>
+    <p>수호신이 쓰러져도 <b>남은 시간</b>은 그대로 흐릅니다. 그 시간에 빈칸을 더 채우면
+       냥을 더 받고, 다 채우면 <b>완전 격파</b>입니다. 생각이 안 나면
+       <b>「여기서 마무리」</b>로 바로 끝내면 됩니다 — 기다릴 필요가 없습니다.</p>
+    <p><b>남은 시간도 냥이 됩니다</b>(1초당 1냥). 빨리 끝낼수록 더 받지만,
+       빈칸 하나를 채우는 편이 대개 더 큽니다. 어느 쪽을 고를지는 그때그때 다릅니다.</p>
     <p class="cite">낱말·뜻풀이 자료: 국립국어원 <b>한국어 학습용 어휘 목록</b>,
       <b>한국어기초사전</b>, <b>표준국어대사전</b> (CC BY-SA 2.0 KR).</p>
   </div>
@@ -709,14 +735,14 @@ body.quake { animation: shake .42s ease-out; }
   // 인벤토리와 장착 화면은 40~60대에게 그 자체로 벽이고, 우리가 파는 것은
   // 관리가 아니라 낱말이다.
   var GEAR = {
-    atk:   { t: "검", names: ["목검", "환도", "운검", "칠성검", "사인검"],
-             val: [1, 1.15, 1.35, 1.6, 2.0], unit: "빈칸 피해 x" },
-    time:  { t: "등", names: ["관솔불", "등잔", "청사초롱", "석등", "장명등"],
-             val: [0, 4, 8, 13, 20], unit: "제한시간 +", suf: "초" },
-    combo: { t: "북", names: ["소고", "승전고", "용고", "뇌고", "천고"],
-             val: [0, 0.02, 0.04, 0.07, 0.11], unit: "연속마다 +", pct: true }
+    atk:   { t: "검", names: ["목검", "환도", "운검", "칠성검", "사인검", "천부검", "개천검"],
+             val: [1, 1.15, 1.35, 1.6, 2.0, 2.6, 3.4], unit: "빈칸 피해 x" },
+    time:  { t: "등", names: ["관솔불", "등잔", "청사초롱", "석등", "장명등", "일월등", "천지등"],
+             val: [0, 4, 8, 13, 20, 28, 38], unit: "제한시간 +", suf: "초" },
+    combo: { t: "북", names: ["소고", "승전고", "용고", "뇌고", "천고", "벽력고", "천뢰고"],
+             val: [0, 0.02, 0.04, 0.07, 0.11, 0.16, 0.22], unit: "연속마다 +", pct: true }
   };
-  var TIER = ["예사", "양품", "귀품", "명품", "신물"];
+  var TIER = ["예사", "양품", "귀품", "명품", "신물", "전설", "신화"];
   var gear = { atk: 0, time: 0, combo: 0 };
 
   function gearVal(id) { return GEAR[id].val[gear[id]]; }
@@ -825,6 +851,20 @@ body.quake { animation: shake .42s ease-out; }
 
   function lerp(a, b, sub) { return Math.round(a + (b - a) * (sub / 9)); }
 
+  // 지금 강화로는 몇 개면 쓰러지는가. 짧은 것부터 채운다고 보고 센다.
+  function needNow(ans, hp) {
+    var byLen = ans.slice().sort(function (a, b) { return a.length - b.length; });
+    var acc = 0;
+    for (var i = 0; i < byLen.length; i++) {
+      acc += Math.round(16 * Math.pow(byLen[i].length, 1.8)
+        * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
+        * (1 + Math.min(i, COMBO_CAP)
+               * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
+      if (acc >= hp) return i + 1;
+    }
+    return byLen.length;
+  }
+
   function stageInfo(k) {
     var M = MOUNTAINS[Math.floor(k / 10)], sub = k % 10, boss = sub === 9;
     return {
@@ -846,13 +886,16 @@ body.quake { animation: shake .42s ease-out; }
   function hpFor(ans, need) {
     var byLen = ans.slice().sort(function (a, b) { return a.length - b.length; });
     var hp = 0;
-    // 강화를 반영해 역산해야 "약속한 개수"가 끝까지 지켜진다. 공격력만 올리고
-    // 기세를 그대로 두면 두 개 채우기 전에 쓰러져 빈칸이 다시 장식이 된다.
+    // 기세는 '강화가 하나도 없을 때' 기준으로 잡는다.
+    //
+    // 강화까지 반영해 역산하면 검을 아무리 갈아도 기세가 같이 올라가 늘 같은
+    // 개수가 필요해진다 — 강화가 아무 효과도 없는 셈이다. 여기를 고정해 두면
+    // 검과 북을 올릴수록 필요한 낱말 수가 실제로 줄어든다.
+    //
+    // 그래서 화면의 "N개면 쓰러집니다"는 상한이다. 강화하면 더 적게 걸린다.
     for (var i = 0; i < need && i < byLen.length; i++) {
       hp += Math.round(16 * Math.pow(byLen[i].length, 1.8)
-        * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
-        * (1 + Math.min(i, COMBO_CAP)
-               * (0.08 + gearVal("combo") + up.combo * COMBO_STEP)));
+        * (1 + Math.min(i, COMBO_CAP) * 0.08));
     }
     return hp;
   }
@@ -873,6 +916,7 @@ body.quake { animation: shake .42s ease-out; }
     var hp = hpFor(p.ans, b.need);
     run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
+            payFill: 0, payWord: 0, payPerfect: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
             // 산의 규칙에 쓰는 것들
             weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 1 };
@@ -889,7 +933,7 @@ body.quake { animation: shake .42s ease-out; }
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
     var rn = ruleName(b);
-    el.bossHint.innerHTML = b.m + " \u00b7 " + b.need + "개면 쓰러집니다"
+    el.bossHint.innerHTML = b.m + " \u00b7 " + needNow(p.ans, hp) + "개면 쓰러집니다"
       + (rn ? '<span class="rulechip">' + rn + '</span>' : "");
     el.stageNo.textContent = b.no;
     el.stageUnit.textContent = "단계";
@@ -1323,9 +1367,10 @@ body.quake { animation: shake .42s ease-out; }
     el.hpNow.textContent = Math.max(0, run.hp);
     if (run.phase === "bonus") {
       el.bLeft.textContent = remaining().length;
-      el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다";
+      el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다 \u00b7 남은 시간 "
+        + Math.max(0, run.left) + "냥";
       run.sealed = -1; run.weak = -1;
-      el.hpTail.textContent = "· 덤 시간";
+      el.hpTail.textContent = "· 마무리";
       el.goLabel.textContent = "채우기";
     } else {
       el.hpTail.textContent = "· 0이 되면 이깁니다";
@@ -1337,7 +1382,7 @@ body.quake { animation: shake .42s ease-out; }
     var left = remaining().length;
     el.gFound.textContent = run.ans.length - left;
     el.gTotal.textContent = run.ans.length;
-    el.gNote.textContent = run.phase === "bonus" ? "덤 시간"
+    el.gNote.textContent = run.phase === "bonus" ? "마무리 · 남은 시간만큼 냥"
       : left === 1 ? "하나 남았습니다 · 완전 격파!" : "다 채우면 완전 격파";
     el.hpNow.parentNode.title = run.b.need + "개를 채우면 쓰러집니다";
     el.timer.textContent = run.left;
@@ -1418,7 +1463,7 @@ body.quake { animation: shake .42s ease-out; }
     el.btnGo.disabled = !ok;
     if (run.phase === "bonus") {
       el.goSub.textContent = isSlot ? "빈칸을 채웁니다 · +" + (w.length * 25) + "냥"
-        : isBonus ? "덤 낱말 · +" + (w.length * 5) + "냥"
+        : isBonus ? "보너스 낱말 · +" + (w.length * 5) + "냥"
         : w.length < 2 ? "낱말을 만드세요"
         : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
       return;
@@ -1426,7 +1471,7 @@ body.quake { animation: shake .42s ease-out; }
     el.goSub.textContent = isSlot
       ? (run.daily ? "빈칸을 채웁니다 \u00b7 " + w.length + "칸"
                    : (weakHit() ? "금빛! 기세 -" : "빈칸 \u00b7 기세 -") + damage(w, true))
-      : isBonus ? (w.length >= 3 ? "덤 낱말 · 연속 +1, 시간 +3초" : "덤 낱말 · 연속 +1")
+      : isBonus ? (w.length >= 3 ? "보너스 낱말 · 연속 +1, 시간 +3초" : "보너스 낱말 · 연속 +1")
       : w.length < 2 ? "낱말을 만드세요"
       : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
   }
@@ -1495,12 +1540,13 @@ body.quake { animation: shake .42s ease-out; }
         var sb = document.createElement("span"); sb.textContent = w; el.bonus.appendChild(sb);
       }
       gold += pay; run.extra += pay;
+      if (isSlot) run.payFill += pay; else run.payWord += pay;
       floatDmg("+" + pay + "냥", true);
       if (window.SFX) { SFX.word(w.length); isSlot ? SFX.up() : SFX.tap(); }
       picked = []; draw();
       if (!remaining().length) {           // 보너스 시간에 다 채웠다
         run.perfect++;
-        gold += 80; run.extra += 80;
+        gold += 80; run.extra += 80; run.payPerfect += 80;
         if (window.SFX) SFX.clear();
         toast("완전 격파 · +80냥");
         setTimeout(function () { if (run) victory(run); }, 700);
@@ -1526,7 +1572,7 @@ body.quake { animation: shake .42s ease-out; }
       // 아무거나 눌러 시간을 무한히 버는 길이 열린다.
       run.bonus.push(w);
       if (w.length >= 3) run.left += 3;
-      gold += w.length * 3;
+      gold += w.length * 3; run.payWord += w.length * 3;
       var s = document.createElement("span"); s.textContent = w; el.bonus.appendChild(s);
       floatDmg(w.length >= 3 ? "연속 +1 · 시간 +3초" : "연속 +1", true);
       if (window.SFX) { SFX.word(w.length); SFX.tap(); }
@@ -1575,7 +1621,7 @@ body.quake { animation: shake .42s ease-out; }
     tumble(function () {
       if (!run) return;
       el.bonusBar.hidden = false;
-      toast("물리쳤습니다! 남은 빈칸은 덤으로 채우실 수 있습니다");
+      toast("물리쳤습니다! 남은 시간에 빈칸을 더 채우시면 냥이 늘어납니다");
       draw();
     }, true);
   }
@@ -1645,6 +1691,7 @@ body.quake { animation: shake .42s ease-out; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     var r = run; run = null;
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
+    r.leftAtEnd = Math.max(0, r.left);
     // 수호신(열 단계마다)만 보물함을 남긴다. 매 판 나오면 값이 떨어진다.
     if (won) { tumble(function () { victory(r); }); return; }
     result(r, false);
@@ -1663,10 +1710,12 @@ body.quake { animation: shake .42s ease-out; }
     { p: 12, k: "반", t: "반딧불",   d: "빈칸 하나를 비춰 준다", go: function () { bag.brush++; } },
     { p:  8, k: "기", t: "기름 한 병", d: "덤 시간 +15초",        go: function () { bag.ink++; } },
     { p:  5, k: "숫", t: "숫돌",     d: "강화 성공률 +20%p",     go: function () { bag.charm++; } },
-    { p: 13, k: "양", tier: 1 },
-    { p:  6, k: "귀", tier: 2 },
-    { p:  3, k: "명", tier: 3 },
-    { p:  1, k: "신", tier: 4 }
+    { p: 13,   k: "양", tier: 1 },
+    { p:  6,   k: "귀", tier: 2 },
+    { p:  3,   k: "명", tier: 3 },
+    { p:  0.89, k: "신", tier: 4 },
+    { p:  0.1,  k: "전", tier: 5 },   // 1년 열심히 하면 셋 중 둘은 본다
+    { p:  0.01, k: "화", tier: 6 }    // 전국에 몇 명. 순위표가 생겨야 뜻이 산다
   ];
 
   // 문방구가 나오면 어느 것인지 다시 한 번 뽑는다. 이미 가진 것보다 낮으면
@@ -1676,7 +1725,7 @@ body.quake { animation: shake .42s ease-out; }
     var id = ids[Math.floor(Math.random() * 3)];
     var G = GEAR[id], nm = G.names[tier];
     if (tier <= gear[id]) {
-      var back = 60 + tier * 60;
+      var back = 60 + tier * 90;
       gold += back;
       var why = tier === gear[id] ? "이미 쓰고 계신 것입니다" : "지금 것이 더 좋습니다";
       return { t: nm, d: why + " · 냥 +" + back + "으로 바꿨습니다", tier: tier };
@@ -1733,7 +1782,7 @@ body.quake { animation: shake .42s ease-out; }
       box.classList.add("open");
       if (window.SFX) SFX.up();
       h.textContent = title;
-      h.className = "win" + (tier != null && tier >= 3 ? " rare" : "");
+      h.className = "win" + (tier != null && tier >= 5 ? " myth" : tier != null && tier >= 3 ? " rare" : "");
       tip.textContent = body;
       tip.className = "lead got";
       next.hidden = false;
@@ -1807,6 +1856,7 @@ body.quake { animation: shake .42s ease-out; }
   // 셋으로 이긴 사람은 상자를 구경도 못 한다. 그래서 전부 여기로 모은다.
   function victory(r) {
     if (timerId) { clearInterval(timerId); timerId = null; }
+    r.leftAtEnd = Math.max(0, r.left);
     run = null;
     if (r.b.boss) openChest(function () { result(r, true); });
     else result(r, true);
@@ -1822,7 +1872,11 @@ body.quake { animation: shake .42s ease-out; }
     el.bonusBar.hidden = true;
     // 단수는 장식이 아니라 수입이다. 고르게 올린 사람이 더 번다.
     var reward = won ? Math.round((40 + r.max * 0.3) * (1 + trainLv() * 0.05)) : 0;
-    gold += reward;
+    // 남은 시간도 냥이 된다. 다만 격파 보상보다 커지면 모두가 서두르고 빈칸은
+    // 또 장식이 되므로 1초에 1냥으로 둔다. 빈칸 하나가 글자당 25냥이라
+    // 채우는 쪽이 늘 이득이고, 그래서 "더 채울까"가 매번 진짜 선택이 된다.
+    var timePay = won ? Math.max(0, r.leftAtEnd || 0) : 0;
+    gold += reward + timePay;
     if (won) stage = Math.min(99, stage + 1);
     saveS();
     el.gold.textContent = gold;
@@ -1837,13 +1891,32 @@ body.quake { animation: shake .42s ease-out; }
     big.textContent = r.slots + "빈칸";
     card.appendChild(big);
     var lead = document.createElement("p"); lead.className = "lead";
-    lead.textContent = (r.perfect ? "완전 격파 · " : "") + "덤 낱말 " + r.bonus.length + "개";
+    lead.textContent = (r.perfect ? "완전 격파 · " : "")
+      + "보너스 낱말 " + r.bonus.length + "개";
     card.appendChild(lead);
+
     if (won) {
-      var pay = document.createElement("p"); pay.className = "lead pay";
-      pay.textContent = r.extra ? reward + "냥 + 덤 시간 " + r.extra + "냥"
-                                : reward + "냥";
-      card.appendChild(pay);
+      // 어디서 얼마가 나왔는지 줄마다 적는다. 합계만 보여 주면 플레이어가
+      // 무엇을 더 해야 많이 버는지 알 수 없고, 그러면 아무것도 바꾸지 않는다.
+      var rows = [["격파 보상", reward]];
+      if (r.payFill)    rows.push(["마무리 중 채운 빈칸", r.payFill]);
+      if (r.payPerfect) rows.push(["완전 격파", r.payPerfect]);
+      if (r.payWord)    rows.push(["보너스 낱말 " + r.bonus.length + "개", r.payWord]);
+      if (timePay)      rows.push(["남은 시간 " + r.leftAtEnd + "초", timePay]);
+
+      var tbl = document.createElement("div"); tbl.className = "paylist";
+      rows.forEach(function (x) {
+        var li = document.createElement("div"); li.className = "payrow";
+        var a = document.createElement("span"); a.textContent = x[0];
+        var b2 = document.createElement("b"); b2.textContent = "+" + x[1] + "냥";
+        li.appendChild(a); li.appendChild(b2); tbl.appendChild(li);
+      });
+      var sum = document.createElement("div"); sum.className = "payrow total";
+      var sa = document.createElement("span"); sa.textContent = "합계";
+      var sb = document.createElement("b");
+      sb.textContent = rows.reduce(function (n, x) { return n + x[1]; }, 0).toLocaleString() + "냥";
+      sum.appendChild(sa); sum.appendChild(sb); tbl.appendChild(sum);
+      card.appendChild(tbl);
     }
     if (!won) {
       var miss = document.createElement("p"); miss.className = "lead";
