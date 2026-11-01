@@ -356,47 +356,48 @@ body.quake { animation: shake .42s ease-out; }
 .c3 { background: #4A79D8; }
 .c4 { background: #9B5BD6; }
 
-/* 보물함. 그림을 쓰지 않고 네모 둘로 궤짝을 세운다 — 용량이 0이고
-   열릴 때 뚜껑만 젖히면 되니 움직임도 자연스럽다. */
+/* 보물함.
+   등급마다 함을 따로 그리면 여섯 장이 필요하다. 한 장을 받아 색조만 바꾸면
+   여섯이 되고, 나무에서 자주빛까지 한 계보로 읽힌다. 금속 장석의 황동빛이
+   색조를 따라 같이 움직여서 '같은 함의 더 귀한 판'처럼 보인다. */
 .chest {
-  align-self: center; position: relative; width: 112px; height: 86px;
-  background: transparent; border: 0; padding: 0; cursor: pointer;
+  align-self: center; position: relative; width: 190px; aspect-ratio: 520 / 511;
+  max-width: 100%; background: transparent; border: 0; padding: 0; cursor: pointer;
+  border-radius: 12px; overflow: visible;
 }
-.chest i, .chest u {
-  position: absolute; left: 0; right: 0; display: block;
-  background: linear-gradient(180deg, var(--cw1, #8A6A2E), var(--cw2, #5E4518));
-  box-shadow: inset 0 0 0 2px var(--cb, #C9A227), 0 8px 20px -8px #000;
+.chest img {
+  position: absolute; left: 0; bottom: 0; width: 100%; height: auto; display: block;
+  border-radius: 12px; transition: filter .45s ease;
 }
-/* 산이 높을수록 함도 귀해진다. 열기 전에 이미 눈으로 알 수 있어야 한다. */
-.chest.c1 { --cw1:#7A6141; --cw2:#4E3C22; --cb:#A98B52; }
-.chest.c2 { --cw1:#8A6A2E; --cw2:#5E4518; --cb:#C9A227; }
-.chest.c3 { --cw1:#6E7784; --cw2:#424A57; --cb:#C3CBD6; }
-.chest.c4 { --cw1:#9A7B1E; --cw2:#6A520C; --cb:#F0D98A; }
-.chest.c5 { --cw1:#8C3A2E; --cw2:#5C2018; --cb:#F0D98A; }
-.chest.c6 { --cw1:#6C3A86; --cw2:#3E1E52; --cb:#FFD76A; }
-.chest i { top: 26px; bottom: 0; border-radius: 4px 4px 10px 10px; overflow: visible; }
-.chest u {
-  top: 0; height: 32px; border-radius: 10px 10px 4px 4px;
-  transform-origin: 50% 100%; transition: transform .45s cubic-bezier(.2,1.5,.4,1);
+.chest::after {               /* 등급 테두리 빛 */
+  content: ""; position: absolute; inset: -6px; border-radius: 16px;
+  pointer-events: none; box-shadow: 0 0 0 2px var(--cb, #8A6A2E),
+    0 0 var(--cg, 0px) 2px var(--cgc, transparent);
+  transition: box-shadow .4s ease, inset .45s ease, top .45s ease;
 }
-.chest::after {
-  content: ""; position: absolute; left: 50%; top: 24px; width: 16px; height: 20px;
-  margin-left: -8px; border-radius: 3px; background: #2A1E08;
-  box-shadow: inset 0 0 0 1.5px #C9A227; z-index: 2;
-  transition: opacity .25s ease;
+.chest.c1 { --cb:#8A7250; --cg:0px; }                                  /* 나무 */
+.chest.c2 { --cb:#C9A227; --cg:16px; --cgc:rgba(201,162,39,.45); }     /* 놋 */
+.chest.c3 { --cb:#C3CBD6; --cg:20px; --cgc:rgba(195,203,214,.5); }     /* 은 */
+.chest.c4 { --cb:#F0D98A; --cg:26px; --cgc:rgba(240,217,138,.65); }    /* 금 */
+.chest.c5 { --cb:#E6705C; --cg:32px; --cgc:rgba(230,112,92,.7); }      /* 주칠 */
+.chest.c6 { --cb:#C77BE0; --cg:40px; --cgc:rgba(199,123,224,.8);
+  animation: chestAura 2.2s ease-in-out infinite; }                    /* 자주 */
+@keyframes chestAura { 50% { box-shadow: 0 0 0 2px #C77BE0, 0 0 60px 6px rgba(199,123,224,.95); } }
+
+.chest.c1 img { filter: saturate(.7) brightness(.96); }
+.chest.c2 img { filter: saturate(1.15) hue-rotate(-6deg) brightness(1.04); }
+.chest.c3 img { filter: hue-rotate(165deg) saturate(.5) brightness(1.14) contrast(1.05); }
+.chest.c4 img { filter: saturate(1.5) hue-rotate(-12deg) brightness(1.14); }
+.chest.c5 img { filter: saturate(1.6) hue-rotate(-22deg) brightness(1.02); }
+.chest.c6 img { filter: saturate(1.35) hue-rotate(228deg) brightness(1.06); }
+
+.chest.open { transform: scale(1.03); transform-origin: 50% 100%; }
+.chest.open::after {
+  top: -48px;                 /* 520x627 그림이 520x511 칸보다 42px 높다 */
+  box-shadow: 0 0 0 2px var(--cb), 0 0 70px 10px var(--cgc, rgba(255,224,138,.9));
 }
-.chest.open::after { opacity: 0; }
-/* 열리면 안에서 빛이 샌다 */
-.chest.open i::before {
-  content: ""; position: absolute; left: 8px; right: 8px; top: -6px; height: 14px;
-  border-radius: 50%; background: #FFE9A8;
-  box-shadow: 0 0 26px 10px rgba(255,224,138,.85);
-}
-/* 뚜껑은 경첩처럼 돌리지 않고 위로 튕겨 올린다. 2차원에서 회전시키면
-   몸통을 가로질러 누워 무엇이 열린 건지 알아보기 어렵다. */
-.chest.open u { transform: translateY(-40px) rotate(-10deg); }
-.chest.open i { box-shadow: inset 0 0 0 2px #F0D98A, 0 0 42px 2px rgba(201,162,39,.75); }
-.chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; }
+.chest { transition: transform .45s cubic-bezier(.2,1.4,.4,1); }
 .card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
 .card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
 /* 명품 이상이 나오면 제목부터 다르게 — 이 순간이 상자를 여는 이유다 */
@@ -1780,10 +1781,12 @@ body.quake { animation: shake .42s ease-out; }
     h.textContent = MOUNTAINS[mt].m + "의 보물함";
     card.appendChild(h);
 
+    new Image().src = "art/chest-open.jpg";   // 누르는 순간 깜빡이지 않게 미리 받아 둔다
+
     var box = document.createElement("button");
     box.className = "chest c" + tierCap(mt);
     box.setAttribute("aria-label", "보물함 열기");
-    box.innerHTML = "<i></i><u></u>";
+    box.innerHTML = '<img src="art/chest.jpg" alt="">';
     card.appendChild(box);
 
     var tip = document.createElement("p"); tip.className = "lead";
@@ -1812,6 +1815,7 @@ body.quake { animation: shake .42s ease-out; }
       saveS();
       drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
       logEv("T", got ? got.k : "g" + tier);
+      box.querySelector("img").src = "art/chest-open.jpg";
       box.classList.add("open");
       if (window.SFX) SFX.up();
       h.textContent = title;
