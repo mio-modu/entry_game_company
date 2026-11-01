@@ -90,19 +90,30 @@ li b { color: var(--fg); }
 
 <header class="head">
   <h1>장비 그림 프롬프트</h1>
-  <p>검 일곱, 등 일곱, 북 일곱. 스물한 장을 따로 뽑지 않고
-    <strong>한 종류를 한 장에 일곱 개씩</strong> 담아 세 번만 뽑습니다.</p>
+  <p>검 일곱, 등 일곱, 북 일곱. 한 종류를 한 장에 담되
+    <strong>네 칸 위 · 세 칸 아래, 칸마다 정사각</strong>으로 받습니다.
+    세 번만 뽑으시면 됩니다.</p>
 </header>
 
 <section>
-  <p class="eyebrow">먼저</p>
-  <h2>왜 한 장에 일곱 개인가</h2>
+  <p class="eyebrow">바뀐 점</p>
+  <h2>왜 한 줄로 세우면 안 되는가</h2>
   <div class="body">
-    <p>스물한 번 따로 뽑으면 <strong>등급이 올라가는 느낌이 안 납니다.</strong>
-      목검과 개천검이 서로 다른 그림체로 나오면 둘이 같은 계보라는 게 안 보입니다.</p>
-    <p>한 장에 일곱 개를 왼쪽에서 오른쪽으로 늘어놓으면 <strong>같은 손이 그린 한 줄</strong>이 되고,
-      점점 귀해지는 것이 한눈에 보입니다. 신수 여덟 점을 한 번에 뽑으셨던 것과 같은 방식입니다.</p>
-    <p>받으신 뒤에는 일곱 칸으로 잘라 쓰면 됩니다.</p>
+    <p>처음에는 일곱을 <strong>한 줄로</strong> 세워 받았습니다. 그림 자체는 좋았는데
+      게임에 넣으니 <strong>검이 실오라기처럼 얇았습니다.</strong></p>
+    <p>이유는 그림이 아니라 셈입니다. 일곱을 한 줄에 세우면 칸 하나가
+      <strong>가로 1 : 세로 7</strong>이 됩니다. 거기에 칼을 똑바로 세워 그리면
+      칼은 그 비율대로 가늘어집니다. 화면에서 작게 줄이면 아무것도 안 보입니다.</p>
+    <p>그래서 <strong>네 칸 위, 세 칸 아래</strong>로 바꿉니다. 칸 하나가 정사각이 되고,
+      그 안을 물건이 꽉 채웁니다. 장 전체는 가로 2 : 세로 1이라 어느 생성기에서나
+      안정적으로 나옵니다.</p>
+    <p>그리고 <strong>검은 대각선으로 눕힙니다.</strong> 정사각 칸을 세로로 선 칼이
+      채우는 방법은 없지만, 비스듬히 누우면 칸의 가장 긴 선을 타고 꽉 찹니다.</p>
+  </div>
+  <div class="call">
+    <div class="t">지금 그림도 버리지 마십시오</div>
+    <p>이미 받으신 세 장은 잘라서 게임에 넣어 두었습니다. 새로 받으시면
+      갈아 끼우고, 안 받으셔도 그대로 돌아갑니다. <strong>급한 일이 아닙니다.</strong></p>
   </div>
 </section>
 
@@ -125,22 +136,32 @@ li b { color: var(--fg); }
   </div>
   <div class="pbox">
     <button class="copy" data-t="p1">복사</button>
-    <pre id="p1">Seven Korean swords in one image, arranged in a single horizontal row, left to right, evenly spaced, all vertical blade-up, same scale and same baseline.
+    <pre id="p1">Seven Korean swords, as a plate from an old illustrated catalogue.
 
-Ink wash painting on aged hanji paper. Sumi-e brush technique with visible brush texture and ink bleed. Muted palette: charcoal ink, warm steel grey, oxidized brass, deep vermilion cord, antique gold. Each sword is a single clean object on the paper — no background scenery.
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
 
-Left to right, each one visibly more precious than the last:
-1. Plain wooden practice sword (목검), unpainted oak, slightly chipped, no guard.
-2. Korean military sabre (환도), gently curved blade, simple round brass guard, plain leather-wrapped grip.
-3. Ceremonial court sword (운검), straight blade, brass fittings with cloud motifs, vermilion silk cord tassel.
-4. Seven-star sword (칠성검), straight blade with the Big Dipper inlaid in silver dots along the blade, brass guard.
-5. Four-tiger sword (사인검), straight blade with fine engraved markings along its length, tiger-head brass pommel, gold inlay, red and gold tassel.
-6. Legendary heavenly sword (천부검), blade of pale luminous steel, faint golden light along the edge, cloud-and-star fittings, long gold tassel.
-7. Mythic sky-opening sword (개천검), blade appears made of cold light, a thin crack of dawn-gold running its length, radiant aura, intricate gold and jade fittings.
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
 
-Warm ivory hanji background with visible paper fiber. No text, no characters, no hands, no human figures, no fantasy runes, no neon, no lens flare.
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
 
-Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directional light from upper left.</pre>
+SWORD ORIENTATION — required:
+Lay every sword DIAGONALLY inside its square panel, hilt at the lower left and point at the upper right, so the blade runs along the panel's diagonal and fills it corner to corner. All seven lie the same way. A sword standing straight up leaves the panel mostly empty — that is the thing to avoid.
+
+THE SEVEN, in order:
+1. A plain wooden practice sword — unmistakably a SWORD, not a stick: a flat blade silhouette with a bevelled edge, a simple carved collar and a shaped grip. Pale worn oak.
+2. A Korean hwando: single-edged, gently curved, round brass guard, leather-wrapped grip.
+3. A straight double-edged court sword, brass fittings, a short crimson cord at the pommel.
+4. A straight blade inlaid with SEVEN small silver stars in the pattern of the Big Dipper running up the fuller.
+5. A straight blade with fine gold inlay script-like etching along the blade and a small brass tiger-head pommel, a crimson tassel.
+6. A ceremonial sword whose blade carries a faint inner light, an ornate gilt guard with a mythical beast head, a long gold tassel.
+7. The grandest: pale jade and gold hilt set with small green stones, the blade glowing white-gold with a soft aura, a long pale tassel.</pre>
   </div>
 </section>
 
@@ -163,22 +184,31 @@ Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directiona
   </div>
   <div class="pbox">
     <button class="copy" data-t="p2">복사</button>
-    <pre id="p2">Seven Korean lamps and lanterns in one image, single horizontal row, left to right, evenly spaced, same baseline, each lit.
+    <pre id="p2">Seven Korean lamps and lanterns, as a plate from an old illustrated catalogue. Each one is lit, and the light is the warmest thing on the page.
 
-Ink wash painting on aged hanji paper. Sumi-e brush technique with visible brush texture and ink bleed. Muted palette: charcoal ink, warm amber lamplight, aged stone grey, indigo and vermilion silk, antique gold. Each lamp is a single clean object — no background scenery.
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
 
-Left to right, each one visibly more precious than the last:
-1. Pine-knot torch (관솔불), a rough resinous branch burning with a small smoky flame.
-2. Earthenware oil lamp (등잔), low clay dish with a cotton wick and a small steady flame.
-3. Blue-and-red silk lantern (청사초롱), cylindrical frame, indigo top and vermilion bottom, warm glow through the silk.
-4. Stone lantern (석등), squat granite lantern with a carved roof, weathered, firelight in its window.
-5. Eternal-light stone lantern (장명등), taller and more ornate granite lantern with lotus carving, steady bright light.
-6. Legendary sun-and-moon lantern (일월등), a lantern holding a small sun disc and crescent moon, radiating warm gold and cool silver light together.
-7. Mythic heaven-and-earth lantern (천지등), a lantern that seems to hold a whole night sky inside, deep indigo within, stars drifting, golden rim, strong outward glow.
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
 
-Warm ivory hanji background with visible paper fiber. No text, no characters, no hands, no human figures, no modern lightbulbs, no neon, no lens flare.
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
 
-Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directional light from upper left.</pre>
+Stand each lamp upright and centred in its square panel, seen slightly from above so the top and the body both read. Make each one WIDE and solid rather than tall and thin — they must fill the square.
+
+THE SEVEN, in order:
+1. A burning pine-knot torch — a gnarled resinous root with a live flame and a thread of smoke.
+2. A shallow stone oil dish with a single wick and a small steady flame.
+3. A cheongsa-choprong: a cylindrical silk lantern, blue in the upper half and red in the lower half, with a carrying ring on top and a glow inside.
+4. A SQUAT stone lantern — wide hexagonal base, low body, broad heavy roof-cap, moss in the carved seams, warm light in the window.
+5. A TALL slender stone lantern on a long shaft — clearly much taller and narrower than number four, with a lotus-carved base and a tiered pagoda roof, so the two stone lanterns can never be confused.
+6. A gilt bronze lantern with a round face carrying a sun and a crescent moon side by side, a crown of gold flames around the rim.
+7. The grandest: deep indigo panels scattered with small stars, a gold frame, and a warm light burning at its heart.</pre>
   </div>
 </section>
 
@@ -201,22 +231,31 @@ Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directiona
   </div>
   <div class="pbox">
     <button class="copy" data-t="p3">복사</button>
-    <pre id="p3">Seven Korean drums in one image, single horizontal row, left to right, evenly spaced, same baseline, each shown front-on with the drumhead facing the viewer.
+    <pre id="p3">Seven Korean drums, as a plate from an old illustrated catalogue.
 
-Ink wash painting on aged hanji paper. Sumi-e brush technique with visible brush texture and ink bleed. Muted palette: charcoal ink, warm ox-hide cream, vermilion and indigo lacquer, brass tacks, antique gold. Each drum is a single clean object — no background scenery, no drumsticks unless noted.
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
 
-Left to right, each one visibly more precious than the last:
-1. Small handheld frame drum (소고), plain wooden hoop, bare hide, worn, with a short wooden handle.
-2. Victory war drum (승전고), medium barrel drum on a simple wooden stand, red hide rim, brass tacks around the edge.
-3. Dragon drum (용고), larger barrel drum, body lacquered vermilion with a painted dragon coiling around it, gold tacks.
-4. Thunder drum (뇌고), big drum with indigo lacquer body, painted spiral thunder patterns, heavy carved wooden frame.
-5. Heaven drum (천고), grand ceremonial drum on an ornate carved stand with cloud motifs, gold leaf accents, taut pale hide.
-6. Legendary lightning drum (벽력고), drum rimmed in gold, forked lightning rendered in ink and gold across the head, faint sparks in the air around it.
-7. Mythic celestial thunder drum (천뢰고), enormous drum whose head seems to hold a storm sky, deep indigo and gold, radiating shockwave rings drawn in ink.
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
 
-Warm ivory hanji background with visible paper fiber. No text, no characters, no hands, no human figures, no Japanese taiko shape, no neon, no lens flare.
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
 
-Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directional light from upper left.</pre>
+Show each drum front-on with the drumhead facing the viewer, centred and filling its square panel. The drums grow larger and more ornate in order.
+
+THE SEVEN, in order:
+1. A small hand drum with a short wooden handle, plain hide head, simple lashing.
+2. A mid-sized war drum on a plain wooden stand, crimson body, brass studs around the rim.
+3. A larger crimson drum with a gold dragon coiled across the body, on a carved stand.
+4. A drum with an indigo body painted with rolling cloud scrolls, in a dark carved wooden frame.
+5. A drum in an elaborate gilt frame carved with clouds and beasts; the head itself is pale and plain so the frame does the work.
+6. A dark drum whose head is cracked across with veins of gold lightning, in a black and gold frame.
+7. The grandest: a night-dark drum head full of storm cloud and a glowing core, in a gold frame, with ink-brush ripples radiating outward to show the sound carrying.</pre>
   </div>
 </section>
 
@@ -224,8 +263,11 @@ Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directiona
   <p class="eyebrow">받은 뒤</p>
   <h2>자르고 넣는 법</h2>
   <div class="body">
-    <p>한 장에 일곱이니 <strong>가로로 일곱 등분</strong>해서 자르시면 됩니다.
-      생성기가 간격을 정확히 맞추진 않으니, 눈으로 보고 조금씩 조정하시면 됩니다.</p>
+    <p><strong>그냥 받은 그대로 주십시오.</strong> 자르는 일은 제가 합니다.
+      칸마다 가는 먹선을 두르라고 적어 두었으니, 그 선을 따라 일곱으로 가르면 됩니다.</p>
+    <p>지난번에는 선이 없어서 먹 농도와 윤곽선 세기로 경계를 찾느라 몇 번을 헤맸고,
+      그 와중에 북 두 개가 한 칸에 들어가기도 했습니다. <strong>선 하나가 그 고생을
+      전부 없앱니다.</strong></p>
   </div>
   <div class="scroll">
     <table>
@@ -238,15 +280,16 @@ Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directiona
     </table>
   </div>
   <div class="body">
-    <p>정사각형(예: 240 × 240)으로 맞춰 주시면 수련 패널과 보물함 양쪽에 그대로 들어갑니다.
-      배경은 한지 그대로 두셔도 되고, 지우셔도 됩니다 — 둘 다 제가 맞추겠습니다.</p>
-    <p>받으시면 <strong>수련 패널의 이름표 자리에 작은 그림</strong>을 넣고,
-      <strong>보물함에서 나올 때는 크게</strong> 띄우겠습니다.</p>
+    <p>칸이 정사각이면 <strong>수련 패널에도 작게 걸 수 있습니다.</strong> 지금은 검이
+      세로로 길어 30px로 줄이면 실오라기가 되는 탓에 패널에서는 빼 두었습니다.
+      정사각으로 받으면 그 자리도 살아납니다.</p>
+    <p>보물함에서 나올 때는 지금도 등급 띠를 둘러 크게 띄우고 있습니다.</p>
   </div>
   <div class="call gold">
-    <div class="t">한 종류만 먼저 뽑으셔도 됩니다</div>
-    <p><strong>검부터</strong> 하십시오. 셋 중 가장 자주 눈에 띄고, 한 장만 들어가도
-      «그림이 있는 게임»으로 보입니다. 나머지 둘은 나중에 채워도 빈 자리가 티 나지 않습니다.</p>
+    <div class="t">검부터 하십시오</div>
+    <p>셋 중 <strong>검이 가장 급합니다.</strong> 등과 북은 원래 옆으로 퍼진 물건이라
+      지금 그림으로도 봐줄 만한데, 검만 세로로 길어 혼자 초라합니다.
+      검 한 장만 새로 받아도 체감이 크게 달라집니다.</p>
   </div>
 </section>
 
@@ -261,6 +304,16 @@ Wide horizontal composition, 7:3 aspect ratio, generous margins, soft directiona
       «each one visibly more precious than the last»가 그걸 노린 문장입니다.</li>
     <li><b>사람 손이나 인물</b> — 물건만 있어야 잘라 쓸 수 있습니다.</li>
     <li><b>글자</b> — 낱말 게임이라 화면에 이미 글자가 가득합니다.</li>
+    <li><b>칸 안이 헐렁함</b> — 이번에 고치려는 바로 그 문제입니다. 물건이 칸의
+      85%를 채워야 합니다. 여백이 넓으면 작게 줄였을 때 «없어 보입니다».</li>
+    <li><b>칼을 똑바로 세움</b> — 정사각 칸에 세로로 선 칼을 넣으면 칸이 텅 빕니다.
+      일곱 자루 모두 <b>왼쪽 아래에서 오른쪽 위로</b> 비스듬히 누워야 합니다.</li>
+    <li><b>목검이 막대기</b> — 지난번 실패입니다. 날과 손잡이가 구분되는
+      «검 모양»이어야 합니다.</li>
+    <li><b>석등과 장명등이 같음</b> — 지난번 실패입니다. 넷째는 <b>낮고 넓게</b>,
+      다섯째는 <b>높고 가늘게</b>. 프롬프트에 둘을 나란히 비교해 적어 뒀습니다.</li>
+    <li><b>칸이 여덟</b> — 넷·셋이라고 적었는데 넷·넷으로 나오면 하나가 군더더기입니다.
+      그때는 그냥 다시 뽑으십시오.</li>
   </ul>
 </section>
 
