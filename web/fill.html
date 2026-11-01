@@ -144,6 +144,38 @@ body.quake { animation: shake .42s ease-out; }
   border-radius: 10px; transition: transform .08s ease, opacity .15s ease; }
 .tile:active { transform: scale(.92); }
 .tile.used { opacity: .22; }
+
+/* 산마다 다른 규칙. 글자판 크기만 바뀌고 손이 하는 일은 같으면 금방 질린다.
+   보는 것과 고르는 것이 달라져야 다른 산에 온 느낌이 난다. */
+.tile.weak {
+  color: #1A1206; border-color: #F0D98A;
+  background: linear-gradient(180deg, #EBCB72, #C9A227);
+  box-shadow: 0 0 16px -2px rgba(201,162,39,.95);
+  animation: weakpulse 1.3s ease-in-out infinite;
+}
+@keyframes weakpulse { 50% { box-shadow: 0 0 5px -2px rgba(201,162,39,.4); } }
+.tile.sealed {
+  color: var(--fg-faint); background: #0C0E14;
+  border-color: #3A2420; box-shadow: inset 0 0 14px -4px #D6453A;
+  opacity: 1 !important;
+}
+.tile.sealed::after {
+  content: "\d83d\udd12"; position: absolute; font-size: 11px; opacity: .8;
+}
+.tile { position: relative; }
+.slotrow.fog { opacity: .75; }
+.slotrow .qmark {
+  width: 42px; height: 46px; border-radius: 8px; display: grid; place-items: center;
+  font-family: var(--font-display); font-size: 20px; font-weight: 700;
+  color: var(--fg-faint); background: #0E1017;
+  box-shadow: inset 0 0 0 1.5px #2C3142;
+}
+.rulechip {
+  display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: .06em; padding: 1px 8px; border-radius: 20px;
+  border: 1px solid var(--gold); color: var(--gold); margin-left: 6px;
+  vertical-align: middle; white-space: nowrap;
+}
 .acts { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 6px; }
 .btn { border-radius: 11px; padding: 12px 8px; font-size: 14px; font-weight: 600;
   background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
@@ -243,9 +275,11 @@ body.quake { animation: shake .42s ease-out; }
     <p>이기는 길은 하나입니다 — <b>수호신의 기세를 0으로 만들면</b> 그 자리에서 끝납니다.
        빈칸이 다섯이어도 <b>정해진 개수만 채우면</b> 쓰러집니다. 몇 개인지는
        수호신 이름 아래에 적혀 있습니다.</p>
-    <p>산마다 성격이 다릅니다 — 북한산·속리산은 두 글자만 나오고, 계룡산부터
-       세 글자가 섞입니다. 덕유산은 긴 낱말만 나오는 대신 빈칸이 적습니다.
-       산을 넘을 때마다 알려 드립니다.</p>
+    <p>산마다 <b>규칙이 다릅니다.</b> 계룡산부터 <b>금빛 글자</b>가 하나 뜹니다 —
+       그 글자를 끼워 넣은 낱말은 크게 들어가고, 쓰고 나면 다른 자리로 옮겨 갑니다.
+       소백산·한라산에서는 수호신이 글자 하나를 <b>잠깐 눌러 둡니다.</b>
+       지리산·금강산은 <b>안개</b>가 끼어 빈칸의 글자 수가 가려지고,
+       하나 채울 때마다 하나씩 걷힙니다.</p>
     <p>같은 산 안에서도 올라갈수록 <b>빈칸과 채울 개수는 늘고 시간은 줄어듭니다.</b></p>
     <p>빈칸은 <b>가장 잘 드는 공격</b>입니다. 긴 낱말일수록 깊게 들어갑니다.
        빈칸에 없는 낱말도 사전에 있으면 <b>절반만큼</b> 들어갑니다 —
@@ -290,22 +324,22 @@ body.quake { animation: shake .42s ease-out; }
       w0:3, w1:5, k0:2, k1:3, s0:70, s1:56, d:"두 글자 낱말만 · 둘만 채워도 쓰러집니다" },
     { m:"속리산", n:"삼족오",    a:"samjogo",   t:7, lo:2, hi:2,
       w0:4, w1:6, k0:3, k1:4, s0:66, s1:52, d:"여전히 두 글자 · 글자판이 넓어집니다" },
-    { m:"계룡산", n:"해태",      a:"haetae",    t:7, lo:2, hi:3,
-      w0:4, w1:6, k0:3, k1:4, s0:62, s1:50, d:"세 글자가 섞이기 시작합니다" },
-    { m:"설악산", n:"현무",      a:"hyeonmu",   t:7, lo:2, hi:3,
-      w0:5, w1:7, k0:3, k1:5, s0:58, s1:46, d:"세 글자가 늘고 빈칸도 늘어납니다" },
-    { m:"소백산", n:"백호",      a:"baekho",    t:7, lo:2, hi:4,
-      w0:5, w1:7, k0:4, k1:5, s0:54, s1:44, d:"네 글자 낱말이 나타납니다" },
-    { m:"덕유산", n:"기린",      a:"kirin",     t:7, lo:3, hi:4,
-      w0:3, w1:4, k0:2, k1:3, s0:52, s1:42, d:"빈칸은 긴 낱말만 · 적지만 깊습니다" },
-    { m:"지리산", n:"주작",      a:"jujak",     t:8, lo:3, hi:4,
-      w0:3, w1:5, k0:3, k1:4, s0:48, s1:40, d:"긴 낱말만 · 글자판이 커집니다" },
-    { m:"한라산", n:"백록",      a:"baekrok",   t:8, lo:2, hi:4,
-      w0:6, w1:8, k0:4, k1:6, s0:46, s1:38, d:"빈칸이 가장 많은 산" },
-    { m:"금강산", n:"봉황",      a:"bonghwang", t:8, lo:3, hi:4,
-      w0:4, w1:5, k0:3, k1:4, s0:42, s1:34, d:"긴 낱말만 · 시간이 촉박합니다" },
-    { m:"백두산", n:"천지의 용", a:"yong",      t:8, lo:2, hi:4,
-      w0:7, w1:9, k0:5, k1:7, s0:38, s1:30, d:"마지막 산 · 모든 것이 한꺼번에" }
+    { m:"계룡산", n:"해태",      a:"haetae",    t:7, lo:2, hi:3, mod:"weak",
+      w0:4, w1:6, k0:3, k1:4, s0:62, s1:50, d:"금빛 글자를 쓰면 크게 들어갑니다" },
+    { m:"설악산", n:"현무",      a:"hyeonmu",   t:7, lo:2, hi:3, mod:"weak",
+      w0:5, w1:7, k0:3, k1:5, s0:58, s1:46, d:"금빛 글자 · 빈칸이 늘어납니다" },
+    { m:"소백산", n:"백호",      a:"baekho",    t:7, lo:2, hi:4, mod:"seal",
+      w0:5, w1:7, k0:4, k1:5, s0:54, s1:44, d:"백호가 글자를 하나씩 눌러 둡니다" },
+    { m:"덕유산", n:"기린",      a:"kirin",     t:7, lo:3, hi:4, mod:"weak",
+      w0:3, w1:4, k0:2, k1:3, s0:52, s1:42, d:"긴 낱말만 · 금빛 글자가 함께" },
+    { m:"지리산", n:"주작",      a:"jujak",     t:8, lo:3, hi:4, mod:"fog",
+      w0:3, w1:5, k0:3, k1:4, s0:48, s1:40, d:"안개 · 빈칸이 하나씩만 드러납니다" },
+    { m:"한라산", n:"백록",      a:"baekrok",   t:8, lo:2, hi:4, mod:"seal",
+      w0:6, w1:8, k0:4, k1:6, s0:46, s1:38, d:"빈칸이 가장 많고 글자가 잠깁니다" },
+    { m:"금강산", n:"봉황",      a:"bonghwang", t:8, lo:3, hi:4, mod:"fog",
+      w0:4, w1:5, k0:3, k1:4, s0:42, s1:34, d:"안개 속 긴 낱말 · 시간이 촉박합니다" },
+    { m:"백두산", n:"천지의 용", a:"yong",      t:8, lo:2, hi:4, mod:"weak", mod2:"seal",
+      w0:7, w1:9, k0:5, k1:7, s0:38, s1:30, d:"금빛 글자와 봉인이 한꺼번에" }
   ];
   var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
 
@@ -417,6 +451,7 @@ body.quake { animation: shake .42s ease-out; }
       n: boss ? M.n + " 수호신" : TITLES[sub] + M.n, art: M.a, m: M.m, boss: boss,
       no: k + 1, d: M.d,
       // 글자판 조건은 산의 처음과 끝 사이를 단계 수만큼 나눠 걷는다
+      mod: M.mod || null, mod2: M.mod2 || null,
       spec: { t: M.t, lo: M.lo, hi: M.hi,
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
       need: lerp(M.k0, M.k1, sub),
@@ -453,13 +488,19 @@ body.quake { animation: shake .42s ease-out; }
     var hp = hpFor(p.ans, b.need);
     run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
             bonus: [], cleared: 0, perfect: 0, found: 0, extra: 0,
-            tiles: p.tiles, ans: p.ans, got: Object.create(null) };
+            tiles: p.tiles, ans: p.ans, got: Object.create(null),
+            // 산의 규칙에 쓰는 것들
+            weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 1 };
+    if (hasMod(b, "weak")) moveWeak();
+    if (hasMod(b, "fog")) run.shown = 1;
     picked = [];
     el.bonusBar.hidden = true;
     el.portrait.classList.remove("down");
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
-    el.bossHint.textContent = b.m + " · " + b.need + "개를 채우면 쓰러집니다";
+    var rn = ruleName(b);
+    el.bossHint.innerHTML = b.m + " \u00b7 " + b.need + "개면 쓰러집니다"
+      + (rn ? '<span class="rulechip">' + rn + '</span>' : "");
     el.stageNo.textContent = b.no;
     el.mtName.textContent = b.m;
     el.hpMax.textContent = hp;
@@ -476,7 +517,52 @@ body.quake { animation: shake .42s ease-out; }
     run.tiles = p.tiles;
     run.ans = p.ans;
     run.got = Object.create(null);
+    run.sealed = -1; run.weak = -1; run.shown = 1;
     picked = [];
+    if (hasMod(run.b, "weak")) moveWeak();
+  }
+
+  // ── 산의 규칙 ──────────────────────────────────────────────────────
+  // 금빛 글자: 그 글자를 쓴 낱말이 크게 들어간다. 쓰면 다른 자리로 옮겨 간다.
+  //            "어떤 낱말을 만들까"가 "어떤 글자를 끼워 넣을까"로 바뀐다.
+  // 봉인     : 수호신이 글자 하나를 눌러 둔다. 잠깐이지만 셈이 완전히 달라진다.
+  // 안개     : 빈칸의 글자 수가 가려진다. 길이를 보고 겨냥하던 것이, 아는
+  //            낱말을 던져 보는 쪽으로 바뀐다. 하나 채울 때마다 하나씩 걷힌다.
+  function hasMod(b, name) { return b.mod === name || b.mod2 === name; }
+
+  function moveWeak() {
+    if (!run) return;
+    var pool = [];
+    for (var i = 0; i < run.tiles.length; i++) {
+      if (i !== run.weak && i !== run.sealed && picked.indexOf(i) < 0) pool.push(i);
+    }
+    run.weak = pool.length ? pool[Math.floor(Math.random() * pool.length)] : -1;
+    run.weakAt = run.left;
+  }
+
+  function doSeal() {
+    if (!run || remaining().length <= 1) return;   // 마지막 한 칸은 건드리지 않는다
+    var pool = [];
+    for (var i = 0; i < run.tiles.length; i++) {
+      if (i !== run.weak && picked.indexOf(i) < 0) pool.push(i);
+    }
+    if (!pool.length) return;
+    run.sealed = pool[Math.floor(Math.random() * pool.length)];
+    run.sealAt = run.left;
+    if (window.SFX) SFX.bad();
+    toast(run.b.n + "이 “" + run.tiles[run.sealed] + "”를 눌렀습니다");
+  }
+
+  function weakHit() {
+    return run.weak >= 0 && picked.indexOf(run.weak) >= 0;
+  }
+
+  function ruleName(b) {
+    var n = [];
+    if (hasMod(b, "weak")) n.push("금빛 글자");
+    if (hasMod(b, "seal")) n.push("봉인");
+    if (hasMod(b, "fog")) n.push("안개");
+    return n.join(" · ");
   }
 
   function remaining() {
@@ -490,7 +576,8 @@ body.quake { animation: shake .42s ease-out; }
     el.hpNow.textContent = Math.max(0, run.hp);
     if (run.phase === "bonus") {
       el.bLeft.textContent = remaining().length;
-      el.bossHint.textContent = run.b.m + " · 쓰러뜨렸습니다";
+      el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다";
+      run.sealed = -1; run.weak = -1;
       el.hpTail.textContent = "· 보너스 시간";
       el.goLabel.textContent = "채우기";
     } else {
@@ -510,13 +597,27 @@ body.quake { animation: shake .42s ease-out; }
 
   function drawSlots() {
     el.slots.textContent = "";
+    var fog = hasMod(run.b, "fog") && run.phase === "fight";
+    var hidden = 0;
     run.ans.forEach(function (w) {
+      var on = !!run.got[w];
       var row = document.createElement("div");
       row.className = "slotrow";
+      // 안개에 가려진 줄은 글자 수를 숨긴다. 채운 줄과 드러난 줄만 보인다.
+      if (fog && !on && hidden++ >= run.shown) {
+        row.className += " fog";
+        var lab0 = document.createElement("span");
+        lab0.className = "lenlab"; lab0.textContent = "?자";
+        row.appendChild(lab0);
+        var q = document.createElement("span");
+        q.className = "qmark"; q.textContent = "?";
+        row.appendChild(q);
+        el.slots.appendChild(row);
+        return;
+      }
       var lab = document.createElement("span");
       lab.className = "lenlab"; lab.textContent = w.length + "자";
       row.appendChild(lab);
-      var on = !!run.got[w];
       for (var i = 0; i < w.length; i++) {
         var c = document.createElement("b");
         c.className = "cell" + (on ? " on" : "");
@@ -532,9 +633,11 @@ body.quake { animation: shake .42s ease-out; }
     el.tiles.textContent = "";
     run.tiles.forEach(function (ch, i) {
       var b = document.createElement("button");
-      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "");
+      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "")
+        + (i === run.weak ? " weak" : "") + (i === run.sealed ? " sealed" : "");
       b.textContent = ch;
-      b.disabled = picked.indexOf(i) >= 0;
+      b.disabled = picked.indexOf(i) >= 0 || i === run.sealed;
+      if (i === run.sealed) b.title = "수호신이 눌러 둔 글자입니다";
       b.addEventListener("click", function () { tap(i); });
       el.tiles.appendChild(b);
     });
@@ -571,7 +674,7 @@ body.quake { animation: shake .42s ease-out; }
         : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
       return;
     }
-    el.goSub.textContent = isSlot ? "빈칸 · 기세 -" + damage(w, true)
+    el.goSub.textContent = isSlot ? (weakHit() ? "금빛! 기세 -" : "빈칸 \u00b7 기세 -") + damage(w, true)
       : isBonus ? "보너스 · 기세 -" + damage(w, false) + ", 시간 +3초"
       : w.length < 2 ? "낱말을 만드세요"
       : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
@@ -581,7 +684,10 @@ body.quake { animation: shake .42s ease-out; }
   // 막혔을 때 아는 낱말로 길을 낼 수 있다.
   function damage(w, isSlot) {
     var d = 16 * Math.pow(w.length, 1.8) * (1 + Math.min(run.combo, 10) * 0.08);
-    return Math.round(isSlot ? d : d * 0.5);
+    if (isSlot) d *= 0.5 + 0.5;            // 빈칸이 본줄기
+    else d *= 0.5;
+    if (weakHit()) d *= 1.8;               // 금빛 글자를 끼워 넣으면 크게 들어간다
+    return Math.round(d);
   }
 
   function tap(i) {
@@ -639,11 +745,14 @@ body.quake { animation: shake .42s ease-out; }
     }
 
     var dmg = damage(w, isSlot);
+    var wasWeak = weakHit();
     run.hp -= dmg;
     run.combo++;
     if (isSlot) {
       run.got[w] = 1;
-      floatDmg("-" + dmg, false);
+      run.shown++;                            // 안개가 한 칸 걷힌다
+      if (run.sealed >= 0) run.sealed = -1;    // 빈칸을 채우면 봉인이 풀린다
+      floatDmg((wasWeak ? "금빛! -" : "-") + dmg, false);
       if (window.SFX) { SFX.word(w.length); SFX.hit(); }
     } else {
       run.bonus.push(w);
@@ -656,6 +765,7 @@ body.quake { animation: shake .42s ease-out; }
     el.portrait.classList.add("hit");
     setTimeout(function () { el.portrait.classList.remove("hit"); }, 110);
     picked = [];
+    if (wasWeak) moveWeak();                   // 짚은 금빛은 다른 자리로 옮겨 간다
     draw();
 
     // 수호신이 쓰러졌다. 빈칸이 남았으면 바로 끝내지 않고 덤 시간을 준다.
@@ -698,6 +808,7 @@ body.quake { animation: shake .42s ease-out; }
   function onSecond() {
     if (!run) return;
     run.left--;
+    if (run.phase === "fight") ruleSecond();
     if (run.left <= 0) {
       run.left = 0; draw();
       // 보너스 시간에 시계가 멈춘 것은 진 게 아니다. 이미 이겨 둔 판이다.
@@ -732,6 +843,22 @@ body.quake { animation: shake .42s ease-out; }
     }, 780);
 
     setTimeout(function () { dz.remove(); sp.remove(); after(); }, keep ? 1500 : 1700);
+  }
+
+  function ruleSecond() {
+    var b = run.b;
+    // 금빛 글자는 가만히 두지 않는다. 한자리에 머물면 그냥 보너스가 된다.
+    if (hasMod(b, "weak") && run.weak >= 0 && run.weakAt - run.left >= 11) moveWeak();
+    if (hasMod(b, "seal")) {
+      // 경과 시간으로 잰다. 남은 시간으로 재면 판마다 첫 봉인이 들쭉날쭉하고,
+      // 짧은 판에서는 글자판을 읽기도 전에 걸린다.
+      var past = b.t - run.left;
+      if (run.sealed >= 0) {
+        if (run.sealAt - run.left >= 7) run.sealed = -1;   // 오래 묶어 두지 않는다
+      } else if (past >= 12 && (past - 12) % 13 === 0) {
+        doSeal();
+      }
+    }
   }
 
   function finish(won) {
