@@ -466,7 +466,9 @@ body.quake { animation: shake .42s ease-out; }
   <div class="panel">
     <h2>수련 <small id="trainSub"></small></h2>
     <div id="ups"></div>
-    <p class="cite">세 가지를 <b>고르게</b> 올려야 단수가 오릅니다. 한 축만 밀면 그대로입니다.
+    <p class="cite"><b>검</b>은 깊게 베고, <b>등</b>은 밤을 밝혀 시간을 벌고,
+      <b>북</b>은 연달아 두드릴수록 기세가 오릅니다.
+      세 가지를 <b>고르게</b> 올려야 단수가 오릅니다. 한 축만 밀면 그대로입니다.
       단수가 높을수록 수호신을 쓰러뜨렸을 때 받는 냥이 늘어납니다.</p>
   </div>
 
@@ -676,12 +678,19 @@ body.quake { animation: shake .42s ease-out; }
   // 벽이 생기고, 그 벽을 돈으로만 넘게 만들면 리뷰가 무너진다.
   var ATK_STEP = 1.14, TIME_STEP = 3, COMBO_STEP = 0.02, COMBO_CAP = 12;
   var CAP_PER_CYCLE = 9;
+  // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
+  // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
+  // 셋 다 조선 세계관 안에 그대로 있다 — 산을 오르는 사람이 검과 등과 북을
+  // 지니는 건 자연스럽다.
+  //   검  벤다            조선 왕실의 사인검에는 실제로 글자가 새겨져 있었다
+  //   등  밤을 밝혀 시간을 번다
+  //   북  연달아 두드릴수록 기세가 오른다 — 연속 배수의 은유 그 자체
   var UPGRADES = [
-    { id: "atk",   t: "붓끝",  w: "공격력",   base: 40,  r: 1.16,
+    { id: "atk",   t: "검",   w: "공격력",   base: 40,  r: 1.16,
       desc: function () { return "빈칸 피해 x" + (gearVal("atk") * Math.pow(ATK_STEP, up.atk)).toFixed(2); } },
-    { id: "time",  t: "먹물",  w: "제한시간", base: 90,  r: 1.22,
+    { id: "time",  t: "등",   w: "제한시간", base: 90,  r: 1.22,
       desc: function () { return "제한시간 +" + (up.time * TIME_STEP + gearVal("time")) + "초"; } },
-    { id: "combo", t: "인장",  w: "연속 배수", base: 150, r: 1.22,
+    { id: "combo", t: "북",   w: "연속 배수", base: 150, r: 1.22,
       desc: function () { return "연속마다 +"
         + Math.round((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100) + "%"; } }
   ];
@@ -700,14 +709,14 @@ body.quake { animation: shake .42s ease-out; }
   // 인벤토리와 장착 화면은 40~60대에게 그 자체로 벽이고, 우리가 파는 것은
   // 관리가 아니라 낱말이다.
   var GEAR = {
-    atk:   { t: "붓", names: ["몽당붓", "족제비붓", "황모붓", "금니붓", "일필휘지"],
+    atk:   { t: "검", names: ["목검", "환도", "운검", "칠성검", "사인검"],
              val: [1, 1.15, 1.35, 1.6, 2.0], unit: "빈칸 피해 x" },
-    time:  { t: "먹", names: ["먹동강", "송연묵", "유연묵", "금니묵", "천년묵"],
+    time:  { t: "등", names: ["관솔불", "등잔", "청사초롱", "석등", "장명등"],
              val: [0, 4, 8, 13, 20], unit: "제한시간 +", suf: "초" },
-    combo: { t: "인장", names: ["나무도장", "황동인", "옥인", "금인", "어보"],
+    combo: { t: "북", names: ["소고", "승전고", "용고", "뇌고", "천고"],
              val: [0, 0.02, 0.04, 0.07, 0.11], unit: "연속마다 +", pct: true }
   };
-  var TIER = ["평범", "양품", "귀품", "명품", "신물"];
+  var TIER = ["예사", "양품", "귀품", "명품", "신물"];
   var gear = { atk: 0, time: 0, combo: 0 };
 
   function gearVal(id) { return GEAR[id].val[gear[id]]; }
@@ -1651,9 +1660,9 @@ body.quake { animation: shake .42s ease-out; }
   var CHEST = [
     { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",             go: function () { gold += 120; } },
     { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",           go: function () { gem += 2; } },
-    { p: 12, k: "획", t: "붓 한 획",     d: "빈칸 하나를 짚어 준다", go: function () { bag.brush++; } },
-    { p:  8, k: "물", t: "먹물 한 모금", d: "덤 시간 +15초",        go: function () { bag.ink++; } },
-    { p:  5, k: "부", t: "부적",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } },
+    { p: 12, k: "반", t: "반딧불",   d: "빈칸 하나를 비춰 준다", go: function () { bag.brush++; } },
+    { p:  8, k: "기", t: "기름 한 병", d: "덤 시간 +15초",        go: function () { bag.ink++; } },
+    { p:  5, k: "숫", t: "숫돌",     d: "강화 성공률 +20%p",     go: function () { bag.charm++; } },
     { p: 13, k: "양", tier: 1 },
     { p:  6, k: "귀", tier: 2 },
     { p:  3, k: "명", tier: 3 },
@@ -1744,7 +1753,7 @@ body.quake { animation: shake .42s ease-out; }
   function drawTrain() {
     var cap = upCap();
     el.lv.textContent = "수련 " + trainLv() + "단";
-    el.trainSub.textContent = "붓끝 " + up.atk + " · 먹물 " + up.time + " · 인장 " + up.combo
+    el.trainSub.textContent = "검 " + up.atk + " · 등 " + up.time + " · 북 " + up.combo
       + "  (각 " + cap + "단계까지)";
     el.ups.textContent = "";
     UPGRADES.forEach(function (u) {
@@ -2057,7 +2066,7 @@ body.quake { animation: shake .42s ease-out; }
       var rest0 = remaining();
       if (rest0.length) {
         var w0 = rest0[Math.floor(Math.random() * rest0.length)];
-        toast("붓 한 획 · " + w0.length + "글자, 첫 글자는 “" + w0.charAt(0) + "”");
+        toast("반딧불 · " + w0.length + "글자, 첫 글자는 “" + w0.charAt(0) + "”");
         LOG.hint++; logEv("H"); draw(); return;
       }
     }
