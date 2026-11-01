@@ -105,7 +105,7 @@ body.quake { animation: shake .42s ease-out; }
 .floaters { position: absolute; inset: 0; pointer-events: none; }
 .dmg { position: absolute; font-family: var(--font-mono); font-weight: 600; color: var(--gold);
   font-size: 21px; text-shadow: 0 2px 6px #000; animation: rise 1s ease-out forwards; }
-.dmg.bonus { color: var(--jade); font-size: 17px; }
+.dmg.bonus { color: var(--jade); font-size: 14px; font-family: var(--font-body); font-weight: 600; }
 @keyframes rise { to { transform: translateY(-46px); opacity: 0 } }
 
 /* ---- 빈칸 격자. 이 게임의 전부다. ----
@@ -281,9 +281,10 @@ body.quake { animation: shake .42s ease-out; }
        지리산·금강산은 <b>안개</b>가 끼어 빈칸의 글자 수가 가려지고,
        하나 채울 때마다 하나씩 걷힙니다.</p>
     <p>같은 산 안에서도 올라갈수록 <b>빈칸과 채울 개수는 늘고 시간은 줄어듭니다.</b></p>
-    <p>빈칸은 <b>가장 잘 드는 공격</b>입니다. 긴 낱말일수록 깊게 들어갑니다.
-       빈칸에 없는 낱말도 사전에 있으면 <b>절반만큼</b> 들어갑니다 —
-       아는 낱말이 헛되지 않습니다.</p>
+    <p>기세를 깎는 것은 <b>빈칸뿐</b>입니다. 긴 낱말일수록 깊게 들어갑니다.
+       빈칸에 없는 낱말도 사전에 있으면 <b>덤</b>으로 인정해 <b>연속을 이어 주고
+       시간과 냥</b>을 줍니다 — 기세는 깎이지 않지만 <b>다음 빈칸 한 방이 더 크게</b>
+       들어갑니다. 아는 낱말이 헛되지 않습니다.</p>
     <p>수호신이 쓰러져도 빈칸이 남았다면 <b>보너스 시간</b>이 이어집니다.
        남은 빈칸을 채우면 냥을 더 받고, 다 채우면 <b>완전 격파</b>입니다.
        생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내면 됩니다 —
@@ -669,23 +670,32 @@ body.quake { animation: shake .42s ease-out; }
     el.btnGo.disabled = !ok;
     if (run.phase === "bonus") {
       el.goSub.textContent = isSlot ? "빈칸을 채웁니다 · +" + (w.length * 25) + "냥"
-        : isBonus ? "보너스 낱말 · +" + (w.length * 5) + "냥"
+        : isBonus ? "덤 낱말 · +" + (w.length * 5) + "냥"
         : w.length < 2 ? "낱말을 만드세요"
         : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
       return;
     }
     el.goSub.textContent = isSlot ? (weakHit() ? "금빛! 기세 -" : "빈칸 \u00b7 기세 -") + damage(w, true)
-      : isBonus ? "보너스 · 기세 -" + damage(w, false) + ", 시간 +3초"
+      : isBonus ? (w.length >= 3 ? "덤 낱말 · 연속 +1, 시간 +3초" : "덤 낱말 · 연속 +1")
       : w.length < 2 ? "낱말을 만드세요"
       : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
   }
 
-  // 빈칸이 본줄기, 보너스는 절반. 그래야 빈칸을 채우는 쪽이 늘 이득이면서도
-  // 막혔을 때 아는 낱말로 길을 낼 수 있다.
+  // 기세를 깎는 것은 빈칸뿐이다.
+  //
+  // 전에는 빈칸 밖 낱말도 절반을 깎게 했는데, 그 순간 "가장 짧은 N개를 채우면
+  // 정확히 0"이라는 약속이 거짓이 된다. 빈칸을 하나도 안 채우고 이길 수 있고,
+  // 그러면 빈칸은 목표가 아니라 장식이다.
+  //
+  // 실제로 재 보니 더 나빴다. 두 글자 구간에서는 타일 여섯 개로 만들 수 있는
+  // 서로 다른 조합 30가지 가운데 절반이 넘는 15~20개가 사전에 있는 낱말이라,
+  // 아무 두 개나 눌러도 절반은 맞았다. 찍기가 전략이 되는 판이었다.
+  //
+  // 그래서 빈칸 밖 낱말은 기세를 건드리지 않는다. 대신 연속을 이어 주고
+  // 시간과 냥을 준다 — 다음 빈칸 한 방이 더 크게 들어간다.
   function damage(w, isSlot) {
+    if (!isSlot) return 0;
     var d = 16 * Math.pow(w.length, 1.8) * (1 + Math.min(run.combo, 10) * 0.08);
-    if (isSlot) d *= 0.5 + 0.5;            // 빈칸이 본줄기
-    else d *= 0.5;
     if (weakHit()) d *= 1.8;               // 금빛 글자를 끼워 넣으면 크게 들어간다
     return Math.round(d);
   }
@@ -755,11 +765,14 @@ body.quake { animation: shake .42s ease-out; }
       floatDmg((wasWeak ? "금빛! -" : "-") + dmg, false);
       if (window.SFX) { SFX.word(w.length); SFX.hit(); }
     } else {
+      // 기세는 그대로. 연속을 잇고 시간과 냥으로 갚는다.
+      // 시간은 세 글자 이상에만 준다. 두 글자에도 주면 두 글자 구간에서
+      // 아무거나 눌러 시간을 무한히 버는 길이 열린다.
       run.bonus.push(w);
-      run.left += 3;                  // 아는 낱말은 시간도 벌어 준다
+      if (w.length >= 3) run.left += 3;
       gold += w.length * 3;
       var s = document.createElement("span"); s.textContent = w; el.bonus.appendChild(s);
-      floatDmg("-" + dmg, true);
+      floatDmg(w.length >= 3 ? "연속 +1 · 시간 +3초" : "연속 +1", true);
       if (window.SFX) { SFX.word(w.length); SFX.tap(); }
     }
     el.portrait.classList.add("hit");
