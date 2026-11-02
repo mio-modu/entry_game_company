@@ -7,6 +7,10 @@
   --bg: #11131A; --surface: #1A1D27; --surface-2: #242838; --line: #333950;
   --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
   --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --danger: #E0683C;
+  /* 일곱 등급의 색. 이름표·미리보기·보물함이 전부 여기를 본다.
+     전에는 세 곳이 제각각이라 같은 신화가 어디선 주황, 어디선 금빛이었다. */
+  --t0:#8A7250; --t1:#C9A227; --t2:#C3CBD6; --t3:#F0D98A;
+  --t4:#E6705C; --t5:#C77BE0; --t6:#FFD76A;
   --font-display: "Gowun Batang", serif;
   --font-body: "IBM Plex Sans KR", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -304,11 +308,11 @@ body.quake { animation: shake .42s ease-out; }
   border-radius: 20px; padding: 1px 7px; margin-left: 6px; vertical-align: middle;
   border: 1px solid currentColor;
 }
-.gear.g0 { color: var(--fg-faint); }
-.gear.g1 { color: #7FA86B; }
-.gear.g2 { color: #6FA8C8; }
-.gear.g3 { color: var(--gold); }
-.gear.g4 { color: #C77BE0; text-shadow: 0 0 10px rgba(199,123,224,.6); }
+.gear.g0 { color: var(--t0); }
+.gear.g1 { color: var(--t1); }
+.gear.g2 { color: var(--t2); }
+.gear.g3 { color: var(--t3); }
+.gear.g4 { color: var(--t4); text-shadow: 0 0 10px rgba(230,112,92,.55); }
 .up .d { font-size: 12px; color: var(--fg-dim); }
 .up .d.rate { font-family: var(--font-mono); font-size: 11px; }
 .up .d.rate.hi { color: var(--jade); }
@@ -448,7 +452,7 @@ body.quake { animation: shake .42s ease-out; }
 /* 함에서 나온 물건 — 등급 띠를 두르고 한지 조각처럼 걸린다 */
 .gearshot {
   align-self: center; position: relative; margin-top: 14px;
-  height: 118px; border-radius: 10px; overflow: hidden;
+  height: 142px; border-radius: 10px; overflow: hidden;
   border: 2px solid var(--gb, #8A7250); background: #F3EFE4;
   box-shadow: 0 0 var(--gg, 0px) 1px var(--ggc, transparent);
   animation: gearIn .55s cubic-bezier(.2,1.5,.35,1);
@@ -460,13 +464,26 @@ body.quake { animation: shake .42s ease-out; }
   background: var(--gb, #8A7250); color: #140F06; font-weight: 700;
 }
 @keyframes gearIn { from { opacity: 0; transform: translateY(10px) scale(.9) } }
-.gearshot.t1 { --gb:#C9A227; --gg:14px; --ggc:rgba(201,162,39,.45); }
-.gearshot.t2 { --gb:#C3CBD6; --gg:16px; --ggc:rgba(195,203,214,.5); }
-.gearshot.t3 { --gb:#F0D98A; --gg:22px; --ggc:rgba(240,217,138,.6); }
-.gearshot.t4 { --gb:#E6705C; --gg:26px; --ggc:rgba(230,112,92,.65); }
-.gearshot.t5 { --gb:#C77BE0; --gg:32px; --ggc:rgba(199,123,224,.75); }
-.gearshot.t6 { --gb:#FFD76A; --gg:40px; --ggc:rgba(255,215,106,.85);
+.gearshot.t0 { --gb:var(--t0); }
+.gearshot.t1 { --gb:var(--t1); --gg:14px; --ggc:rgba(201,162,39,.45); }
+.gearshot.t2 { --gb:var(--t2); --gg:16px; --ggc:rgba(195,203,214,.5); }
+.gearshot.t3 { --gb:var(--t3); --gg:22px; --ggc:rgba(240,217,138,.6); }
+.gearshot.t4 { --gb:var(--t4); --gg:26px; --ggc:rgba(230,112,92,.65); }
+.gearshot.t5 { --gb:var(--t5); --gg:32px; --ggc:rgba(199,123,224,.75); }
+.gearshot.t6 { --gb:var(--t6); --gg:40px; --ggc:rgba(255,215,106,.85);
   animation: gearIn .55s cubic-bezier(.2,1.5,.35,1), chestAura 2.2s ease-in-out .6s infinite; }
+/* 수련 패널에 지금 쥔 물건. 한 줄에 세워 받던 때는 검이 실오라기라
+   뺐었는데, 칸이 정사각이 되면서 다시 걸 수 있게 됐다. */
+.geartn {
+  width: 34px; height: 34px; vertical-align: middle; margin-right: 8px;
+  border-radius: 5px; border: 1px solid var(--gtb, var(--line)); background: #F3EFE4;
+  object-fit: cover;
+}
+.geartn.g0 { --gtb:var(--t0); } .geartn.g1 { --gtb:var(--t1); }
+.geartn.g2 { --gtb:var(--t2); } .geartn.g3 { --gtb:var(--t3); }
+.geartn.g4 { --gtb:var(--t4); } .geartn.g5 { --gtb:var(--t5);
+  box-shadow: 0 0 8px rgba(199,123,224,.5); }
+.geartn.g6 { --gtb:var(--t6); box-shadow: 0 0 10px rgba(255,215,106,.6); }
 .card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
 .card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
 /* 명품 이상이 나오면 제목부터 다르게 — 이 순간이 상자를 여는 이유다 */
@@ -486,9 +503,9 @@ body.quake { animation: shake .42s ease-out; }
   55% { transform: scale(1.18) rotate(2deg) }
   100% { transform: scale(1) rotate(0) }
 }
-.gear.g5 { color: #FFD76A; text-shadow: 0 0 12px rgba(255,215,106,.8); }
-.gear.g6 { color: #FF9D5C; text-shadow: 0 0 14px rgba(255,157,92,.95);
-  border-color: #FF9D5C; animation: mythGlow 1.8s ease-in-out infinite; }
+.gear.g5 { color: var(--t5); text-shadow: 0 0 12px rgba(199,123,224,.75); }
+.gear.g6 { color: var(--t6); text-shadow: 0 0 14px rgba(255,215,106,.95);
+  border-color: var(--t6); animation: mythGlow 1.8s ease-in-out infinite; }
 @keyframes mythGlow { 50% { opacity: .6 } }
 
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
@@ -2007,6 +2024,10 @@ body.quake { animation: shake .42s ease-out; }
       g.className = "gear g" + gear[u.id];
       g.textContent = gearName(u.id);
       t.appendChild(g);
+      var th = document.createElement("img");
+      th.className = "geartn g" + gear[u.id]; th.alt = "";
+      th.src = "art/gear/" + u.id + "-" + gear[u.id] + ".jpg";
+      t.insertBefore(th, t.firstChild);
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
       var r2 = document.createElement("div");
       r2.className = "d rate" + (maxed ? "" : pr >= 0.8 ? " hi" : pr >= 0.5 ? " mid" : " lo");
