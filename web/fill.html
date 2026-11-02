@@ -221,6 +221,35 @@ body.quake { animation: shake .42s ease-out; }
   color: var(--fg-faint); background: #0E1017;
   box-shadow: inset 0 0 0 1.5px #2C3142;
 }
+/* 처음 오신 분을 따라다니는 한 줄. 첫 승리까지만 보인다.
+   설명을 길게 써 두면 안 읽는다. 지금 할 일 하나만 적는다. */
+.guide {
+  margin: 0 0 10px; padding: 11px 15px; border-radius: 11px;
+  background: rgba(74,158,143,.12); border: 1px solid rgba(74,158,143,.45);
+  color: #9FD8CE; font-size: 14px; line-height: 1.6; text-align: center;
+  animation: guideIn .35s ease;
+}
+.guide b { color: #6FC3B3; }
+@keyframes guideIn { from { opacity: 0; transform: translateY(-5px) } }
+
+/* ── 처음 오신 길 ── */
+.intro { max-width: 400px; text-align: left; gap: 0; }
+.intro .pic {
+  align-self: center; width: 100%; max-width: 280px; aspect-ratio: 16/9;
+  border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line);
+  display: grid; place-items: center; margin-bottom: 16px; overflow: hidden;
+}
+.intro h2 { font-size: 20px; text-align: center; }
+.intro .lead { margin-top: 10px; font-size: 14.5px; line-height: 1.8; text-align: center; }
+.intro .dots { display: flex; gap: 7px; justify-content: center; margin: 18px 0 14px; }
+.intro .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.intro .dots i.on { background: var(--gold); width: 20px; border-radius: 20px; }
+.intro .row { display: flex; gap: 9px; }
+.intro .row .btn { flex: 1; }
+.intro .skip {
+  background: none; border: 0; color: var(--fg-faint); font-size: 12.5px;
+  margin-top: 10px; cursor: pointer; font-family: inherit; text-decoration: underline;
+}
 .rulechip {
   display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
   letter-spacing: .06em; padding: 1px 8px; border-radius: 20px;
@@ -582,6 +611,7 @@ body.quake { animation: shake .42s ease-out; }
     <div class="floaters" id="floaters"></div>
   </div>
 
+  <p class="guide" id="guide" hidden></p>
   <div class="grid">
     <div class="gridtop">
       <span>이 글자판 <b id="gFound">0</b> / <span id="gTotal">0</span></span>
@@ -657,6 +687,9 @@ body.quake { animation: shake .42s ease-out; }
 
   <div class="panel">
     <h2>규칙</h2>
+    <div class="trow" style="margin-bottom:11px">
+      <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
+    </div>
     <p>이기는 길은 하나입니다 — <b>수호신의 기세를 0으로 만들면</b> 쓰러집니다.
        빈칸이 다섯이어도 <b>정해진 개수만 채우면</b> 쓰러집니다. 몇 개인지는
        수호신 이름 아래에 적혀 있습니다.</p>
@@ -842,7 +875,7 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
-   "adSub","adWhat","btnAd","ho",
+   "adSub","adWhat","btnAd","ho","guide","btnIntro",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
    "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
    "trainSub","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
@@ -1657,6 +1690,7 @@ body.quake { animation: shake .42s ease-out; }
     el.gem.textContent = gem;
     drawAd();
     drawTrain();
+    drawGuide();
     var left = remaining().length;
     el.gFound.textContent = run.ans.length - left;
     el.gTotal.textContent = run.ans.length;
@@ -2202,6 +2236,118 @@ body.quake { animation: shake .42s ease-out; }
     el.ho.textContent = h;
   }
 
+  // ── 처음 오신 길 ───────────────────────────────────────────────
+  //
+  // 규칙 패널은 읽어야 아는 것이고, 처음 들어온 사람은 읽지 않는다.
+  // 그래서 길잡이 한 줄을 글자판 위에 띄워 '지금 할 일' 하나만 말한다.
+  // 첫 승리까지만 보이고 그 뒤로는 사라진다.
+  var TKEY = "nathero-first";
+  var tut = { done: 0, seen: 0 };
+  function loadTut() {
+    try { var v = JSON.parse(localStorage.getItem(TKEY) || "null"); if (v) tut = v; }
+    catch (e) {}
+  }
+  function saveTut() { try { localStorage.setItem(TKEY, JSON.stringify(tut)); } catch (e) {} }
+
+  function drawGuide() {
+    var g = el.guide;
+    if (!run || run.daily || run.chain || tut.done) { g.hidden = true; return; }
+    var t;
+    if (run.phase === "bonus")   t = "쓰러뜨렸습니다 · 남은 시간에 더 채우면 <b>냥</b>이 됩니다";
+    else if (!el.btnGo.disabled) t = "이제 <b>공격</b>을 누르세요";
+    else if (picked.length)      t = "글자를 더 누르세요 · 되돌리려면 <b>지우기</b>";
+    else if (run.slots)          t = "<b>기세</b>를 0으로 만들면 이깁니다 · "
+                                   + "빈칸을 다 채우지 않아도 됩니다";
+    else                         t = "아래 <b>글자를 눌러</b> 빈칸에 들어갈 낱말을 만드세요";
+    g.innerHTML = t; g.hidden = false;
+  }
+
+  // 넉 장이면 충분하다. 다섯 장째부터는 넘기기만 하고 안 읽는다.
+  var INTRO = [
+    { h: "낱말이 곧 무기입니다",
+      p: "글자판에서 <b>빈칸에 들어갈 낱말</b>을 찾습니다.<br>"
+       + "긴 낱말일수록 깊게 들어갑니다.",
+      a: "board" },
+    { h: "이기는 길은 하나",
+      p: "수호신의 <b>기세를 0으로</b> 만들면 쓰러집니다.<br>"
+       + "빈칸을 <b>다 채우지 않아도</b> 됩니다 — 정해진 개수만 채우면 끝납니다.",
+      a: "hp" },
+    { h: "빈칸 밖 낱말도 값이 있습니다",
+      p: "글자판으로 만든 다른 낱말도 인정됩니다.<br>"
+       + "기세는 안 깎이지만 <b>냥</b>이 되고, 틀려도 잃는 것은 없습니다.",
+      a: "coin" },
+    { h: "져도 괜찮습니다",
+      p: "미끄러질 때마다 그 단계가 <b>4초씩</b> 눅어집니다.<br>"
+       + "단계는 <b>내려가지 않습니다.</b> 실패는 벌이 아니라 길입니다.",
+      a: "step" }
+  ];
+  var PIC = {
+    board: '<svg viewBox="0 0 200 112" width="100%" height="100%" aria-hidden="true">'
+      + '<rect x="46" y="14" width="30" height="30" rx="6" fill="none" stroke="#4A9E8F" stroke-width="2" stroke-dasharray="4 3"/>'
+      + '<rect x="84" y="14" width="30" height="30" rx="6" fill="none" stroke="#4A9E8F" stroke-width="2" stroke-dasharray="4 3"/>'
+      + '<rect x="122" y="14" width="30" height="30" rx="6" fill="none" stroke="#333950" stroke-width="2" stroke-dasharray="4 3"/>'
+      + '<g fill="#242838" stroke="#333950">'
+      + '<rect x="28" y="66" width="30" height="30" rx="6"/><rect x="66" y="66" width="30" height="30" rx="6"/>'
+      + '<rect x="104" y="66" width="30" height="30" rx="6"/><rect x="142" y="66" width="30" height="30" rx="6"/></g>'
+      + '<g fill="#ECEAE3" font-family="Gowun Batang,serif" font-size="17" text-anchor="middle">'
+      + '<text x="43" y="88">하</text><text x="81" y="88">산</text>'
+      + '<text x="119" y="88">생</text><text x="157" y="88">력</text></g>'
+      + '<path d="M58 56 L58 50 M96 56 L96 50" stroke="#C9A227" stroke-width="2"/></svg>',
+    hp: '<svg viewBox="0 0 200 112" width="100%" height="100%" aria-hidden="true">'
+      + '<rect x="24" y="44" width="152" height="12" rx="6" fill="#242838"/>'
+      + '<rect x="24" y="44" width="52" height="12" rx="6" fill="#D6453A"/>'
+      + '<text x="100" y="32" fill="#969BB3" font-size="12" text-anchor="middle" font-family="IBM Plex Mono,monospace">기세 38 / 116</text>'
+      + '<text x="100" y="80" fill="#4A9E8F" font-size="13" text-anchor="middle" font-family="Gowun Batang,serif">0이 되면 이깁니다</text></svg>',
+    coin: '<svg viewBox="0 0 200 112" width="100%" height="100%" aria-hidden="true">'
+      + '<circle cx="100" cy="52" r="26" fill="none" stroke="#C9A227" stroke-width="2"/>'
+      + '<text x="100" y="60" fill="#C9A227" font-size="22" text-anchor="middle" font-family="Gowun Batang,serif">냥</text>'
+      + '<text x="100" y="98" fill="#969BB3" font-size="12" text-anchor="middle" font-family="Gowun Batang,serif">아는 낱말은 모두 값이 됩니다</text></svg>',
+    step: '<svg viewBox="0 0 200 112" width="100%" height="100%" aria-hidden="true">'
+      + '<g fill="#4A9E8F" opacity=".35"><ellipse cx="62" cy="78" rx="9" ry="6"/>'
+      + '<ellipse cx="92" cy="62" rx="9" ry="6"/></g>'
+      + '<ellipse cx="122" cy="78" rx="9" ry="6" fill="#6FC3B3"/>'
+      + '<text x="100" y="32" fill="#6FC3B3" font-size="13" text-anchor="middle" font-family="Gowun Batang,serif">세 걸음 · 제한시간 +12초</text>'
+      + '<text x="100" y="102" fill="#969BB3" font-size="11.5" text-anchor="middle" font-family="Gowun Batang,serif">미끄러진 자리에 길이 납니다</text></svg>'
+  };
+
+  function showIntro(fromMenu) {
+    var i = 0;
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card intro";
+    var pic = document.createElement("div"); pic.className = "pic";
+    var h = document.createElement("h2");
+    var lead = document.createElement("p"); lead.className = "lead";
+    var dots = document.createElement("div"); dots.className = "dots";
+    INTRO.forEach(function () { dots.appendChild(document.createElement("i")); });
+    var row = document.createElement("div"); row.className = "row";
+    var back = document.createElement("button"); back.className = "btn ghost"; back.textContent = "이전";
+    var next = document.createElement("button"); next.className = "btn";
+    var skip = document.createElement("button"); skip.className = "skip";
+    skip.textContent = fromMenu ? "닫기" : "건너뛰기";
+    row.appendChild(back); row.appendChild(next);
+    card.appendChild(pic); card.appendChild(h); card.appendChild(lead);
+    card.appendChild(dots); card.appendChild(row); card.appendChild(skip);
+
+    function show() {
+      var c = INTRO[i];
+      pic.innerHTML = PIC[c.a];
+      h.textContent = c.h;
+      lead.innerHTML = c.p;
+      for (var k = 0; k < dots.children.length; k++)
+        dots.children[k].className = k === i ? "on" : "";
+      back.hidden = i === 0;
+      next.textContent = i === INTRO.length - 1 ? "시작하기" : "다음";
+    }
+    function close() { ov.remove(); tut.seen = 1; saveTut(); draw(); }
+    next.addEventListener("click", function () {
+      if (i < INTRO.length - 1) { i++; show(); } else close();
+    });
+    back.addEventListener("click", function () { if (i) { i--; show(); } });
+    skip.addEventListener("click", close);
+    show();
+    ov.appendChild(card); document.body.appendChild(ov); next.focus();
+  }
+
   function drawAd() {
     drawHo();
     var left = adsLeft(), cap = adCap();
@@ -2308,13 +2454,21 @@ body.quake { animation: shake .42s ease-out; }
     // 또 장식이 되므로 1초에 1냥으로 둔다. 빈칸 하나가 글자당 25냥이라
     // 채우는 쪽이 늘 이득이고, 그래서 "더 채울까"가 매번 진짜 선택이 된다.
     var timePay = won ? Math.max(0, r.leftAtEnd || 0) : 0;
-    gold += reward + timePay;
+    // 첫 승리에 한 번. 강화를 두 단계씩 바로 해 볼 수 있는 양이어야
+    // '강화라는 게 있구나'를 글이 아니라 손으로 배운다.
+    var firstWin = 0;
+    if (won && !tut.done) {
+      firstWin = 1000;
+      tut.done = 1; saveTut();
+      gem += 3; bag.brush += 2;
+    }
+    gold += reward + timePay + firstWin;
     // 깨면 발자국은 지워진다. 길을 냈으니 더 필요 없다.
     if (won) delete steps[stage];
     else steps[stage] = Math.min(STEP_MAX, stepsAt(stage) + 1);
     if (won) stage += 1;
     saveS();
-    el.gold.textContent = gold;
+    drawStatsOnly();   // 냥만 새로 그리면 첫걸음 선물의 옥이 화면에서 안 보인다
 
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
@@ -2338,12 +2492,14 @@ body.quake { animation: shake .42s ease-out; }
       if (r.payPerfect) rows.push(["완전 격파", r.payPerfect]);
       if (r.payWord)    rows.push(["보너스 낱말 " + r.bonus.length + "개", r.payWord]);
       if (timePay)      rows.push(["남은 시간 " + r.leftAtEnd + "초", timePay]);
+      if (firstWin)     rows.push(["첫걸음 선물", firstWin]);
 
       var tbl = document.createElement("div"); tbl.className = "paylist";
       rows.forEach(function (x) {
         var li = document.createElement("div"); li.className = "payrow";
         var a = document.createElement("span"); a.textContent = x[0];
-        var b2 = document.createElement("b"); b2.textContent = "+" + x[1] + "냥";
+        var b2 = document.createElement("b");
+        b2.textContent = "+" + x[1].toLocaleString() + "냥";
         li.appendChild(a); li.appendChild(b2); tbl.appendChild(li);
       });
       var sum = document.createElement("div"); sum.className = "payrow total";
@@ -2372,6 +2528,12 @@ body.quake { animation: shake .42s ease-out; }
           + (st >= STEP_MAX ? " (여기까지)" : "");
         card.appendChild(fp);
       }
+    }
+    if (firstWin) {
+      var fw = document.createElement("p"); fw.className = "lead foot";
+      fw.innerHTML = "첫걸음을 떼셨습니다<br><b>냥 1,000 · 옥 3 · 반딧불 2</b><br>"
+        + "아래 <b>수련</b>에서 검·등·북을 올려 보세요";
+      card.appendChild(fw);
     }
     var b1 = document.createElement("button"); b1.className = "btn";
     b1.textContent = won ? "다음 단계로" : "다시 도전";
@@ -2620,10 +2782,14 @@ body.quake { animation: shake .42s ease-out; }
     openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD);
   });
 
+  el.btnIntro.addEventListener("click", function () { showIntro(true); });
+
   loadS();
+  loadTut();
   logLoad();
   drawLog();
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
   setMode((location.hash || "").toLowerCase().indexOf("daily") >= 0 ? "daily" : "quest");
+  if (!tut.seen) setTimeout(function () { showIntro(false); }, 400);
 })();
 </script>
