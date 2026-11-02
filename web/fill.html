@@ -142,6 +142,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 @keyframes say { from { opacity: 0; transform: scale(.5) translateX(-8px); } }
 body.quake { animation: shake .42s ease-out; }
+.arena.shake { animation: shake .34s ease-out; }
 @keyframes shake {
   0%,100% { transform: translate(0,0) }
   20% { transform: translate(-4px, 3px) } 40% { transform: translate(4px,-3px) }
@@ -1222,6 +1223,19 @@ body.quake { animation: shake .42s ease-out; }
   //
   // 단계를 내리거나 돈을 받지 않는다. 실패에 값을 매기는 순간 실패가
   // 벌이 되고, 40~60대는 벌을 받으면 앱을 지운다. 여기서 실패는 길이다.
+  // ── 헛손질 ──────────────────────────────────────────────────────
+  //
+  // 사전에 없는 것으로 공격하면 수호신이 숨을 돌린다. 기세가 조금 오르고
+  // 연속이 끊긴다. 아는 낱말을 쓰는 사람은 한 푼도 손해 보지 않는다 —
+  // 모르면서 찍는 사람만 손해다. 그게 이 벌의 전부다.
+  //
+  // 첫 산(1~10단계)에는 걸지 않는다. 규칙을 배우는 자리에서까지 손해를
+  // 보게 하면 배우기 전에 떠난다.
+  var MISS_BACK = 0.04;              // 최대 기세의 4%가 돌아온다
+  function blindOn() {
+    return !!run && !run.daily && !run.chain && run.phase !== "bonus" && stage >= 10;
+  }
+
   var STEP_MAX = 5, STEP_SEC = 4;
   var ORD = ["", "첫", "두", "세", "네", "다섯"];
   var steps = {};
@@ -1861,22 +1875,38 @@ body.quake { animation: shake .42s ease-out; }
     var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
     var isBonus = !isSlot && accepted(w) && run.bonus.indexOf(w) < 0 && !run.got[w];
     var ok = isSlot || isBonus;
-    el.slot.classList.toggle("ok", ok);
-    el.btnGo.disabled = !ok;
+    var dup = (run.got[w] || run.bonus.indexOf(w) >= 0) && w.length >= 2;
+
+    // 누르기 전에 '낱말인지'를 알려 주면 그게 공짜 정답 확인이 된다.
+    //
+    // 재 보니 두 글자 조합 42개 중 사전에 있는 것이 18개(43%)였다. 아무거나
+    // 눌러도 절반쯤 단추가 켜지고, 켜지는지 보고 누르면 되니 낱말을 아는
+    // 것보다 막 눌러보는 쪽이 빨랐다. 그래서 알려 주지 않는다 — 두 글자만
+    // 모이면 공격할 수 있고, 맞는지는 누른 뒤에 안다.
+    //
+    // 다만 첫 산에서는 그대로 알려 준다. 규칙을 배우는 자리에서까지
+    // 손해를 보게 하면 배우기 전에 떠난다.
+    var tell = !blindOn();
+    el.slot.classList.toggle("ok", ok && tell);
+    el.btnGo.disabled = w.length < 2 || dup || (tell && !ok);
+
     if (run.phase === "bonus") {
       el.goSub.textContent = isSlot ? "빈칸을 채웁니다 · +" + (w.length * SLOT_PAY) + "냥"
         : isBonus ? "보너스 낱말 · +" + (w.length * WORD_PAY) + "냥"
         : w.length < 2 ? "낱말을 만드세요"
-        : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
+        : dup ? "이미 찾았습니다" : (tell ? "사전에 없습니다" : w.length + "글자 · 눌러서 확인");
       return;
     }
-    el.goSub.textContent = isSlot
-      ? (run.daily ? "빈칸을 채웁니다 \u00b7 " + w.length + "칸"
-                   : (weakHit() ? "금빛! 기세 -" : "빈칸 \u00b7 기세 -") + damage(w, true)
-                     + ", +" + (w.length * SLOT_PAY) + "냥")
-      : isBonus ? (w.length >= 3 ? "보너스 낱말 · 연속 +1, 시간 +3초" : "보너스 낱말 · 연속 +1")
-      : w.length < 2 ? "낱말을 만드세요"
-      : (run.got[w] || run.bonus.indexOf(w) >= 0) ? "이미 찾았습니다" : "사전에 없습니다";
+    el.goSub.textContent =
+      w.length < 2 ? "낱말을 만드세요"
+      : dup ? "이미 찾았습니다"
+      : !tell ? w.length + "글자 · 눌러서 확인"
+      : isSlot
+        ? (run.daily ? "빈칸을 채웁니다 \u00b7 " + w.length + "칸"
+                     : (weakHit() ? "금빛! 기세 -" : "빈칸 \u00b7 기세 -") + damage(w, true)
+                       + ", +" + (w.length * SLOT_PAY) + "냥")
+        : isBonus ? (w.length >= 3 ? "보너스 낱말 · 연속 +1, 시간 +3초" : "보너스 낱말 · 연속 +1")
+        : "사전에 없습니다";
   }
 
   // 기세를 깎는 것은 빈칸뿐이다.
@@ -1945,6 +1975,24 @@ body.quake { animation: shake .42s ease-out; }
     if (!run || el.btnGo.disabled) return;
     var w = word();
     var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
+
+    // 사전에 없는 것으로 쳤다 — 수호신이 숨을 돌린다
+    if (!isSlot && !accepted(w)) {
+      var back = Math.max(1, Math.round(run.max * MISS_BACK));
+      run.hp = Math.min(run.max, run.hp + back);
+      run.combo = 0;
+      run.miss = (run.miss || 0) + 1;
+      logEv("M", w.length);
+      floatDmg("+" + back, false);
+      if (window.SFX) SFX.down();
+      document.querySelector(".arena").classList.add("shake");
+      setTimeout(function () {
+        var a = document.querySelector(".arena"); if (a) a.classList.remove("shake");
+      }, 320);
+      toast("사전에 없는 낱말입니다 · 기세 +" + back);
+      picked = []; draw();
+      return;
+    }
 
     run.found++;
 
@@ -2605,6 +2653,10 @@ body.quake { animation: shake .42s ease-out; }
     el.bonusBar.hidden = true;
     // 단수는 장식이 아니라 수입이다. 고르게 올린 사람이 더 번다.
     var reward = won ? Math.round((40 + r.max * 0.3) * (1 + trainLv() * 0.05)) : 0;
+    // 미끄러지지 않고 한 번에 깼으면 3할을 더 얹는다.
+    // 실패에 벌을 주는 대신 성공에 상을 주는 쪽이다 — 같은 신중함을
+    // 끌어내면서 진 사람을 더 밀어내지 않는다.
+    var clean = won && !stepsAt(stage) ? Math.round(reward * 0.3) : 0;
     // 남은 시간도 냥이 된다. 다만 격파 보상보다 커지면 모두가 서두르고 빈칸은
     // 또 장식이 되므로 1초에 1냥으로 둔다. 빈칸 하나가 글자당 25냥이라
     // 채우는 쪽이 늘 이득이고, 그래서 "더 채울까"가 매번 진짜 선택이 된다.
@@ -2617,7 +2669,7 @@ body.quake { animation: shake .42s ease-out; }
       tut.done = 1; saveTut();
       gem += 3; bag.brush += 2;
     }
-    gold += reward + timePay + firstWin;
+    gold += reward + timePay + firstWin + clean;
     // 깨면 발자국은 지워진다. 길을 냈으니 더 필요 없다.
     if (won) delete steps[stage];
     else steps[stage] = Math.min(STEP_MAX, stepsAt(stage) + 1);
@@ -2647,6 +2699,7 @@ body.quake { animation: shake .42s ease-out; }
       if (r.payPerfect) rows.push(["완전 격파", r.payPerfect]);
       if (r.payWord)    rows.push(["보너스 낱말 " + r.bonus.length + "개", r.payWord]);
       if (timePay)      rows.push(["남은 시간 " + r.leftAtEnd + "초", timePay]);
+      if (clean)        rows.push(["한 번에 격파", clean]);
       if (firstWin)     rows.push(["첫걸음 선물", firstWin]);
 
       var tbl = document.createElement("div"); tbl.className = "paylist";
