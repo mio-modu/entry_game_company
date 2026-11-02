@@ -740,28 +740,39 @@ body.quake { animation: shake .42s ease-out; }
   // 두 글자만 나오는 구간은 북한산·속리산까지다. 스무 단계면 규칙을 익히고
   // 손에 붙기에 충분하고, 그 이상 끌면 그때부터는 쉬운 게 아니라 심심하다.
   // 계룡산(21단계)부터 세 글자가 섞이기 시작한다.
+  // hi(글자 수 상한)는 산마다 고정이 아니라 산 안에서 자란다.
+  //
+  // 전에는 북한산과 속리산이 둘 다 '두 글자만'이라 스무 단계를 내리
+  // 두 글자만 쳤다. 쉬워서가 아니라 고를 것이 없어서 지루했다 — 길게
+  // 찾을지 짧게 찾을지라는 선택 자체가 없었다.
+  //
+  // 이제 북한산 후반부터 세 글자가 섞인다. 어려워지지 않는다: 기세는
+  // '가장 짧은 need개'로 거꾸로 계산하므로 세 글자가 늘어도 요구량은
+  // 그대로고, 세 글자를 찾으면 오히려 더 깊게 들어간다. 늘어나는 것은
+  // 난이도가 아니라 고를 수 있는 가짓수다.
   var MOUNTAINS = [
-    { m:"북한산", n:"불가사리",  a:"bulgasari", t:6, lo:2, hi:2,
-      w0:3, w1:5, k0:2, k1:3, s0:70, s1:56, d:"두 글자 낱말만 · 둘만 채워도 쓰러집니다" },
-    { m:"속리산", n:"삼족오",    a:"samjogo",   t:7, lo:2, hi:2,
-      w0:4, w1:6, k0:3, k1:4, s0:66, s1:52, d:"여전히 두 글자 · 글자판이 넓어집니다" },
-    { m:"계룡산", n:"해태",      a:"haetae",    t:7, lo:2, hi:3, mod:"weak",
-      w0:4, w1:6, k0:3, k1:4, s0:62, s1:50, d:"금빛 글자를 쓰면 크게 들어갑니다" },
-    { m:"설악산", n:"현무",      a:"hyeonmu",   t:7, lo:2, hi:3, mod:"weak",
+    { m:"북한산", n:"불가사리",  a:"bulgasari", t:7, lo:2, h0:2, h1:3,
+      w0:3, w1:5, k0:2, k1:3, s0:70, s1:58, d:"두 글자로 시작합니다 · 둘만 채워도 쓰러집니다" },
+    { m:"속리산", n:"삼족오",    a:"samjogo",   t:7, lo:2, h0:3, h1:3,
+      w0:4, w1:6, k0:3, k1:4, s0:68, s1:54, d:"세 글자가 섞입니다 · 길수록 깊게 들어갑니다" },
+    { m:"계룡산", n:"해태",      a:"haetae",    t:7, lo:2, h0:3, h1:3, mod:"weak",
+      w0:4, w1:6, k0:3, k1:4, s0:56, s1:50, d:"금빛 글자를 쓰면 크게 들어갑니다" },
+    { m:"설악산", n:"현무",      a:"hyeonmu",   t:7, lo:2, h0:3, h1:3, mod:"weak",
       w0:5, w1:7, k0:4, k1:5, s0:58, s1:46, d:"금빛 글자 · 빈칸이 늘어납니다" },
-    { m:"소백산", n:"백호",      a:"baekho",    t:7, lo:2, hi:4, mod:"seal",
+    { m:"소백산", n:"백호",      a:"baekho",    t:7, lo:2, h0:4, h1:4, mod:"seal",
       w0:5, w1:7, k0:4, k1:5, s0:54, s1:44, d:"백호가 글자를 하나씩 눌러 둡니다" },
-    { m:"덕유산", n:"기린",      a:"kirin",     t:7, lo:3, hi:4, mod:"weak",
+    { m:"덕유산", n:"기린",      a:"kirin",     t:7, lo:3, h0:4, h1:4, mod:"weak",
       w0:4, w1:4, k0:3, k1:3, s0:48, s1:42, d:"긴 낱말만 · 금빛 글자가 함께" },
-    { m:"지리산", n:"주작",      a:"jujak",     t:8, lo:3, hi:4, mod:"fog",
+    { m:"지리산", n:"주작",      a:"jujak",     t:8, lo:3, h0:4, h1:4, mod:"fog",
       w0:3, w1:5, k0:3, k1:4, s0:48, s1:40, d:"안개 · 빈칸이 하나씩만 드러납니다" },
-    { m:"한라산", n:"백록",      a:"baekrok",   t:8, lo:2, hi:4, mod:"seal",
+    { m:"한라산", n:"백록",      a:"baekrok",   t:8, lo:2, h0:4, h1:4, mod:"seal",
       w0:6, w1:8, k0:4, k1:6, s0:40, s1:38, d:"빈칸이 가장 많고 글자가 잠깁니다" },
-    { m:"금강산", n:"봉황",      a:"bonghwang", t:8, lo:3, hi:4, mod:"fog",
+    { m:"금강산", n:"봉황",      a:"bonghwang", t:8, lo:3, h0:4, h1:4, mod:"fog",
       w0:4, w1:5, k0:3, k1:4, s0:37, s1:34, d:"안개 속 긴 낱말 · 시간이 촉박합니다" },
-    { m:"백두산", n:"천지의 용", a:"yong",      t:8, lo:2, hi:4, mod:"weak", mod2:"seal",
+    { m:"백두산", n:"천지의 용", a:"yong",      t:8, lo:2, h0:4, h1:4, mod:"weak", mod2:"seal",
       w0:7, w1:9, k0:5, k1:7, s0:38, s1:30, d:"금빛 글자와 봉인이 한꺼번에" }
   ];
+
   var TITLES = ["어린 ", "어린 ", "어린 ", "", "", "", "성난 ", "성난 ", "성난 "];
 
   // ── 사전 ────────────────────────────────────────────────────────────
@@ -1166,7 +1177,7 @@ body.quake { animation: shake .42s ease-out; }
       no: (k % 100) + 1, cyc: cyc, d: M.d,
       // 글자판 조건은 산의 처음과 끝 사이를 단계 수만큼 나눠 걷는다
       mod: M.mod || null, mod2: M.mod2 || null,
-      spec: { t: M.t, lo: M.lo, hi: M.hi,
+      spec: { t: M.t, lo: M.lo, hi: lerp(M.h0, M.h1, sub),
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
       need: lerp(M.k0, M.k1, sub),
       step: stepBonus(k), hpMul: 1 + cyc * CYC_HP,
@@ -2052,12 +2063,28 @@ body.quake { animation: shake .42s ease-out; }
   function topMountain() { return Math.floor((stage % 100) / 10); }
   function adCap() { return Math.max(1, Math.min(6, tierCap(topMountain()) + cycle() - 1)); }
 
+  // 함은 무엇이 나오든 냥을 함께 낸다.
+  //
+  // 전에는 '옥 두 알'이 나오면 그게 전부였고, 냥 꾸러미마저 어느 산에서나
+  // 120냥 고정이었다. 스무 단계를 올라와 연 함이 그 단계 한 판 격파 보상의
+  // 사분의 일이었다는 뜻이다. 열 판을 깬 값이 한 판 값보다 작으면
+  // 함을 여는 일 자체가 김이 샌다.
+  //
+  // 그래서 바닥을 깐다. 단계를 따라 오르고 회차를 따라 커진다.
+  // 격파 보상은 20단계 450, 100단계 600쯤으로 꽤 평평하다. 바닥도 그
+  // 결을 따라가야 "열 판 깬 값"으로 읽힌다. 가파르게 잡으면 후반에
+  // 한 판 값의 세 배가 되어 이번에는 단계를 깨는 일이 시시해진다.
+  function chestFloor(mul) {
+    return Math.round((200 + stage * 6) * (1 + cycle() * 0.6) * (mul == null ? 1 : mul));
+  }
+
   var CHEST = [
-    { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",              go: function () { gold += 120; } },
-    { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",            go: function () { gem += 2; } },
-    { p: 12, k: "반", t: "반딧불",       d: "빈칸 하나를 비춰 준다", go: function () { bag.brush++; } },
-    { p:  8, k: "기", t: "기름 한 병",   d: "마무리 시간 +15초",     go: function () { bag.ink++; } },
-    { p:  5, k: "숫", t: "숫돌",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } }
+    { p: 30, k: "냥", t: "냥 꾸러미", x: 2,   // x는 바닥 냥을 몇 곱절 더 얹는가
+      go: function () { return "곱절로 들어 있었습니다"; } },
+    { p: 22, k: "옥", t: "옥 두 알",     go: function () { gem += 2;    return "힌트 두 번"; } },
+    { p: 12, k: "반", t: "반딧불",       go: function () { bag.brush++; return "빈칸 하나를 비춰 준다"; } },
+    { p:  8, k: "기", t: "기름 한 병",   go: function () { bag.ink++;   return "마무리 시간 +15초"; } },
+    { p:  5, k: "숫", t: "숫돌",         go: function () { bag.charm++; return "강화 성공률 +20%p"; } }
   ];
   // 장비가 나올 확률은 함을 '어떻게 얻었는가'에 따라 다르다.
   //
@@ -2139,9 +2166,10 @@ body.quake { animation: shake .42s ease-out; }
     return r;
   }
 
-  function openChest(mt, after, capIn, gpIn) {
+  function openChest(mt, after, capIn, gpIn, goldMul) {
     var cap = capIn == null ? tierCap(mt) : capIn;
     var gp = gpIn == null ? GEAR_BOSS : gpIn;
+    var floorGold = chestFloor(goldMul);
     var ov = document.createElement("div"); ov.className = "ov hoard";
     ov.appendChild(document.createElement("div")).className = "flash";
     var card = document.createElement("div"); card.className = "card hoard";
@@ -2166,6 +2194,10 @@ body.quake { animation: shake .42s ease-out; }
     tip.textContent = "눌러서 여세요";
     card.appendChild(tip);
 
+    var coin = document.createElement("p"); coin.className = "lead pay"; coin.hidden = true;
+    coin.textContent = "냥 +" + floorGold.toLocaleString();
+    card.appendChild(coin);
+
     var odds = document.createElement("p"); odds.className = "lead odds";
     odds.textContent = chestOdds(cap, gp);
     card.appendChild(odds);
@@ -2184,7 +2216,12 @@ body.quake { animation: shake .42s ease-out; }
       var sc = (100 - gp) / CHEST_SUM;
       for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p * sc; if (roll < acc) { got = CHEST[i]; break; } }
       var title, body, gid = null;
-      if (got) { got.go(); title = got.t; body = got.d; }
+      // 바닥 냥은 무엇이 나오든 들어간다. 냥 꾸러미면 거기에 곱절을 얹는다.
+      // 두 줄로 나눠 적으면 사람이 더하기를 해야 한다 — 한 줄로 합쳐 적는다.
+      var coinGot = floorGold * (1 + (got && got.x ? got.x : 0));
+      gold += coinGot;
+      coin.textContent = "냥 +" + coinGot.toLocaleString();
+      if (got) { title = got.t; body = got.go(); }
       else {
         tier = rollTier(cap);
         var g = grantGear(tier); title = g.t; body = g.d; gid = g.id;
@@ -2203,6 +2240,7 @@ body.quake { animation: shake .42s ease-out; }
       h.className = "win" + (tier != null && tier >= 5 ? " myth" : tier != null && tier >= 3 ? " rare" : "");
       tip.textContent = body;
       tip.className = "lead got";
+      coin.hidden = false;
       drawStatsOnly();
       // 물건은 빛이 지나간 뒤에 떠오른다. 한꺼번에 나오면 아무것도 안 보인다.
       setTimeout(function () {
@@ -2779,7 +2817,7 @@ body.quake { animation: shake .42s ease-out; }
     // 횟수와 등급 상한이 어떻게 느껴지는지만 먼저 본다.
     toast("시험판에서는 광고 없이 바로 열립니다");
     logEv("T", "ad");
-    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD);
+    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD, 0.4);
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
