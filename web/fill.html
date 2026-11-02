@@ -2,20 +2,32 @@
 <title>낱말 채우기</title>
 <!-- 카톡·밴드에 링크를 붙였을 때 뜨는 카드.
      없으면 민 주소만 떠서, 퍼지는 길의 첫 칸이 비어 버린다.
-     주소가 정해지면 og:image 를 절대 주소로 바꿔야 한다 — 상대 주소를
-     못 읽는 수집기가 있다. -->
+     og:image 는 반드시 절대 주소여야 한다 — 상대 주소를 못 읽는
+     수집기가 있고, 그러면 그림 없이 주소만 뜬다. -->
+<link rel="canonical" href="https://wordgamebest.vercel.app/">
 <meta name="description" content="글자판에서 빈칸에 들어갈 낱말을 찾아 수호신을 쓰러뜨리고 열 개의 산을 오릅니다. 하루 한 판, 모두 같은 글자판.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:site_name" content="낱말 채우기">
 <meta property="og:title" content="낱말 채우기">
 <meta property="og:description" content="빈칸에 들어갈 낱말을 찾아 열 개의 산을 오릅니다. 하루 한 판, 모두 같은 글자판.">
-<meta property="og:image" content="art/og.jpg">
+<meta property="og:url" content="https://wordgamebest.vercel.app/">
+<meta property="og:image" content="https://wordgamebest.vercel.app/art/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="수묵으로 그린 용과 글자판">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wordgamebest.vercel.app/art/og.jpg">
 <meta name="theme-color" content="#11131A">
+<!-- 휴대전화에 깔리게 한다. 링크로만 두면 열 때마다 주소를 찾아야 하고
+     지하철에서는 사전 3.6MB를 다시 받느라 안 열린다. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon/apple-touch-icon.png">
+<link rel="icon" href="icon/icon-192.png" sizes="192x192">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="낱말 채우기">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
@@ -601,6 +613,15 @@ body.quake { animation: shake .42s ease-out; }
   animation: gearIn .55s cubic-bezier(.2,1.5,.35,1), chestAura 2.2s ease-in-out .6s infinite; }
 /* 수련 패널에 지금 쥔 물건. 한 줄에 세워 받던 때는 검이 실오라기라
    뺐었는데, 칸이 정사각이 되면서 다시 걸 수 있게 됐다. */
+.install {
+  display: block; width: 100%; margin: 12px 0 0; padding: 11px 14px;
+  background: var(--surface); border: 1px solid var(--jade); border-radius: 12px;
+  color: var(--fg); text-align: left; cursor: pointer; font: inherit;
+  animation: gearIn .4s ease;
+}
+.install b { display: block; font-size: 14.5px; color: var(--jade); }
+.install small { display: block; font-size: 11.5px; color: var(--fg-dim); margin-top: 2px; }
+.install:active { background: var(--surface-2); }
 .tags { margin: 5px 0 3px; display: flex; flex-wrap: wrap; gap: 5px; }
 .tags .gear, .tags .forge { margin-left: 0; }
 .geartn {
@@ -757,6 +778,12 @@ body.quake { animation: shake .42s ease-out; }
   <!-- 화면 아래를 비운다.
        덧붙이다 보니 광고 설명·수련·시험 기록·규칙이 통째로 쌓여
        게임 한 화면 뒤로 두 화면 반이 더 있었다. 필요할 때만 연다. -->
+  <!-- 크롬 메뉴를 뒤져 '앱 설치'를 찾아 들어가는 사람은 드물다.
+       깔 수 있을 때만 올라오고, 깔고 나면 사라진다. -->
+  <button class="install" id="btnInstall" hidden>
+    <b>휴대전화에 깔기</b><small id="installSub">집 밖에서도 데이터 없이 열립니다</small>
+  </button>
+
   <div class="tray">
     <button class="tbtn" id="tTrain"><b>수련</b><small id="tTrainSub">0단</small></button>
     <button class="tbtn" id="tChest"><b>보물함</b><small id="tChestSub">—</small></button>
@@ -3225,5 +3252,40 @@ body.quake { animation: shake .42s ease-out; }
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
   setMode((location.hash || "").toLowerCase().indexOf("daily") >= 0 ? "daily" : "quest");
   if (!tut.seen) setTimeout(function () { showIntro(false); }, 400);
+
+  // ── 깔기 ──────────────────────────────────────────────
+  var btnIn = document.getElementById("btnInstall");
+  var subIn = document.getElementById("installSub");
+  var waiting = null;
+  var standalone = matchMedia("(display-mode: standalone)").matches
+    || navigator.standalone === true;
+
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); waiting = e;
+    if (!standalone) btnIn.hidden = false;
+  });
+  btnIn.addEventListener("click", function () {
+    if (!waiting) return;
+    waiting.prompt();
+    waiting.userChoice.then(function () { waiting = null; btnIn.hidden = true; });
+  });
+  window.addEventListener("appinstalled", function () { btnIn.hidden = true; });
+
+  // 아이폰은 이 신호를 안 준다. 대신 어디를 눌러야 하는지 적어 준다.
+  if (!standalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    subIn.textContent = "아래 공유 단추 → 홈 화면에 추가";
+    btnIn.hidden = false;
+    btnIn.addEventListener("click", function () {
+      toast("아래 공유 단추를 누르고 '홈 화면에 추가'를 고르세요");
+    });
+  }
 })();
+
+// 한 번 받아 두면 집 밖에서도 열린다. file:// 과 남의 자리에서는 조용히 넘긴다.
+if ("serviceWorker" in navigator &&
+    (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js")["catch"](function () {});
+  });
+}
 </script>
