@@ -1,0 +1,338 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>장비 그림 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 세로 한 칸. 프롬프트는 통째로 집어 가는 것이라 복사 단추를 붙인다. */
+:root {
+  --bg: #F3EFE4; --surface: #FBF8F0; --surface-2: #EEE8D8; --line: #DBD2BD;
+  --fg: #201C16; --fg-dim: #6A6254; --fg-faint: #938B7B;
+  --accent: #B23A2E; --gold: #8A6A12; --jade: #2C6659;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+    --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+    --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+  --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.72;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 780px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; text-wrap: balance; }
+p { margin: 0; }
+.head { padding-block: 40px 26px; border-bottom: 2px solid var(--fg); }
+.head h1 { font-size: clamp(27px, 6.4vw, 38px); line-height: 1.22; }
+.head p { margin-top: 11px; color: var(--fg-dim); max-width: 62ch; }
+section { padding-block: 30px; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+}
+section > h2 { font-size: clamp(19px, 4.2vw, 24px); }
+section > h2 + p { margin-top: 9px; color: var(--fg-dim); max-width: 64ch; }
+h3 { font-size: 16px; margin-top: 24px; }
+.body { margin-top: 12px; display: flex; flex-direction: column; gap: 11px; }
+.body p { max-width: 66ch; }
+
+.pbox { position: relative; margin-top: 13px; }
+.pbox pre {
+  margin: 0; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--gold); border-radius: 4px 12px 12px 4px;
+  padding: 16px 16px 16px 17px; font-family: var(--font-mono); font-size: 12.5px;
+  line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--fg);
+}
+.copy {
+  position: absolute; top: 9px; right: 9px; font-family: var(--font-body);
+  font-size: 11.5px; font-weight: 600; background: var(--gold); color: #1A1206;
+  border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer;
+}
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scroll { overflow-x: auto; margin-top: 15px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 500px; }
+th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--fg-faint); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.name { font-family: var(--font-display); font-weight: 700; white-space: nowrap; }
+td.num, th.num { font-family: var(--font-mono); white-space: nowrap; }
+.t5 { color: var(--gold); font-weight: 700; }
+.t6 { color: var(--accent); font-weight: 700; }
+.call {
+  margin-top: 18px; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
+  padding: 15px 17px; display: flex; flex-direction: column; gap: 7px;
+}
+.call.gold { border-left-color: var(--gold); }
+.call .t { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.call p { font-size: 13.5px; color: var(--fg-dim); max-width: 64ch; }
+ul { margin: 10px 0 0; padding-left: 19px; color: var(--fg-dim); font-size: 13.5px; }
+li { margin-bottom: 6px; }
+li b { color: var(--fg); }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <h1>장비 그림 프롬프트</h1>
+  <p>검 일곱, 등 일곱, 북 일곱. 한 종류를 한 장에 담되
+    <strong>네 칸 위 · 세 칸 아래, 칸마다 정사각</strong>으로 받습니다.
+    세 번만 뽑으시면 됩니다.</p>
+</header>
+
+<section>
+  <p class="eyebrow">바뀐 점</p>
+  <h2>왜 한 줄로 세우면 안 되는가</h2>
+  <div class="body">
+    <p>처음에는 일곱을 <strong>한 줄로</strong> 세워 받았습니다. 그림 자체는 좋았는데
+      게임에 넣으니 <strong>검이 실오라기처럼 얇았습니다.</strong></p>
+    <p>이유는 그림이 아니라 셈입니다. 일곱을 한 줄에 세우면 칸 하나가
+      <strong>가로 1 : 세로 7</strong>이 됩니다. 거기에 칼을 똑바로 세워 그리면
+      칼은 그 비율대로 가늘어집니다. 화면에서 작게 줄이면 아무것도 안 보입니다.</p>
+    <p>그래서 <strong>네 칸 위, 세 칸 아래</strong>로 바꿉니다. 칸 하나가 정사각이 되고,
+      그 안을 물건이 꽉 채웁니다. 장 전체는 가로 2 : 세로 1이라 어느 생성기에서나
+      안정적으로 나옵니다.</p>
+    <p>그리고 <strong>검은 대각선으로 눕힙니다.</strong> 정사각 칸을 세로로 선 칼이
+      채우는 방법은 없지만, 비스듬히 누우면 칸의 가장 긴 선을 타고 꽉 찹니다.</p>
+  </div>
+  <div class="call">
+    <div class="t">지금 그림도 버리지 마십시오</div>
+    <p>이미 받으신 세 장은 잘라서 게임에 넣어 두었습니다. 새로 받으시면
+      갈아 끼우고, 안 받으셔도 그대로 돌아갑니다. <strong>급한 일이 아닙니다.</strong></p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">프롬프트 1</p>
+  <h2>검 — 공격력</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th class="num">등급</th><th>이름</th><th>효과</th></tr></thead>
+      <tbody>
+        <tr><td class="num">예사</td><td class="name">목검</td><td>×1.00</td></tr>
+        <tr><td class="num">양품</td><td class="name">환도</td><td>×1.15</td></tr>
+        <tr><td class="num">귀품</td><td class="name">운검</td><td>×1.35</td></tr>
+        <tr><td class="num">명품</td><td class="name">칠성검</td><td>×1.60</td></tr>
+        <tr><td class="num">신물</td><td class="name">사인검</td><td>×2.00</td></tr>
+        <tr><td class="num t5">전설</td><td class="name t5">천부검</td><td>×2.60</td></tr>
+        <tr><td class="num t6">신화</td><td class="name t6">개천검</td><td>×3.40</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pbox">
+    <button class="copy" data-t="p1">복사</button>
+    <pre id="p1">Seven Korean swords, as a plate from an old illustrated catalogue.
+
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
+
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
+
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
+
+SWORD ORIENTATION — required:
+Lay every sword DIAGONALLY inside its square panel, hilt at the lower left and point at the upper right, so the blade runs along the panel's diagonal and fills it corner to corner. All seven lie the same way. A sword standing straight up leaves the panel mostly empty — that is the thing to avoid.
+
+THE SEVEN, in order:
+1. A plain wooden practice sword — unmistakably a SWORD, not a stick: a flat blade silhouette with a bevelled edge, a simple carved collar and a shaped grip. Pale worn oak.
+2. A Korean hwando: single-edged, gently curved, round brass guard, leather-wrapped grip.
+3. A straight double-edged court sword, brass fittings, a short crimson cord at the pommel.
+4. A straight blade inlaid with SEVEN small silver stars in the pattern of the Big Dipper running up the fuller.
+5. A straight blade with fine gold inlay script-like etching along the blade and a small brass tiger-head pommel, a crimson tassel.
+6. A ceremonial sword whose blade carries a faint inner light, an ornate gilt guard with a mythical beast head, a long gold tassel.
+7. The grandest: pale jade and gold hilt set with small green stones, the blade glowing white-gold with a soft aura, a long pale tassel.</pre>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">프롬프트 2</p>
+  <h2>등 — 제한시간</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th class="num">등급</th><th>이름</th><th>효과</th></tr></thead>
+      <tbody>
+        <tr><td class="num">예사</td><td class="name">관솔불</td><td>+0초</td></tr>
+        <tr><td class="num">양품</td><td class="name">등잔</td><td>+4초</td></tr>
+        <tr><td class="num">귀품</td><td class="name">청사초롱</td><td>+8초</td></tr>
+        <tr><td class="num">명품</td><td class="name">석등</td><td>+13초</td></tr>
+        <tr><td class="num">신물</td><td class="name">장명등</td><td>+20초</td></tr>
+        <tr><td class="num t5">전설</td><td class="name t5">일월등</td><td>+28초</td></tr>
+        <tr><td class="num t6">신화</td><td class="name t6">천지등</td><td>+38초</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pbox">
+    <button class="copy" data-t="p2">복사</button>
+    <pre id="p2">Seven Korean lamps and lanterns, as a plate from an old illustrated catalogue. Each one is lit, and the light is the warmest thing on the page.
+
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
+
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
+
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
+
+Stand each lamp upright and centred in its square panel, seen slightly from above so the top and the body both read. Make each one WIDE and solid rather than tall and thin — they must fill the square.
+
+THE SEVEN, in order:
+1. A burning pine-knot torch — a gnarled resinous root with a live flame and a thread of smoke.
+2. A shallow stone oil dish with a single wick and a small steady flame.
+3. A cheongsa-choprong: a cylindrical silk lantern, blue in the upper half and red in the lower half, with a carrying ring on top and a glow inside.
+4. A SQUAT stone lantern — wide hexagonal base, low body, broad heavy roof-cap, moss in the carved seams, warm light in the window.
+5. A TALL slender stone lantern on a long shaft — clearly much taller and narrower than number four, with a lotus-carved base and a tiered pagoda roof, so the two stone lanterns can never be confused.
+6. A gilt bronze lantern with a round face carrying a sun and a crescent moon side by side, a crown of gold flames around the rim.
+7. The grandest: deep indigo panels scattered with small stars, a gold frame, and a warm light burning at its heart.</pre>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">프롬프트 3</p>
+  <h2>북 — 연속 배수</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th class="num">등급</th><th>이름</th><th>효과</th></tr></thead>
+      <tbody>
+        <tr><td class="num">예사</td><td class="name">소고</td><td>+0%p</td></tr>
+        <tr><td class="num">양품</td><td class="name">승전고</td><td>+2%p</td></tr>
+        <tr><td class="num">귀품</td><td class="name">용고</td><td>+4%p</td></tr>
+        <tr><td class="num">명품</td><td class="name">뇌고</td><td>+7%p</td></tr>
+        <tr><td class="num">신물</td><td class="name">천고</td><td>+11%p</td></tr>
+        <tr><td class="num t5">전설</td><td class="name t5">벽력고</td><td>+16%p</td></tr>
+        <tr><td class="num t6">신화</td><td class="name t6">천뢰고</td><td>+22%p</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pbox">
+    <button class="copy" data-t="p3">복사</button>
+    <pre id="p3">Seven Korean drums, as a plate from an old illustrated catalogue.
+
+LAYOUT — this matters most:
+Seven objects on one sheet, arranged as a grid of SQUARE panels.
+Top row: four panels. Bottom row: three panels, centred under the four.
+Each panel is a perfect square, the same size, separated by generous even margins of blank paper and a thin hairline ink border.
+Each object sits alone in its own square panel and FILLS about 85 percent of it — big, bold, and still readable when shrunk to a thumbnail.
+Reading order is top-left to top-right, then bottom-left to bottom-right, and the objects grow richer in that order.
+Overall sheet is a 2:1 landscape rectangle.
+
+STYLE:
+Ink wash painting on aged hanji paper with visible paper fibre. Sumi-e brush technique with real brush texture and a little ink bleed. One consistent hand across all seven. No background scenery inside the panels — the paper is the background.
+
+DO NOT: no text, no numbers, no labels, no seals, no hanja, no hands, no people, no Japanese katana or taiko, no European fantasy weapons, no drop shadows on the panel borders. Do not make all seven look alike — each must be clearly its own object.
+
+Show each drum front-on with the drumhead facing the viewer, centred and filling its square panel. The drums grow larger and more ornate in order.
+
+THE SEVEN, in order:
+1. A small hand drum with a short wooden handle, plain hide head, simple lashing.
+2. A mid-sized war drum on a plain wooden stand, crimson body, brass studs around the rim.
+3. A larger crimson drum with a gold dragon coiled across the body, on a carved stand.
+4. A drum with an indigo body painted with rolling cloud scrolls, in a dark carved wooden frame.
+5. A drum in an elaborate gilt frame carved with clouds and beasts; the head itself is pale and plain so the frame does the work.
+6. A dark drum whose head is cracked across with veins of gold lightning, in a black and gold frame.
+7. The grandest: a night-dark drum head full of storm cloud and a glowing core, in a gold frame, with ink-brush ripples radiating outward to show the sound carrying.</pre>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">받은 뒤</p>
+  <h2>자르고 넣는 법</h2>
+  <div class="body">
+    <p><strong>그냥 받은 그대로 주십시오.</strong> 자르는 일은 제가 합니다.
+      칸마다 가는 먹선을 두르라고 적어 두었으니, 그 선을 따라 일곱으로 가르면 됩니다.</p>
+    <p>지난번에는 선이 없어서 먹 농도와 윤곽선 세기로 경계를 찾느라 몇 번을 헤맸고,
+      그 와중에 북 두 개가 한 칸에 들어가기도 했습니다. <strong>선 하나가 그 고생을
+      전부 없앱니다.</strong></p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>파일</th><th class="num">장수</th><th>쓰이는 곳</th></tr></thead>
+      <tbody>
+        <tr><td class="name">art/gear/atk-0 … atk-6.png</td><td class="num">7</td><td>검</td></tr>
+        <tr><td class="name">art/gear/time-0 … time-6.png</td><td class="num">7</td><td>등</td></tr>
+        <tr><td class="name">art/gear/combo-0 … combo-6.png</td><td class="num">7</td><td>북</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="body">
+    <p>칸이 정사각이면 <strong>수련 패널에도 작게 걸 수 있습니다.</strong> 지금은 검이
+      세로로 길어 30px로 줄이면 실오라기가 되는 탓에 패널에서는 빼 두었습니다.
+      정사각으로 받으면 그 자리도 살아납니다.</p>
+    <p>보물함에서 나올 때는 지금도 등급 띠를 둘러 크게 띄우고 있습니다.</p>
+  </div>
+  <div class="call gold">
+    <div class="t">검부터 하십시오</div>
+    <p>셋 중 <strong>검이 가장 급합니다.</strong> 등과 북은 원래 옆으로 퍼진 물건이라
+      지금 그림으로도 봐줄 만한데, 검만 세로로 길어 혼자 초라합니다.
+      검 한 장만 새로 받아도 체감이 크게 달라집니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">참고</p>
+  <h2>피해야 할 그림</h2>
+  <ul>
+    <li><b>일본 칼과 일본 북</b> — 가장 흔한 실패입니다. 가타나의 긴 외날과
+      타이코의 통 모양이 섞여 들어옵니다. 프롬프트에 막아 뒀지만 결과를 꼭 보십시오.</li>
+    <li><b>서양 판타지</b> — 룬 문자, 발광 보석, 네온. 수묵과 섞이면 싸구려로 보입니다.</li>
+    <li><b>일곱이 다 비슷함</b> — 등급 차가 안 보이면 다시 뽑으십시오.
+      «each one visibly more precious than the last»가 그걸 노린 문장입니다.</li>
+    <li><b>사람 손이나 인물</b> — 물건만 있어야 잘라 쓸 수 있습니다.</li>
+    <li><b>글자</b> — 낱말 게임이라 화면에 이미 글자가 가득합니다.</li>
+    <li><b>칸 안이 헐렁함</b> — 이번에 고치려는 바로 그 문제입니다. 물건이 칸의
+      85%를 채워야 합니다. 여백이 넓으면 작게 줄였을 때 «없어 보입니다».</li>
+    <li><b>칼을 똑바로 세움</b> — 정사각 칸에 세로로 선 칼을 넣으면 칸이 텅 빕니다.
+      일곱 자루 모두 <b>왼쪽 아래에서 오른쪽 위로</b> 비스듬히 누워야 합니다.</li>
+    <li><b>목검이 막대기</b> — 지난번 실패입니다. 날과 손잡이가 구분되는
+      «검 모양»이어야 합니다.</li>
+    <li><b>석등과 장명등이 같음</b> — 지난번 실패입니다. 넷째는 <b>낮고 넓게</b>,
+      다섯째는 <b>높고 가늘게</b>. 프롬프트에 둘을 나란히 비교해 적어 뒀습니다.</li>
+    <li><b>칸이 여덟</b> — 넷·셋이라고 적었는데 넷·넷으로 나오면 하나가 군더더기입니다.
+      그때는 그냥 다시 뽑으십시오.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var t = document.getElementById(b.dataset.t).textContent;
+    var done = function () { b.textContent = "복사됨"; setTimeout(function () { b.textContent = "복사"; }, 1800); };
+    try {
+      navigator.clipboard.writeText(t).then(done, function () {
+        var r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.t));
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = "직접 복사";
+      });
+    } catch (e) { b.textContent = "직접 복사"; }
+  });
+});
+</script>

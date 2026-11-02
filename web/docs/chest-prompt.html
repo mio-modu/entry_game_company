@@ -1,0 +1,201 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>보물함 그림 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* 세로 한 칸. 프롬프트는 복사해서 쓰는 것이라 통째로 집어 가기 좋게 둔다. */
+:root {
+  --bg: #F3EFE4; --surface: #FBF8F0; --surface-2: #EEE8D8; --line: #DBD2BD;
+  --fg: #201C16; --fg-dim: #6A6254; --fg-faint: #938B7B;
+  --accent: #B23A2E; --gold: #8A6A12; --jade: #2C6659;
+  --font-display: "Gowun Batang", serif;
+  --font-body: "IBM Plex Sans KR", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+    --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+    --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131A; --surface: #1A1D27; --surface-2: #232736; --line: #333950;
+  --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
+  --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.72;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.wrap { max-width: 760px; margin: 0 auto; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; text-wrap: balance; }
+p { margin: 0; }
+.head { padding-block: 40px 26px; border-bottom: 2px solid var(--fg); }
+.head h1 { font-size: clamp(27px, 6.4vw, 38px); line-height: 1.22; }
+.head p { margin-top: 11px; color: var(--fg-dim); max-width: 60ch; }
+section { padding-block: 30px; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: 0; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+}
+section > h2 { font-size: clamp(19px, 4.2vw, 24px); }
+section > h2 + p { margin-top: 9px; color: var(--fg-dim); max-width: 64ch; }
+h3 { font-size: 16px; margin-top: 24px; }
+.body { margin-top: 12px; display: flex; flex-direction: column; gap: 11px; }
+.body p { max-width: 66ch; }
+
+.pbox { position: relative; margin-top: 13px; }
+.pbox pre {
+  margin: 0; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--gold); border-radius: 4px 12px 12px 4px;
+  padding: 16px 16px 16px 17px; font-family: var(--font-mono); font-size: 12.5px;
+  line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--fg);
+}
+.copy {
+  position: absolute; top: 9px; right: 9px; font-family: var(--font-body);
+  font-size: 11.5px; font-weight: 600; background: var(--gold); color: #1A1206;
+  border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer;
+}
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.scroll { overflow-x: auto; margin-top: 15px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 420px; }
+th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--fg-faint); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: 0; }
+td.name { font-family: var(--font-display); font-weight: 700; white-space: nowrap; }
+.call {
+  margin-top: 18px; background: var(--surface); border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 4px 12px 12px 4px;
+  padding: 15px 17px; display: flex; flex-direction: column; gap: 7px;
+}
+.call .t { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.call p { font-size: 13.5px; color: var(--fg-dim); max-width: 64ch; }
+ul { margin: 10px 0 0; padding-left: 19px; color: var(--fg-dim); font-size: 13.5px; }
+li { margin-bottom: 6px; }
+li b { color: var(--fg); }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <h1>보물함 그림 프롬프트</h1>
+  <p>신수 열 점과 같은 손에서 나온 것처럼 보여야 합니다. 그림 두 장이면 됩니다 —
+    닫힌 것과 열린 것.</p>
+</header>
+
+<section>
+  <p class="eyebrow">지금 상태</p>
+  <h2>왜 그림이 필요한가</h2>
+  <div class="body">
+    <p>지금 보물함은 CSS로 그린 네모 둘입니다. 열리는 게 보이고 가볍다는 점은 좋지만,
+      <strong>신수는 한지에 그린 그림인데 보물함만 도형</strong>이라 격이 맞지 않습니다.</p>
+    <p>그리고 이 자리는 <strong>열 단계를 올라온 보상</strong>이 나오는 곳입니다.
+      사람이 가장 설레는 순간에 가장 초라한 그림이 떠 있으면 안 됩니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">프롬프트 1</p>
+  <h2>닫힌 보물함</h2>
+  <p>이것부터 뽑으십시오. 한 장만 쓰실 거면 이것 하나로도 됩니다.</p>
+  <div class="pbox">
+    <button class="copy" data-t="p1">복사</button>
+    <pre id="p1">Korean traditional treasure chest (함, ham), single object, centered, front three-quarter view.
+
+Ink wash painting on aged hanji paper. Sumi-e brush technique with visible brush texture and subtle ink bleed. Muted earth palette: dark walnut wood, oxidized brass fittings, deep vermilion lacquer accents, antique gold.
+
+The chest is a low rectangular Korean clothing chest with a flat hinged lid, reinforced by decorative brass corner plates and a brass hasp lock at the front center. Traditional Korean geometric fretwork carved into the wood panels. Slightly worn, as if it has sat on a mountain shrine for a century.
+
+Closed lid. Faint warm light leaking from the seam between lid and body, suggesting something precious inside.
+
+Warm ivory hanji background with visible paper fiber. No text, no characters, no人物, no hands. No modern elements, no European pirate chest shape, no rounded dome lid, no gems spilling out.
+
+Vertical composition, object fills about 70 percent of the frame, generous margin. Soft directional light from upper left, gentle cast shadow. 3:4 aspect ratio.</pre>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">프롬프트 2</p>
+  <h2>열린 보물함</h2>
+  <p>같은 대화에서 이어서 뽑으셔야 <strong>같은 함</strong>이 나옵니다.
+    새 대화에서 뽑으면 다른 함이 되어 두 장이 안 맞습니다.</p>
+  <div class="pbox">
+    <button class="copy" data-t="p2">복사</button>
+    <pre id="p2">Same chest, same angle, same lighting, same paper — now open.
+
+The hinged lid is tilted back and up, revealing the interior. A strong warm golden light pours upward out of the chest, washing the inner rim of the lid and the upper edges of the body. The light is the brightest thing in the image; the wood falls into warm shadow around it.
+
+Inside, only light — no visible coins, no gems, no objects. The glow itself is the treasure.
+
+Keep the ink wash brush texture and the hanji paper grain identical to the closed version. Same vermilion and brass accents. Same vertical 3:4 composition and same object scale, so the two images can be swapped in place.
+
+No text, no characters, no hands, no sparkle stars, no lens flare.</pre>
+  </div>
+  <div class="call">
+    <div class="t">왜 안에 보물을 그리지 않나</div>
+    <p>함 안에서 나오는 것은 매번 다릅니다 — 냥일 수도, 옥일 수도, 사인검일 수도 있습니다.
+      안에 금화를 그려 두면 검이 나왔을 때 그림이 거짓말을 합니다.
+      <strong>빛만 그리면 무엇이 나와도 맞습니다.</strong></p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">받은 뒤</p>
+  <h2>넣는 법</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>파일</th><th>크기</th><th>쓰이는 곳</th></tr></thead>
+      <tbody>
+        <tr><td class="name">art/chest.jpg</td><td>460 × 614</td><td>닫힌 함 — 누르기 전</td></tr>
+        <tr><td class="name">art/chest-open.jpg</td><td>460 × 614</td><td>열린 함 — 누른 뒤</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="body">
+    <p>신수 그림이 460 × 685이니 비슷한 세로 비율로 맞추시면 자리가 그대로 들어갑니다.
+      두 장을 받으시면 제가 CSS 도형을 그림으로 갈아 끼우고, 누를 때 닫힌 것에서
+      열린 것으로 바뀌면서 빛이 번지는 연출을 붙이겠습니다.</p>
+    <p><strong>한 장만 받으셔도 됩니다.</strong> 닫힌 것만 그림으로 쓰고,
+      열리는 순간은 지금처럼 뚜껑이 튀어 오르는 움직임으로 처리할 수 있습니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">참고</p>
+  <h2>피해야 할 그림</h2>
+  <ul>
+    <li><b>서양 해적 궤짝</b> — 둥근 반원 뚜껑에 가죽끈. 가장 흔하게 나오는 실패입니다.
+      프롬프트의 <i>no rounded dome lid</i>가 그걸 막습니다.</li>
+    <li><b>쏟아지는 금화와 보석</b> — 안에서 나오는 것이 매번 다르니 거짓말이 됩니다.</li>
+    <li><b>반짝이 효과와 렌즈 플레어</b> — 수묵과 섞이면 싸구려로 보입니다.</li>
+    <li><b>글자나 문양 속 한자</b> — 낱말 게임이라 화면에 글자가 이미 가득합니다.</li>
+    <li><b>사람 손</b> — 함만 있어야 합니다.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+document.querySelectorAll(".copy").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var t = document.getElementById(b.dataset.t).textContent;
+    var done = function () { b.textContent = "복사됨"; setTimeout(function () { b.textContent = "복사"; }, 1800); };
+    try {
+      navigator.clipboard.writeText(t).then(done, function () {
+        var r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.t));
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = "직접 복사";
+      });
+    } catch (e) { b.textContent = "직접 복사"; }
+  });
+});
+</script>

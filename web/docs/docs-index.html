@@ -1,0 +1,59 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>낱말 채우기 문서</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#F3EFE4;--sf:#FBF8F0;--ln:#DBD2BD;--fg:#201C16;--dim:#6A6254;--ac:#B23A2E;--gd:#8A6A12}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+ --bg:#11131A;--sf:#1A1D27;--ln:#333950;--fg:#ECEAE3;--dim:#969BB3;--ac:#D6453A;--gd:#C9A227;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);line-height:1.75;
+ font-family:"IBM Plex Sans KR",system-ui,sans-serif;font-size:15px;
+ padding-left:max(16px,env(safe-area-inset-left,0px));
+ padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-family:"Gowun Batang",serif;font-size:clamp(27px,6.4vw,36px);margin:0;line-height:1.2}
+.head{padding-block:44px 24px;border-bottom:2px solid var(--fg)}
+.head p{margin:13px 0 0;color:var(--dim);max-width:58ch}
+.list{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+a.card{display:block;text-decoration:none;color:var(--fg);background:var(--sf);
+ border:1px solid var(--ln);border-radius:13px;padding:17px 18px}
+a.card:hover{border-color:var(--gd)}
+a.card .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;
+ text-transform:uppercase;color:var(--ac)}
+a.card .t{font-family:"Gowun Batang",serif;font-weight:700;font-size:18px;margin-top:4px}
+a.card p{margin:5px 0 0;font-size:13.5px;color:var(--dim)}
+.play{margin-top:26px;display:block;text-align:center;text-decoration:none;
+ font-weight:600;background:var(--gd);color:#1A1206;border-radius:11px;padding:13px}
+</style>
+<div class="wrap">
+  <header class="head">
+    <h1>낱말 채우기 — 문서</h1>
+    <p>만든 것, 왜 그렇게 만들었는지, 재서 고친 숫자들.</p>
+  </header>
+  <a class="play" href="docs-index.html">게임 열기</a>
+  <div class="list">
+    <a class="card" href="plan.html">
+      <div class="k">먼저 읽을 것</div><div class="t">사업 계획</div>
+      <p>제품·분위기·규칙·성장·보물함·기술·시장·수익·승산·로드맵·위험을 한 곳에.
+        재서 고친 숫자와 그 이유까지 전부 담았습니다.</p></a>
+    <a class="card" href="market.html">
+      <div class="k">가장 최근</div><div class="t">마케팅과 출시</div>
+      <p>네 AI 분석을 받아 고친 숫자들. 자본이 안 되는 이유(LTV÷CPI 0.28),
+        두 개의 문, 구글 플레이 준비물, 30일 계획.</p></a>
+    <a class="card" href="state.html">
+      <div class="k">짧게 보려면</div><div class="t">지금</div>
+      <p>전체 개요와 맥락 — 규칙, 열 개의 산, 노력과 운, 걸어온 길, 남은 일.</p></a>
+    <a class="card" href="money.html">
+      <div class="k">설계 판단</div><div class="t">과금 경계선</div>
+      <p>산은 돈이 닿아도 되고 리그는 안 되는 이유. 광고·회차·거래·생명에 대한 판단.</p></a>
+    <a class="card" href="gear-prompt.html">
+      <div class="k">그림</div><div class="t">장비 그림 프롬프트</div>
+      <p>검·등·북 일곱 등급을 정사각 칸으로 받는 법.</p></a>
+    <a class="card" href="chest-prompt.html">
+      <div class="k">그림</div><div class="t">보물함 그림 프롬프트</div>
+      <p>닫힌 함과 열린 함, 두 장.</p></a>
+  </div>
+</div>
