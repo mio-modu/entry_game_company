@@ -891,7 +891,20 @@ body.quake { animation: shake .42s ease-out; }
   function gearVal(id) { return GEAR[id].val[gear[id]]; }
   function gearName(id) { return GEAR[id].names[gear[id]]; }
 
-  function upCap() { return CAP_PER_CYCLE * (Math.floor(stage / 100) + 1); }
+  // ── 회차 ────────────────────────────────────────────────────────
+  //
+  // 백두산을 넘으면 산길이 다시 열린다. 돈을 받지 않는다.
+  //
+  // 한 번 깨면 끝인 게임은 끝낸 사람을 잃는다. 그렇다고 "다시 열려면
+  // 돈을 내라"로 두면, 끝까지 간 사람에게 청구서를 내미는 셈이다.
+  // 가장 오래 놀아 준 사람에게 그러면 안 된다.
+  //
+  // 대신 회차마다 수호신의 기세가 오르고, 함에서 나오는 등급이 한 칸
+  // 올라가고, 강화 상한이 아홉 단계씩 열린다. 두 번째 산길의 북한산은
+  // 첫 번째 산길의 소백산쯤 된다.
+  var CYC_HP = 0.35;                       // 회차마다 기세 +35%
+  function cycle() { return Math.floor(stage / 100); }
+  function upCap() { return CAP_PER_CYCLE * (cycle() + 1); }
   function trainLv() { return Math.floor((up.atk + up.time + up.combo) / 3); }
 
   // 0~2단계는 확정. 거기서 규칙을 배우고 그 뒤부터 확률이 걸린다.
@@ -1057,16 +1070,17 @@ body.quake { animation: shake .42s ease-out; }
   }
 
   function stageInfo(k) {
-    var M = MOUNTAINS[Math.floor(k / 10)], sub = k % 10, boss = sub === 9;
+    var cyc = Math.floor(k / 100);
+    var M = MOUNTAINS[Math.floor(k / 10) % 10], sub = k % 10, boss = sub === 9;
     return {
       n: boss ? M.n + " 수호신" : TITLES[sub] + M.n, art: M.a, m: M.m, boss: boss,
-      no: k + 1, d: M.d,
+      no: (k % 100) + 1, cyc: cyc, d: M.d,
       // 글자판 조건은 산의 처음과 끝 사이를 단계 수만큼 나눠 걷는다
       mod: M.mod || null, mod2: M.mod2 || null,
       spec: { t: M.t, lo: M.lo, hi: M.hi,
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
       need: lerp(M.k0, M.k1, sub),
-      step: stepBonus(k),
+      step: stepBonus(k), hpMul: 1 + cyc * CYC_HP,
       // 수호신은 가장 많이 요구하는 자리라 숨 쉴 틈을 조금 돌려준다
       t: (function (base) { return base + timeBonus(base) + stepBonus(k); })(
            lerp(M.s0, M.s1, sub) + (boss ? 8 : 0))
@@ -1115,7 +1129,7 @@ body.quake { animation: shake .42s ease-out; }
     // 화면이 말하는 승리 조건은 이제 하나뿐이라 어긋날 자리가 없다.
     var b = stageInfo(stage);
     var p = makePuzzle(b.spec);
-    var hp = hpFor(p.ans, b.need);
+    var hp = Math.round(hpFor(p.ans, b.need) * b.hpMul);
     run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
             payFill: 0, payWord: 0, payPerfect: 0,
@@ -1139,12 +1153,15 @@ body.quake { animation: shake .42s ease-out; }
       + (rn ? '<span class="rulechip">' + rn + '</span>' : "")
       + (b.step ? '<span class="rulechip step">발자국 +' + b.step + '초</span>' : "");
     el.stageNo.textContent = b.no;
-    el.stageUnit.textContent = "단계";
+    el.stageUnit.textContent = b.cyc ? "단계 · " + (b.cyc + 1) + "회차" : "단계";
     el.mtName.textContent = b.m;
     el.hpMax.textContent = hp;
     el.bonus.textContent = "";
     // 새 산에 들어설 때 그 산이 어떤 곳인지 한 번 알려 준다
-    if (stage % 10 === 0) toast(b.m + " — " + b.d);
+    if (stage > 0 && stage % 100 === 0)
+      toast("백두산을 넘었습니다 · " + (cycle() + 1) + "회차 — 수호신의 기세가 "
+            + Math.round(CYC_HP * 100) + "% 오르고, 함에서 한 등급 위가 나옵니다");
+    else if (stage % 10 === 0) toast(b.m + " — " + b.d);
     if (timerId) clearInterval(timerId);
     timerId = setInterval(onSecond, 1000);
     draw();
@@ -1295,7 +1312,7 @@ body.quake { animation: shake .42s ease-out; }
 
   function startChain() {
     buildChain();
-    var M = MOUNTAINS[Math.min(9, Math.floor(stage / 10))];
+    var M = MOUNTAINS[Math.floor(stage / 10) % 10];
     var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60)));
     run = { chain: true, b: { n: M.n + " 수호신", art: M.a, m: M.m, boss: false, no: 0 },
             hp: hp, max: hp, left: 13, sec: 13, lives: 3, combo: 0, used: Object.create(null),
@@ -1939,8 +1956,10 @@ body.quake { animation: shake .42s ease-out; }
     try { localStorage.setItem("nathero-ads-" + todayKey(), adsUsed() + 1); } catch (e) {}
   }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
-  function topMountain() { return Math.max(0, Math.floor((stage - 1) / 10)); }
-  function adCap() { return Math.max(1, tierCap(topMountain()) - 1); }
+  // '지금 이 회차에서 올라 있는 산'이다. 회차가 바뀌면 다시 북한산부터다 —
+  // 2회차 북한산에서 광고 함이 신화를 뱉으면 2회차를 오를 이유가 없어진다.
+  function topMountain() { return Math.floor((stage % 100) / 10); }
+  function adCap() { return Math.max(1, Math.min(6, tierCap(topMountain()) + cycle() - 1)); }
 
   var CHEST = [
     { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",              go: function () { gold += 120; } },
@@ -1949,7 +1968,13 @@ body.quake { animation: shake .42s ease-out; }
     { p:  8, k: "기", t: "기름 한 병",   d: "마무리 시간 +15초",     go: function () { bag.ink++; } },
     { p:  5, k: "숫", t: "숫돌",         d: "강화 성공률 +20%p",     go: function () { bag.charm++; } }
   ];
-  var GEAR_P = 23;                               // 나머지 23%가 장비
+  // 장비가 나올 확률은 함을 '어떻게 얻었는가'에 따라 다르다.
+  //
+  // 수호신을 쓰러뜨린 함에서는 셋에 하나가 장비고, 광고로 받은 함에서는
+  // 여섯에 하나다. 그래야 "장비는 산을 올라야 나온다"가 말이 아니라
+  // 숫자로도 참이 된다. 광고 함은 냥과 옥 쪽으로 기운다.
+  var GEAR_BOSS = 35, GEAR_AD = 18;
+  var CHEST_SUM = 77;                            // 냥·옥·반딧불·기름·숫돌의 합
   var TIER_W = [0, 13, 6, 3, 0.89, 0.1, 0.01];   // 예사(0)는 나오지 않는다
 
   function rollTier(cap) {
@@ -1960,12 +1985,14 @@ body.quake { animation: shake .42s ease-out; }
     return 1;
   }
 
-  function chestOdds(cap) {
-    var tot = 0, i, out = [];
-    CHEST.forEach(function (c) { out.push(c.t + " " + c.p + "%"); });
+  function chestOdds(cap, gp) {
+    var tot = 0, i, out = [], sc = (100 - gp) / CHEST_SUM;
+    if (gp < 100) CHEST.forEach(function (c) {
+      out.push(c.t + " " + (c.p * sc).toFixed(c.p * sc < 10 ? 1 : 0) + "%");
+    });
     for (i = 1; i <= cap; i++) tot += TIER_W[i];
     for (i = 1; i <= cap; i++) {
-      var pc = GEAR_P * TIER_W[i] / tot;
+      var pc = gp * TIER_W[i] / tot;
       out.push("장비(" + TIER[i] + ") " + (pc < 1 ? pc.toFixed(2) : pc.toFixed(1)) + "%");
     }
     return out.join("  ·  ");
@@ -2007,8 +2034,9 @@ body.quake { animation: shake .42s ease-out; }
     return r;
   }
 
-  function openChest(mt, after, capIn) {
+  function openChest(mt, after, capIn, gpIn) {
     var cap = capIn == null ? tierCap(mt) : capIn;
+    var gp = gpIn == null ? GEAR_BOSS : gpIn;
     var ov = document.createElement("div"); ov.className = "ov hoard";
     ov.appendChild(document.createElement("div")).className = "flash";
     var card = document.createElement("div"); card.className = "card hoard";
@@ -2034,7 +2062,7 @@ body.quake { animation: shake .42s ease-out; }
     card.appendChild(tip);
 
     var odds = document.createElement("p"); odds.className = "lead odds";
-    odds.textContent = chestOdds(cap);
+    odds.textContent = chestOdds(cap, gp);
     card.appendChild(odds);
 
     var next = document.createElement("button"); next.className = "btn";
@@ -2048,7 +2076,8 @@ body.quake { animation: shake .42s ease-out; }
       if (opened) return;
       opened = true;
       var roll = Math.random() * 100, acc = 0, got = null, tier = null;
-      for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p; if (roll < acc) { got = CHEST[i]; break; } }
+      var sc = (100 - gp) / CHEST_SUM;
+      for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p * sc; if (roll < acc) { got = CHEST[i]; break; } }
       var title, body, gid = null;
       if (got) { got.go(); title = got.t; body = got.d; }
       else {
@@ -2099,7 +2128,8 @@ body.quake { animation: shake .42s ease-out; }
     var left = adsLeft(), cap = adCap();
     el.adSub.textContent = "오늘 " + left + " / " + ADS_PER_DAY + "번";
     el.adWhat.textContent = left
-      ? TIER[cap] + "까지 나옵니다 · 지금은 " + MOUNTAINS[topMountain()].m + "까지 오르셨습니다"
+      ? TIER[cap] + "까지 나옵니다 · 지금은 "
+        + (cycle() ? (cycle() + 1) + "회차 " : "") + MOUNTAINS[topMountain()].m + "입니다"
       : "오늘 몫을 다 쓰셨습니다 · 내일 다시 세 번";
     el.btnAd.disabled = !left;
     el.btnAd.textContent = left ? "광고 보기" : "내일";
@@ -2168,7 +2198,12 @@ body.quake { animation: shake .42s ease-out; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     r.leftAtEnd = Math.max(0, r.left);
     run = null;
-    if (r.b.boss) openChest(Math.floor((r.b.no - 1) / 10), function () { result(r, true); });
+    if (r.b.boss) {
+      var mt = Math.floor((r.b.no - 1) / 10);
+      // 백두산 수호신은 한 회차의 끝이다. 여기서만 장비가 확정으로 나온다.
+      openChest(mt, function () { result(r, true); },
+                Math.min(6, tierCap(mt) + cycle()), mt === 9 ? 100 : GEAR_BOSS);
+    }
     else result(r, true);
   }
 
@@ -2190,7 +2225,7 @@ body.quake { animation: shake .42s ease-out; }
     // 깨면 발자국은 지워진다. 길을 냈으니 더 필요 없다.
     if (won) delete steps[stage];
     else steps[stage] = Math.min(STEP_MAX, stepsAt(stage) + 1);
-    if (won) stage = Math.min(99, stage + 1);
+    if (won) stage += 1;
     saveS();
     el.gold.textContent = gold;
 
@@ -2495,7 +2530,7 @@ body.quake { animation: shake .42s ease-out; }
     // 횟수와 등급 상한이 어떻게 느껴지는지만 먼저 본다.
     toast("시험판에서는 광고 없이 바로 열립니다");
     logEv("T", "ad");
-    openChest(topMountain(), function () { drawAd(); }, adCap());
+    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD);
   });
 
   loadS();
