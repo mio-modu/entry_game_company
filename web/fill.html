@@ -18,6 +18,9 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* display를 정한 클래스는 hidden 속성을 이겨 버린다. .bonusbar가 flex라
+   새 판마다 "쓰러뜨렸습니다" 띠가 떠 있었다. 한 군데서 막는다. */
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   font-size: 15px; line-height: 1.6; margin: 0; }
@@ -535,6 +538,8 @@ body.quake { animation: shake .42s ease-out; }
   animation: gearIn .55s cubic-bezier(.2,1.5,.35,1), chestAura 2.2s ease-in-out .6s infinite; }
 /* 수련 패널에 지금 쥔 물건. 한 줄에 세워 받던 때는 검이 실오라기라
    뺐었는데, 칸이 정사각이 되면서 다시 걸 수 있게 됐다. */
+.tags { margin: 5px 0 3px; display: flex; flex-wrap: wrap; gap: 5px; }
+.tags .gear, .tags .forge { margin-left: 0; }
 .geartn {
   width: 34px; height: 34px; vertical-align: middle; margin-right: 8px;
   border-radius: 5px; border: 1px solid var(--gtb, var(--line)); background: #F3EFE4;
@@ -577,6 +582,33 @@ body.quake { animation: shake .42s ease-out; }
 .words { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
 .words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
   border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
+/* 아래 단추 줄. 네 칸이 똑같은 폭으로 가지런히 선다. */
+.tray {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px;
+}
+.tbtn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
+  padding: 12px 4px 11px; cursor: pointer; font-family: inherit; color: var(--fg);
+  transition: border-color .18s ease, background .18s ease;
+}
+.tbtn b { font-family: var(--font-display); font-size: 14.5px; font-weight: 700; }
+.tbtn small {
+  font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint);
+  letter-spacing: .02em; white-space: nowrap;
+}
+.tbtn:hover, .tbtn:focus-visible { border-color: var(--gold); background: var(--surface-2); }
+.tbtn:focus-visible { outline: none; }
+.tbtn.lit { border-color: var(--gold); }
+.tbtn.lit small { color: var(--gold); }
+
+/* 서랍에서 꺼낸 패널은 테두리를 벗고 카드 안에 그대로 앉는다 */
+.card.sheet { max-width: 420px; text-align: left; gap: 0; padding: 0; }
+.card.sheet .panel {
+  margin: 0; border: 0; background: transparent; padding: 20px 18px 6px;
+}
+.card.sheet .shut { margin: 12px 18px 18px; }
+
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 40;
   background: #2A2F42; border: 1px solid var(--line); border-radius: 22px;
   padding: 9px 17px; font-size: 13px; max-width: 90vw; text-align: center; }
@@ -649,7 +681,19 @@ body.quake { animation: shake .42s ease-out; }
   </div>
   <div class="bonus" id="bonus"></div>
 
-  <div class="panel">
+  <!-- 화면 아래를 비운다.
+       덧붙이다 보니 광고 설명·수련·시험 기록·규칙이 통째로 쌓여
+       게임 한 화면 뒤로 두 화면 반이 더 있었다. 필요할 때만 연다. -->
+  <div class="tray">
+    <button class="tbtn" id="tTrain"><b>수련</b><small id="tTrainSub">0단</small></button>
+    <button class="tbtn" id="tChest"><b>보물함</b><small id="tChestSub">—</small></button>
+    <button class="tbtn" id="tRule"><b>규칙</b><small>어떻게 하나</small></button>
+    <button class="tbtn" id="tLog"><b>기록</b><small>시험판</small></button>
+  </div>
+</div>
+
+<div id="stash" hidden>
+  <div class="panel" id="pChest">
     <h2>보물함 <small id="adSub"></small></h2>
     <div class="up">
       <div>
@@ -658,34 +702,30 @@ body.quake { animation: shake .42s ease-out; }
       </div>
       <button id="btnAd">광고 보기</button>
     </div>
-    <p class="cite">광고로 여는 함은 <b>지금 오른 산보다 한 등급 아래</b>까지만 나옵니다
-      (가장 낮아도 양품은 나옵니다). 광고를 아무리 봐도 그 위는 안 나옵니다 —
-      <b>산을 올라야 나옵니다.</b> 가장 귀한 <b>신화는 수호신을 쓰러뜨린 함에서만</b> 나옵니다.
-      모아서 등급을 올리는 것도 없습니다. 하루 세 번, 한 번에 하나뿐입니다.</p>
+    <p class="cite">광고로 여는 함은 <b>지금 오른 산보다 한 등급 아래</b>까지입니다.
+      아무리 봐도 그 위는 안 나옵니다 — <b>산을 올라야 나옵니다.</b>
+      가장 귀한 <b>신화는 수호신 함에서만</b> 나옵니다.</p>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="pTrain">
     <h2>수련 <small id="trainSub"></small></h2>
     <div id="ups"></div>
-    <p class="cite"><b>검</b>은 깊게 베고, <b>등</b>은 밤을 밝혀 시간을 벌고,
-      <b>북</b>은 연달아 두드릴수록 기세가 오릅니다.
-      세 가지를 <b>고르게</b> 올려야 단수가 오릅니다. 한 축만 밀면 그대로입니다.
-      단수가 높을수록 수호신을 쓰러뜨렸을 때 받는 냥이 늘어납니다.</p>
+    <p class="cite">세 가지를 <b>고르게</b> 올려야 단수가 오릅니다. 한 축만 밀면 그대로입니다.
+      단수가 높을수록 받는 냥이 늘어납니다.</p>
   </div>
 
-  <div class="panel tlog">
+  <div class="panel tlog" id="pLog">
     <h2>시험판 기록</h2>
     <p id="logSum">아직 기록이 없습니다.</p>
     <div class="trow">
       <button class="btn" id="btnLog">기록 복사</button>
       <button class="btn ghost" id="btnLogClear">기록 지우기</button>
     </div>
-    <p class="cite">이 시험판은 <b>어느 단계에서 그만두는지</b>를 알아보려고
-      플레이 기록을 이 기기 안에만 남깁니다. 이름·연락처 같은 것은 일절 담지 않고,
-      <b>「기록 복사」를 누르셨을 때만</b> 글로 만들어 드립니다. 그 글을 보내 주시면 됩니다.</p>
+    <p class="cite">기록은 <b>이 기기 안에만</b> 남습니다. 이름·연락처는 일절 담지 않고,
+      <b>「기록 복사」를 누르셨을 때만</b> 글로 만들어 드립니다.</p>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="pRule">
     <h2>규칙</h2>
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
@@ -887,6 +927,8 @@ body.quake { animation: shake .42s ease-out; }
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
    "adSub","adWhat","btnAd","ho","guide","btnIntro",
+   "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
+   "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
    "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
    "trainSub","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
@@ -2266,6 +2308,20 @@ body.quake { animation: shake .42s ease-out; }
     el.gem.textContent = gem;
     el.lv.textContent = "수련 " + trainLv() + "단";
     drawHo();
+    drawTray();
+  }
+
+  // 단추만 보고도 '지금 올릴 수 있는가 · 함이 남았는가'를 알아야
+  // 굳이 열어 보지 않는다.
+  function drawTray() {
+    var cap = upCap(), can = UPGRADES.some(function (u) {
+      return up[u.id] < cap && gold >= Math.round(u.base * Math.pow(u.r, up[u.id]));
+    });
+    el.tTrainSub.textContent = trainLv() + "단";
+    el.tTrain.classList.toggle("lit", can);
+    var left = adsLeft();
+    el.tChestSub.textContent = left ? left + "번 남음" : "내일";
+    el.tChest.classList.toggle("lit", left > 0);
   }
 
   function drawHo() {
@@ -2388,6 +2444,7 @@ body.quake { animation: shake .42s ease-out; }
 
   function drawAd() {
     drawHo();
+    drawTray();
     var left = adsLeft(), cap = adCap();
     el.adSub.textContent = "오늘 " + left + " / " + ADS_PER_DAY + "번";
     el.adWhat.textContent = left
@@ -2416,19 +2473,23 @@ body.quake { animation: shake .42s ease-out; }
       var left = document.createElement("div");
       var t = document.createElement("div"); t.className = "t";
       t.textContent = u.t + " (" + u.w + ") · " + lvl + " / " + cap + "단계";
-      var g = document.createElement("span");
-      g.className = "gear g" + gear[u.id];
-      g.textContent = gearName(u.id);
-      t.appendChild(g);
-      if (forge[u.id]) {
-        var fz = document.createElement("span"); fz.className = "forge";
-        fz.textContent = "벼림 " + forge[u.id];
-        t.appendChild(fz);
-      }
+      // 이름표를 제목 줄에 같이 두면 '칠성검'이 좁은 화면에서 쪼개진다.
+      // 제목 한 줄, 이름표 한 줄로 나눈다.
       var th = document.createElement("img");
       th.className = "geartn g" + gear[u.id]; th.alt = "";
       th.src = "art/gear/" + u.id + "-" + gear[u.id] + ".jpg";
       t.insertBefore(th, t.firstChild);
+
+      var tags = document.createElement("div"); tags.className = "tags";
+      var g = document.createElement("span");
+      g.className = "gear g" + gear[u.id];
+      g.textContent = gearName(u.id);
+      tags.appendChild(g);
+      if (forge[u.id]) {
+        var fz = document.createElement("span"); fz.className = "forge";
+        fz.textContent = "벼림 " + forge[u.id];
+        tags.appendChild(fz);
+      }
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
       var r2 = document.createElement("div");
       r2.className = "d rate" + (maxed ? "" : pr >= 0.8 ? " hi" : pr >= 0.5 ? " mid" : " lo");
@@ -2436,7 +2497,8 @@ body.quake { animation: shake .42s ease-out; }
         ? (byStage ? "다음 산을 넘으면 한 단계 더 열립니다" : "이 회차의 최고 단계입니다")
         : "성공률 " + Math.round(pr * 100) + "%"
           + (f ? "  ·  연속 실패 " + f + "회 보정 +" + (f * 10) + "%p" : "");
-      left.appendChild(t); left.appendChild(d); left.appendChild(r2);
+      left.appendChild(t); left.appendChild(tags);
+      left.appendChild(d); left.appendChild(r2);
 
       var b = document.createElement("button");
       b.textContent = maxed ? (byStage ? "더 올라야" : "완성") : "냥 " + cost;
@@ -2821,6 +2883,29 @@ body.quake { animation: shake .42s ease-out; }
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
+
+  // 서랍에서 패널을 꺼내 띄우고, 닫으면 제자리로 돌려놓는다.
+  // 통째로 옮기므로 걸어 둔 손잡이와 el.* 참조가 그대로 산다.
+  function openPanel(node) {
+    var mark = document.createComment("stash");
+    node.parentNode.insertBefore(mark, node);
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card sheet";
+    card.appendChild(node);
+    var shut = document.createElement("button");
+    shut.className = "btn shut"; shut.textContent = "닫기";
+    function close() {
+      mark.parentNode.insertBefore(node, mark); mark.remove(); ov.remove();
+    }
+    shut.addEventListener("click", close);
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+    card.appendChild(shut);
+    ov.appendChild(card); document.body.appendChild(ov); shut.focus();
+  }
+  el.tTrain.addEventListener("click", function () { drawTrain(); openPanel(el.pTrain); });
+  el.tChest.addEventListener("click", function () { drawAd(); openPanel(el.pChest); });
+  el.tRule.addEventListener("click", function () { openPanel(el.pRule); });
+  el.tLog.addEventListener("click", function () { drawLog(); openPanel(el.pLog); });
 
   loadS();
   loadTut();
