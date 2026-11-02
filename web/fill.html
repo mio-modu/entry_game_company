@@ -735,14 +735,15 @@ body.quake { animation: shake .42s ease-out; }
     <h2>보물함 <small id="adSub"></small></h2>
     <div class="up">
       <div>
-        <div class="t">광고 한 편에 함 하나</div>
+        <div class="t">광고 두 편에 함 하나</div>
         <div class="d" id="adWhat"></div>
       </div>
       <button id="btnAd">광고 보기</button>
     </div>
-    <p class="cite">광고로 여는 함은 <b>지금 오른 산보다 한 등급 아래</b>까지입니다.
-      아무리 봐도 그 위는 안 나옵니다 — <b>산을 올라야 나옵니다.</b>
-      가장 귀한 <b>신화는 수호신 함에서만</b> 나옵니다.</p>
+    <p class="cite">광고 <b>두 편</b>에 함 하나, 하루 <b>세 개</b>까지.
+      등급은 <b>지금 오른 산보다 한 칸 아래</b>까지입니다 — 아무리 봐도 그 위는
+      안 나옵니다. 가장 귀한 <b>신화는 수호신 함에서만</b> 나옵니다.
+      이미 가진 장비가 나오면 <b>벼림</b>이 되니 버려지지 않습니다.</p>
   </div>
 
   <div class="panel" id="pTrain">
@@ -2176,14 +2177,19 @@ body.quake { animation: shake .42s ease-out; }
   //
   // 쌓기도 두지 않는다. 광고 스무 개를 모아 한 등급 올리는 구조는 광고를
   // 노동으로 만든다. 하루 세 번, 한 번에 하나. 그걸로 끝이다.
-  var ADS_PER_DAY = 3;
-  function adsUsed() {
-    try { return +localStorage.getItem("nathero-ads-" + todayKey()) || 0; } catch (e) { return 0; }
+  // 광고 한 편에 함 하나는 값이 안 맞았다.
+  //
+  // 재 보니 광고 함 하나가 한 판을 다 푼 것과 거의 같았다 (10단계 101%,
+  // 50단계 100%, 100단계 88%). 30초 광고가 한 판과 같으면 푸는 일이
+  // 값을 잃는다. 두 편에 하나로 올리고 바닥 냥도 낮춘다.
+  var ADS_PER_CHEST = 2, CHESTS_PER_DAY = 3;
+  function adKey() { return "nathero-ads-" + todayKey(); }
+  function adState() {
+    try { return JSON.parse(localStorage.getItem(adKey()) || "null") || { n: 0, c: 0 }; }
+    catch (e) { return { n: 0, c: 0 }; }
   }
-  function adsLeft() { return Math.max(0, ADS_PER_DAY - adsUsed()); }
-  function adsSpend() {
-    try { localStorage.setItem("nathero-ads-" + todayKey(), adsUsed() + 1); } catch (e) {}
-  }
+  function adSave(v) { try { localStorage.setItem(adKey(), JSON.stringify(v)); } catch (e) {} }
+  function chestsLeft() { return Math.max(0, CHESTS_PER_DAY - adState().c); }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
   // '지금 이 회차에서 올라 있는 산'이다. 회차가 바뀌면 다시 북한산부터다 —
   // 2회차 북한산에서 광고 함이 신화를 뱉으면 2회차를 오를 이유가 없어진다.
@@ -2422,8 +2428,8 @@ body.quake { animation: shake .42s ease-out; }
     });
     el.tTrainSub.textContent = trainLv() + "단";
     el.tTrain.classList.toggle("lit", can);
-    var left = adsLeft();
-    el.tChestSub.textContent = left ? left + "번 남음" : "내일";
+    var left = chestsLeft();
+    el.tChestSub.textContent = left ? left + "개 남음" : "내일";
     el.tChest.classList.toggle("lit", left > 0);
   }
 
@@ -2548,14 +2554,17 @@ body.quake { animation: shake .42s ease-out; }
   function drawAd() {
     drawHo();
     drawTray();
-    var left = adsLeft(), cap = adCap();
-    el.adSub.textContent = "오늘 " + left + " / " + ADS_PER_DAY + "번";
+    var st = adState(), left = chestsLeft(), cap = adCap();
+    el.adSub.textContent = left
+      ? "오늘 함 " + left + " / " + CHESTS_PER_DAY + "개"
+      : "오늘 몫을 다 썼습니다";
     el.adWhat.textContent = left
-      ? TIER[cap] + "까지 나옵니다 · 지금은 "
-        + (cycle() ? (cycle() + 1) + "회차 " : "") + MOUNTAINS[topMountain()].m + "입니다"
-      : "오늘 몫을 다 쓰셨습니다 · 내일 다시 세 번";
+      ? TIER[cap] + "까지 나옵니다 · 이미 가진 것이 나오면 벼림이 됩니다"
+      : "내일 다시 " + CHESTS_PER_DAY + "개";
     el.btnAd.disabled = !left;
-    el.btnAd.textContent = left ? "광고 보기" : "내일";
+    el.btnAd.textContent = !left ? "내일"
+      : st.n ? "광고 보기 (" + st.n + "/" + ADS_PER_CHEST + ")"
+      : "광고 보기";
   }
 
   function drawTrain() {
@@ -2981,13 +2990,21 @@ body.quake { animation: shake .42s ease-out; }
   });
 
   el.btnAd.addEventListener("click", function () {
-    if (!adsLeft()) return;
-    adsSpend(); drawAd();
+    if (!chestsLeft()) return;
+    var st = adState();
+    st.n++;
+    if (st.n < ADS_PER_CHEST) {
+      adSave(st); drawAd();
+      toast("광고 " + st.n + " / " + ADS_PER_CHEST + " · 한 편 더 보시면 함이 열립니다");
+      return;
+    }
+    st.n = 0; st.c++;
+    adSave(st); drawAd();
     // 시험판에는 광고가 아직 안 붙어 있다. 붙기 전까지는 바로 열어
     // 횟수와 등급 상한이 어떻게 느껴지는지만 먼저 본다.
     toast("시험판에서는 광고 없이 바로 열립니다");
     logEv("T", "ad");
-    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD, 0.4);
+    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD, 0.3);
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
