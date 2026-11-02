@@ -950,7 +950,15 @@ body.quake { animation: shake .42s ease-out; }
     if (c === 1) return "백두산을 넘은 이";
     return (ORDN[c] || c) + " 번 넘은 이";
   }
-  function upCap() { return CAP_PER_CYCLE * (cycle() + 1); }
+  // 강화 상한은 회차만 보는 게 아니라 '지금 어디까지 올랐는가'도 본다.
+  //
+  // 회차만 보면 1단계에서도 아홉 단계를 다 찍을 수 있다. 재 보니 실제로
+  // 36단계쯤에 강화가 꽉 차고, 남은 64단계는 냥이 쓸 데 없이 쌓였다.
+  // 산 하나를 넘을 때마다 한 단계씩 열어 두면, 강화가 산을 앞지르지 않고
+  // 냥이 끝까지 쓸모를 갖는다.
+  function upCap() {
+    return Math.min(CAP_PER_CYCLE * (cycle() + 1), 2 + Math.floor(stage / 12));
+  }
   function trainLv() { return Math.floor((up.atk + up.time + up.combo) / 3); }
 
   // 0~2단계는 확정. 거기서 규칙을 배우고 그 뒤부터 확률이 걸린다.
@@ -2206,6 +2214,8 @@ body.quake { animation: shake .42s ease-out; }
     UPGRADES.forEach(function (u) {
       var lvl = up[u.id], cost = Math.round(u.base * Math.pow(u.r, lvl));
       var maxed = lvl >= cap;
+      // 회차 상한이 아니라 '아직 덜 올라서' 막힌 것인지 구분한다
+      var byStage = maxed && lvl < CAP_PER_CYCLE * (cycle() + 1);
       var f = fails[u.id] || 0;
       var pr = successRate(lvl, f);
 
@@ -2229,13 +2239,14 @@ body.quake { animation: shake .42s ease-out; }
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
       var r2 = document.createElement("div");
       r2.className = "d rate" + (maxed ? "" : pr >= 0.8 ? " hi" : pr >= 0.5 ? " mid" : " lo");
-      r2.textContent = maxed ? "이 회차의 최고 단계입니다"
+      r2.textContent = maxed
+        ? (byStage ? "다음 산을 넘으면 한 단계 더 열립니다" : "이 회차의 최고 단계입니다")
         : "성공률 " + Math.round(pr * 100) + "%"
           + (f ? "  ·  연속 실패 " + f + "회 보정 +" + (f * 10) + "%p" : "");
       left.appendChild(t); left.appendChild(d); left.appendChild(r2);
 
       var b = document.createElement("button");
-      b.textContent = maxed ? "완성" : "냥 " + cost;
+      b.textContent = maxed ? (byStage ? "더 올라야" : "완성") : "냥 " + cost;
       b.disabled = maxed || gold < cost;
       b.addEventListener("click", function () {
         if (maxed || gold < cost) return;
