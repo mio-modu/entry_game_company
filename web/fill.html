@@ -67,7 +67,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   overflow-wrap: anywhere;
 }
 .brand { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
-.brand .lv {
+.brand .ho {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  color: #FFD76A; border: 1px solid #FFD76A; border-radius: 20px;
+  padding: 1px 8px; margin-left: 5px; vertical-align: middle; white-space: nowrap;
+  text-shadow: 0 0 10px rgba(255,215,106,.5);
+}
+.lv {
   font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
   color: var(--gold); border: 1px solid #4A3E18; background: #2E2412;
   border-radius: 20px; padding: 1px 8px; margin-left: 7px; vertical-align: middle;
@@ -509,6 +515,11 @@ body.quake { animation: shake .42s ease-out; }
 .geartn.g4 { --gtb:var(--t4); } .geartn.g5 { --gtb:var(--t5);
   box-shadow: 0 0 8px rgba(199,123,224,.5); }
 .geartn.g6 { --gtb:var(--t6); box-shadow: 0 0 10px rgba(255,215,106,.6); }
+.forge {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .03em;
+  border-radius: 20px; padding: 1px 7px; margin-left: 5px; vertical-align: middle;
+  border: 1px solid var(--jade); color: var(--jade);
+}
 .card .lead.odds { font-size: 11px; color: var(--fg-faint); line-height: 1.7; }
 .card .lead.got { color: var(--gold); font-size: 15px; font-weight: 600; }
 /* 명품 이상이 나오면 제목부터 다르게 — 이 순간이 상자를 여는 이유다 */
@@ -544,7 +555,7 @@ body.quake { animation: shake .42s ease-out; }
 
 <div class="wrap">
   <div class="hud">
-    <div class="brand">낱말 채우기 <span class="lv" id="lv">수련 0단</span></div>
+    <div class="brand">낱말 채우기 <span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
     <div class="purse">냥 <b id="gold">0</b> · 옥 <b id="gem">0</b></div>
   </div>
   <div class="modes">
@@ -830,7 +841,7 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
-   "adSub","adWhat","btnAd",
+   "adSub","adWhat","btnAd","ho",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
    "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
    "trainSub","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
@@ -851,7 +862,9 @@ body.quake { animation: shake .42s ease-out; }
     { id: "atk",   t: "검",   w: "공격력",   base: 40,  r: 1.16,
       desc: function () { return "빈칸 피해 x" + (gearVal("atk") * Math.pow(ATK_STEP, up.atk)).toFixed(2); } },
     { id: "time",  t: "등",   w: "제한시간", base: 90,  r: 1.22,
-      desc: function () { return "제한시간 +" + (up.time * TIME_STEP + gearVal("time")) + "초"; } },
+      desc: function () {
+        return "제한시간 +" + Math.round(up.time * TIME_STEP + gearVal("time")) + "초";
+      } },
     { id: "combo", t: "북",   w: "연속 배수", base: 150, r: 1.22,
       desc: function () { return "연속마다 +"
         + Math.round((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100) + "%"; } }
@@ -888,7 +901,24 @@ body.quake { animation: shake .42s ease-out; }
   var TIER = ["예사", "양품", "귀품", "명품", "신물", "전설", "신화"];
   var gear = { atk: 0, time: 0, combo: 0 };
 
-  function gearVal(id) { return GEAR[id].val[gear[id]]; }
+  // ── 벼림 ────────────────────────────────────────────────────────
+  //
+  // 중복으로 나온 장비는 녹여 쓰던 것에 겹쳐 벼린다.
+  //
+  // 흔한 방식은 '같은 등급 둘을 합쳐 윗 등급'이다. 그건 운을 시간으로
+  // 바꿔 주는 장치라, 오래 하면 누구나 신화에 닿는다. 그 순간 신화는
+  // 희귀한 것이 아니라 '오래 한 표시'가 되고, 노력 55 : 운 45로 맞춰 둔
+  // 저울도 무너진다.
+  //
+  // 그래서 등급은 올리지 않고 수치만 다듬는다. 스무 번까지, 한 번에
+  // 0.75%씩, 다 모아 +15%. 함을 계속 열 이유는 남고 천장은 그대로다.
+  // 운으로 받은 것을 노력으로 다듬는 자리다.
+  var FORGE_MAX = 20, FORGE_STEP = 0.0075;
+  var FORGE_PT = [0, 1, 2, 3, 5, 8, 12];     // 등급이 높을수록 여러 번 친다
+  var forge = { atk: 0, time: 0, combo: 0 };
+
+  function forgeMul(id) { return 1 + forge[id] * FORGE_STEP; }
+  function gearVal(id) { return GEAR[id].val[gear[id]] * forgeMul(id); }
   function gearName(id) { return GEAR[id].names[gear[id]]; }
 
   // ── 회차 ────────────────────────────────────────────────────────
@@ -904,6 +934,22 @@ body.quake { animation: shake .42s ease-out; }
   // 첫 번째 산길의 소백산쯤 된다.
   var CYC_HP = 0.35;                       // 회차마다 기세 +35%
   function cycle() { return Math.floor(stage / 100); }
+
+  // ── 호 ──────────────────────────────────────────────────────────
+  //
+  // 산을 넘은 사람에게 무엇을 주는가. 힘을 주면 안 된다 — 힘을 주는
+  // 순간 리그가 더러워지고, 낱말 대신 장비가 이기기 시작한다.
+  //
+  // 그래서 이름을 준다. 호는 수치가 0이지만 오늘의 낱말 공유 글과
+  // 리그 순위표에 같이 따라다닌다. 산은 힘을 주지 않고 이름을 주고,
+  // 리그는 힘을 받지 않고 이름을 보여 준다. 두 쪽이 이 한 줄로 이어진다.
+  var ORDN = ["", "", "두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉", "열"];
+  function rankName() {
+    var c = cycle();
+    if (!c) return "";
+    if (c === 1) return "백두산을 넘은 이";
+    return (ORDN[c] || c) + " 번 넘은 이";
+  }
   function upCap() { return CAP_PER_CYCLE * (cycle() + 1); }
   function trainLv() { return Math.floor((up.atk + up.time + up.combo) / 3); }
 
@@ -921,7 +967,7 @@ body.quake { animation: shake .42s ease-out; }
     try {
       localStorage.setItem(SKEY, JSON.stringify(
         { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
-          gear: gear, steps: steps }));
+          gear: gear, steps: steps, forge: forge }));
     } catch (e) {}
   }
   function loadS() {
@@ -936,6 +982,7 @@ body.quake { animation: shake .42s ease-out; }
       if (v.fails) fails = v.fails;
       if (v.gear) gear = v.gear;
       if (v.steps) steps = v.steps;
+      if (v.forge) forge = v.forge;
     } catch (e) {}
   }
 
@@ -1257,8 +1304,9 @@ body.quake { animation: shake .42s ease-out; }
     var d = new Date();
     var n = run.ans.filter(function (w) { return run.got[w]; }).length;
     var ratio = run.ans.length ? n / run.ans.length : 0;
+    var ho = rankName();
     return "낱말 채우기 · 오늘의 낱말 " + (d.getMonth() + 1) + "." + d.getDate() + "\n"
-      + "\ud83c\udfc5 " + rank(ratio) + "\n\n"
+      + "\ud83c\udfc5 " + rank(ratio) + (ho ? "  \u00b7  " + ho : "") + "\n\n"
       + dailyRows().map(function (r) {
           return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
         }).join("\n")
@@ -2005,10 +2053,16 @@ body.quake { animation: shake .42s ease-out; }
     var id = ids[Math.floor(Math.random() * 3)];
     var G = GEAR[id], nm = G.names[tier];
     if (tier <= gear[id]) {
-      var back = 60 + tier * 90;
+      var room = FORGE_MAX - forge[id], pts = Math.min(room, FORGE_PT[tier]);
+      forge[id] += pts;
+      // 벼림이 다 찼으면 녹일 자리가 없으니 냥으로 온전히 돌려준다
+      var back = Math.round((60 + tier * 90) * (pts ? 0.5 : 1));
       gold += back;
-      var why = tier === gear[id] ? "이미 쓰고 계신 것입니다" : "지금 것이 더 좋습니다";
-      return { t: nm, d: why + " · 냥 +" + back + "으로 바꿨습니다", tier: tier, id: id };
+      var d = pts
+        ? "겹쳐 벼렸습니다 · " + G.t + " 벼림 " + forge[id] + "/" + FORGE_MAX
+          + " (+" + (forge[id] * FORGE_STEP * 100).toFixed(1) + "%) · 냥 +" + back
+        : G.t + " 벼림이 다 찼습니다 · 냥 +" + back;
+      return { t: nm, d: d, tier: tier, id: id };
     }
     var oldName = G.names[gear[id]];
     gear[id] = tier;
@@ -2122,9 +2176,17 @@ body.quake { animation: shake .42s ease-out; }
     el.gold.textContent = gold;
     el.gem.textContent = gem;
     el.lv.textContent = "수련 " + trainLv() + "단";
+    drawHo();
+  }
+
+  function drawHo() {
+    var h = rankName();
+    el.ho.hidden = !h;
+    el.ho.textContent = h;
   }
 
   function drawAd() {
+    drawHo();
     var left = adsLeft(), cap = adCap();
     el.adSub.textContent = "오늘 " + left + " / " + ADS_PER_DAY + "번";
     el.adWhat.textContent = left
@@ -2155,6 +2217,11 @@ body.quake { animation: shake .42s ease-out; }
       g.className = "gear g" + gear[u.id];
       g.textContent = gearName(u.id);
       t.appendChild(g);
+      if (forge[u.id]) {
+        var fz = document.createElement("span"); fz.className = "forge";
+        fz.textContent = "벼림 " + forge[u.id];
+        t.appendChild(fz);
+      }
       var th = document.createElement("img");
       th.className = "geartn g" + gear[u.id]; th.alt = "";
       th.src = "art/gear/" + u.id + "-" + gear[u.id] + ".jpg";
