@@ -1,6 +1,6 @@
 <meta charset="utf-8">
-<title>낱말 채우기</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<title>낱말 채우기</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
@@ -469,7 +469,42 @@ body.quake { animation: shake .42s ease-out; }
 .chest.c5 img { filter: saturate(1.6) hue-rotate(-22deg) brightness(1.02); }
 .chest.c6 img { filter: saturate(1.35) hue-rotate(228deg) brightness(1.06); }
 
-.chest.open img { transform: translateY(-2px) scale(1.04); }
+/* ── 여는 박자 ──────────────────────────────────────────────────
+   누르면 곧바로 바뀌어서 '열었다'는 느낌이 없었다. 넷으로 나눈다.
+   ① 기다림 — 함이 숨을 쉬고 빛이 맥박친다
+   ② 움츠림 — 누르면 잠깐 작아진다
+   ③ 터짐   — 화면이 한 번 번쩍하고, 그 빛에 가려 그림이 바뀐다
+   ④ 솟음   — 함이 튀어오르고 빛살과 반짝이가 뒤따른다            */
+.chest.idle img { animation: breathe 2.8s ease-in-out infinite; }
+.chest.c5.idle img, .chest.c6.idle img { animation-duration: 1.7s; }
+@keyframes breathe { 50% { transform: scale(1.02); } }
+.chest.idle::before { animation: glowpulse 2.8s ease-in-out infinite; }
+.chest.c5.idle::before, .chest.c6.idle::before { animation-duration: 1.7s; }
+@keyframes glowpulse { 50% { opacity: .5; transform: translate(-50%,-50%) scale(1.1); } }
+
+.chest.press img { transform: scale(.955); transition: transform .12s ease-in; }
+
+.chest.open img {
+  transform: translateY(-2px) scale(1.04);
+  animation: chestpop .55s cubic-bezier(.2,1.5,.35,1);
+}
+@keyframes chestpop {
+  0%   { transform: translateY(3px) scale(.93); }
+  55%  { transform: translateY(-6px) scale(1.10); }
+  100% { transform: translateY(-2px) scale(1.04); }
+}
+
+/* 터지는 빛. 그림이 바뀌는 찰나를 이 빛이 덮는다. */
+.burstlayer { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% 46%,
+    rgba(255,252,242,.98), rgba(255,236,190,.45) 34%, transparent 68%); }
+.ov.burst .burstlayer { animation: burst .46s ease-out; }
+@keyframes burst {
+  0%   { opacity: 0; transform: scale(.55); }
+  16%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
 .chest.open::before { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
 /* 네모 테두리를 두르면 애써 지운 단면이 도로 생긴다. 빛무리를 따라
    타원으로 표시한다. */
@@ -509,7 +544,9 @@ body.quake { animation: shake .42s ease-out; }
   100% { opacity: 0; transform: translate3d(var(--dx,24px), 112vh, 0) scale(1.05) rotate(240deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .rain i, .ov.lit .flash::before, .chest.c6::before { animation: none; }
+  .rain i, .ov.lit .flash::before, .chest.c6::before,
+  .chest.idle img, .chest.idle::before, .chest.open img,
+  .ov.burst .burstlayer { animation: none; }
   .rain i { opacity: .55; }
 }
 .chest { transition: transform .45s cubic-bezier(.2,1.4,.4,1); }
@@ -2214,6 +2251,7 @@ body.quake { animation: shake .42s ease-out; }
     var floorGold = chestFloor(goldMul);
     var ov = document.createElement("div"); ov.className = "ov hoard";
     ov.appendChild(document.createElement("div")).className = "flash";
+    ov.appendChild(document.createElement("div")).className = "burstlayer";
     var card = document.createElement("div"); card.className = "card hoard";
     var h = document.createElement("h2");
     h.textContent = capIn == null ? MOUNTAINS[mt].m + "의 보물함" : "보물함";
@@ -2224,6 +2262,7 @@ body.quake { animation: shake .42s ease-out; }
     var box = document.createElement("button");
     box.className = "chest c" + cap;
     box.setAttribute("aria-label", "보물함 열기");
+    box.classList.add("idle");
     box.innerHTML = '<img src="art/chest-wide.jpg" alt="">';
     card.appendChild(box);
 
@@ -2270,20 +2309,36 @@ body.quake { animation: shake .42s ease-out; }
       }
       saveS();
       drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
-      logEv("T", got ? got.k : "g" + tier);
-      box.querySelector("img").src = "art/chest-open-wide.jpg";
-      box.classList.add("open");
-      var rare = tier != null && tier >= 5;                 // 전설·신화
-      ov.classList.add("lit");
-      if (rare) ov.classList.add("twice");
-      ov.appendChild(makeRain(rare ? 26 : 12));
-      if (window.SFX) SFX.up();
-      h.textContent = title;
-      h.className = "win" + (tier != null && tier >= 5 ? " myth" : tier != null && tier >= 3 ? " rare" : "");
-      tip.textContent = body;
-      tip.className = "lead got";
-      coin.hidden = false;
       drawStatsOnly();
+      logEv("T", got ? got.k : "g" + tier);
+      var rare = tier != null && tier >= 5;                 // 전설·신화
+
+      // 셈은 여기서 다 끝났다. 아래는 보여 주는 순서일 뿐이라
+      // 중간에 무엇이 나왔는지 바뀌지 않는다.
+      box.classList.remove("idle");
+      box.classList.add("press");
+      if (window.SFX) SFX.tap();
+
+      setTimeout(function () {                              // ③ 터짐
+        box.classList.remove("press");
+        box.querySelector("img").src = "art/chest-open-wide.jpg";
+        box.classList.add("open");
+        ov.classList.add("burst");
+        if (window.SFX) SFX.up();
+        setTimeout(function () { ov.classList.remove("burst"); }, 480);
+      }, 150);
+
+      setTimeout(function () {                              // ④ 솟음
+        ov.classList.add("lit");
+        if (rare) ov.classList.add("twice");
+        ov.appendChild(makeRain(rare ? 26 : 12));
+        h.textContent = title;
+        h.className = "win" + (rare ? " myth" : tier != null && tier >= 3 ? " rare" : "");
+        tip.textContent = body;
+        tip.className = "lead got";
+        coin.hidden = false;
+      }, 330);
+
       // 물건은 빛이 지나간 뒤에 떠오른다. 한꺼번에 나오면 아무것도 안 보인다.
       setTimeout(function () {
         if (gid) {
@@ -2294,7 +2349,7 @@ body.quake { animation: shake .42s ease-out; }
         }
         next.hidden = false;
         next.focus();
-      }, rare ? 900 : 520);
+      }, rare ? 1250 : 820);
     });
 
     // 초점은 카드가 받는다. 함이 받으면 타원 표시가 열기 전부터 떠 있어
