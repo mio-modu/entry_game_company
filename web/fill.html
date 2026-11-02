@@ -371,33 +371,57 @@ body.quake { animation: shake .42s ease-out; }
 /* 보물함.
    등급마다 함을 따로 그리면 여섯 장이 필요하다. 한 장을 받아 색조만 바꾸면
    여섯이 되고, 나무에서 자주빛까지 한 계보로 읽힌다. 금속 장석의 황동빛이
-   색조를 따라 같이 움직여서 '같은 함의 더 귀한 판'처럼 보인다. */
+   색조를 따라 같이 움직여서 '같은 함의 더 귀한 판'처럼 보인다.
+
+   이 순간은 열 단계를 올라온 값이다. 그래서 함만 띄우지 않고 화면째로 쓴다. */
+.ov.hoard {
+  background:
+    radial-gradient(ellipse 80% 55% at 50% 44%, rgba(84,58,22,.55), transparent 72%),
+    rgba(6,6,10,.96);
+}
+.card.hoard {
+  max-width: 460px; background: transparent; border: 0; padding: 10px 14px; gap: 10px;
+}
+
 .chest {
-  align-self: center; position: relative; width: 190px; aspect-ratio: 520 / 511;
+  align-self: center; position: relative; width: min(78vw, 360px);
+  /* 두 그림(닫힌 것·열린 것)을 같은 760x860 종이에, 발바닥을 같은 자리에
+     맞춰 앉혀 두었다. 그래서 칸은 하나면 되고, 바꿔 껴도 함이 안 움직인다. */
+  aspect-ratio: 760 / 860;
   max-width: 100%; background: transparent; border: 0; padding: 0; cursor: pointer;
-  border-radius: 12px; overflow: visible;
-  /* 열리면 뚜껑이 칸 위로 42px 자란다. 그 자리를 미리 비워 두지 않으면
-     뚜껑이 제목을 덮는다. 열릴 때 칸을 내리면 발이 같이 내려가므로 안 된다. */
-  margin-top: 48px;
 }
+/* 종이를 네모로 오려 붙이면 '잘라 온 그림'이 된다. 가장자리를 흐리게 지워
+   어둠 속에 떠 있게 한다. 그러면 단면이 사라지고 함만 남는다. */
 .chest img {
-  position: absolute; left: 0; bottom: 0; width: 100%; height: auto; display: block;
-  border-radius: 12px; transition: filter .45s ease;
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  transition: filter .5s ease, transform .5s cubic-bezier(.2,1.3,.4,1);
+  /* 타원 반지름은 칸의 절반이어야 한다. 그보다 크면 사라지는 자리가 칸 밖이라
+     네모가 그대로 남는다 — 한 번 그렇게 만들어 봤다. 종이를 넉넉히 덧대 둔
+     덕에 흐려지는 구간이 전부 빈 종이라 함은 건드리지 않는다. */
+  /* 닫힌 함은 종이 아래쪽에 앉아 있고 열린 함은 뚜껑만큼 위로 자란다.
+     그래서 지워지는 타원도 둘이 달라야 빈 자리가 안 생긴다. */
+  -webkit-mask-image: radial-gradient(ellipse 50% 46% at 50% 60%, #000 70%, transparent 100%);
+          mask-image: radial-gradient(ellipse 50% 46% at 50% 60%, #000 70%, transparent 100%);
 }
-.chest::after {               /* 등급 테두리 빛 */
-  content: ""; position: absolute; inset: -6px; border-radius: 16px;
-  pointer-events: none; box-shadow: 0 0 0 2px var(--cb, #8A6A2E),
-    0 0 var(--cg, 0px) 2px var(--cgc, transparent);
-  transition: box-shadow .4s ease, inset .45s ease, top .45s ease;
+.chest.open img {
+  -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%);
+          mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%);
 }
-.chest.c1 { --cb:#8A7250; --cg:0px; }                                  /* 나무 */
-.chest.c2 { --cb:#C9A227; --cg:16px; --cgc:rgba(201,162,39,.45); }     /* 놋 */
-.chest.c3 { --cb:#C3CBD6; --cg:20px; --cgc:rgba(195,203,214,.5); }     /* 은 */
-.chest.c4 { --cb:#F0D98A; --cg:26px; --cgc:rgba(240,217,138,.65); }    /* 금 */
-.chest.c5 { --cb:#E6705C; --cg:32px; --cgc:rgba(230,112,92,.7); }      /* 주칠 */
-.chest.c6 { --cb:#C77BE0; --cg:40px; --cgc:rgba(199,123,224,.8);
-  animation: chestAura 2.2s ease-in-out infinite; }                    /* 자주 */
-@keyframes chestAura { 50% { box-shadow: 0 0 0 2px #C77BE0, 0 0 60px 6px rgba(199,123,224,.95); } }
+/* 등급은 테두리가 아니라 빛무리로 말한다. 테두리를 두르면 다시 네모가 된다. */
+.chest::before {
+  content: ""; position: absolute; left: 50%; top: 60%; width: 150%; aspect-ratio: 1;
+  transform: translate(-50%, -50%); pointer-events: none; z-index: -1;
+  background: radial-gradient(circle, var(--cgc, transparent) 0%, transparent 60%);
+  opacity: .9; transition: opacity .5s ease, transform .5s ease;
+}
+.chest.c1 { --cgc: rgba(170,140,96,.30); }                             /* 나무 */
+.chest.c2 { --cgc: rgba(201,162,39,.42); }                             /* 놋 */
+.chest.c3 { --cgc: rgba(195,203,214,.42); }                            /* 은 */
+.chest.c4 { --cgc: rgba(240,217,138,.52); }                            /* 금 */
+.chest.c5 { --cgc: rgba(230,112,92,.55); }                             /* 주칠 */
+.chest.c6 { --cgc: rgba(199,123,224,.62); }                            /* 자주 */
+.chest.c6::before { animation: chestAura 2.4s ease-in-out infinite; }
+@keyframes chestAura { 50% { opacity: .55; transform: translate(-50%,-50%) scale(1.14); } }
 
 .chest.c1 img { filter: saturate(.7) brightness(.96); }
 .chest.c2 img { filter: saturate(1.15) hue-rotate(-6deg) brightness(1.04); }
@@ -406,48 +430,49 @@ body.quake { animation: shake .42s ease-out; }
 .chest.c5 img { filter: saturate(1.6) hue-rotate(-22deg) brightness(1.02); }
 .chest.c6 img { filter: saturate(1.35) hue-rotate(228deg) brightness(1.06); }
 
-/* 전설·신화가 나오면 함 위로 빛이 두 번 쓸고 지나가고 잔별이 돈다.
-   이 연출은 몇백 판에 한 번 보는 것이라 아낄 이유가 없다. */
-.chest .shine {
-  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
-  border-radius: 12px; overflow: hidden; pointer-events: none; opacity: 0;
+.chest.open img { transform: translateY(-2px) scale(1.04); }
+.chest.open::before { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+/* 네모 테두리를 두르면 애써 지운 단면이 도로 생긴다. 빛무리를 따라
+   타원으로 표시한다. */
+.chest:focus-visible { outline: none; }
+.chest:focus-visible::after {
+  content: ""; position: absolute; inset: 9% 6%; border-radius: 50%;
+  border: 1.5px dashed rgba(255,215,106,.5); pointer-events: none;
 }
-.chest.open .shine { top: -48px; }
-.chest.gleam .shine { opacity: 1; }
-.chest .shine { mix-blend-mode: screen; }   /* 덧칠이 아니라 번지게 */
-.chest.gleam .shine::before {
-  content: ""; position: absolute; top: -40%; bottom: -40%; width: 52%;
-  background: linear-gradient(100deg, transparent 6%,
-    rgba(255,248,224,.5) 34%, rgba(255,255,255,.95) 50%,
-    rgba(255,248,224,.5) 66%, transparent 94%);
-  transform: translateX(-160%) rotate(14deg);
-  animation: sweep 1.6s cubic-bezier(.35,.08,.3,1) .25s 2;
+.card.hoard:focus { outline: none; }
+
+/* 좌상단에서 우하단으로 한 번 훑고 지나가는 빛. 화면 전체를 쓴다. */
+.flash { position: absolute; inset: -40%; pointer-events: none;
+  overflow: hidden; opacity: 0; mix-blend-mode: screen; }
+.ov.lit .flash { opacity: 1; }
+.ov.lit .flash::before {
+  content: ""; position: absolute; top: -30%; left: 0; width: 26%; height: 160%;
+  background: linear-gradient(90deg, transparent,
+    rgba(255,244,214,.18) 22%, rgba(255,252,238,.72) 50%,
+    rgba(255,244,214,.18) 78%, transparent);
+  transform: rotate(34deg) translateX(-260%);
+  animation: bigsweep 1.15s cubic-bezier(.32,.05,.3,1) .1s 1 both;
 }
-@keyframes sweep { to { transform: translateX(330%) rotate(14deg); } }
-.chest .sp {
-  position: absolute; width: 7px; height: 7px; opacity: 0; pointer-events: none;
-  background: radial-gradient(circle, #fff 0 22%, rgba(255,240,190,.85) 40%, transparent 70%);
+.ov.lit.twice .flash::before { animation-iteration-count: 2; }
+@keyframes bigsweep { to { transform: rotate(34deg) translateX(560%); } }
+
+/* 반짝이가 천천히 내려온다 */
+.rain { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.rain i {
+  position: absolute; top: -5%; width: 9px; height: 9px; opacity: 0;
+  background: radial-gradient(circle, #fff 0 16%, rgba(255,236,176,.92) 40%, transparent 72%);
+  animation: fall var(--d,3.4s) linear var(--dl,0s) infinite;
 }
-.chest .sp::after {
-  content: ""; position: absolute; inset: -3px;
-  background: radial-gradient(circle, rgba(255,255,255,.9) 0 8%, transparent 60%);
-}
-.chest.gleam .sp { animation: twinkle 1.7s ease-in-out infinite; }
-@keyframes twinkle {
-  0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
-  45%      { opacity: 1; transform: scale(1.5) rotate(60deg); }
+@keyframes fall {
+  0%   { opacity: 0; transform: translate3d(0,0,0) scale(.45) rotate(0deg); }
+  14%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--dx,24px), 112vh, 0) scale(1.05) rotate(240deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .chest.gleam .shine::before, .chest.gleam .sp { animation: none; }
-  .chest.gleam .sp { opacity: .9; }
+  .rain i, .ov.lit .flash::before, .chest.c6::before { animation: none; }
+  .rain i { opacity: .55; }
 }
-
-.chest.open { transform: scale(1.03); transform-origin: 50% 100%; }
-.chest.open::after {
-  top: -48px;                 /* 520x627 그림이 520x511 칸보다 42px 높다 */
-  box-shadow: 0 0 0 2px var(--cb), 0 0 70px 10px var(--cgc, rgba(255,224,138,.9));
-}
-.chest:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; }
 .chest { transition: transform .45s cubic-bezier(.2,1.4,.4,1); }
 /* 함에서 나온 물건 — 등급 띠를 두르고 한지 조각처럼 걸린다 */
 .gearshot {
@@ -581,6 +606,21 @@ body.quake { animation: shake .42s ease-out; }
     <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
+
+  <div class="panel">
+    <h2>보물함 <small id="adSub"></small></h2>
+    <div class="up">
+      <div>
+        <div class="t">광고 한 편에 함 하나</div>
+        <div class="d" id="adWhat"></div>
+      </div>
+      <button id="btnAd">광고 보기</button>
+    </div>
+    <p class="cite">광고로 여는 함은 <b>지금 오른 산보다 한 등급 아래</b>까지만 나옵니다
+      (가장 낮아도 양품은 나옵니다). 광고를 아무리 봐도 그 위는 안 나옵니다 —
+      <b>산을 올라야 나옵니다.</b> 가장 귀한 <b>신화는 수호신을 쓰러뜨린 함에서만</b> 나옵니다.
+      모아서 등급을 올리는 것도 없습니다. 하루 세 번, 한 번에 하나뿐입니다.</p>
+  </div>
 
   <div class="panel">
     <h2>수련 <small id="trainSub"></small></h2>
@@ -790,6 +830,7 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
+   "adSub","adWhat","btnAd",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
    "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
    "trainSub","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
@@ -829,13 +870,20 @@ body.quake { animation: shake .42s ease-out; }
   // 장착이라는 개념은 두지 않는다. 가진 것 중 가장 좋은 것이 저절로 쓰인다.
   // 인벤토리와 장착 화면은 40~60대에게 그 자체로 벽이고, 우리가 파는 것은
   // 관리가 아니라 낱말이다.
+  //
+  // 장비 최고치는 강화 최고치의 80% 선에 둔다.
+  //
+  // 전에는 장비가 더 셌다 — 검 49:51, 등 42:58, 북 45:55로 전부 운이 이겼다.
+  // 냥을 모아 아홉 단계를 올린 사람보다 함 한 번 잘 연 사람이 세면,
+  // 그 게임은 공정하지 않다고 느껴진다. 40~60대에게는 특히 그렇다.
+  // 이제 셋 다 노력이 55~56으로 앞선다. 운은 그 위에 얹히는 몫이다.
   var GEAR = {
     atk:   { t: "검", names: ["목검", "환도", "운검", "칠성검", "사인검", "천부검", "개천검"],
-             val: [1, 1.15, 1.35, 1.6, 2.0, 2.6, 3.4], unit: "빈칸 피해 x" },
+             val: [1, 1.12, 1.26, 1.45, 1.75, 2.1, 2.6], unit: "빈칸 피해 x" },
     time:  { t: "등", names: ["관솔불", "등잔", "청사초롱", "석등", "장명등", "일월등", "천지등"],
-             val: [0, 4, 8, 13, 20, 28, 38], unit: "제한시간 +", suf: "초" },
+             val: [0, 3, 6, 10, 14, 18, 22], unit: "제한시간 +", suf: "초" },
     combo: { t: "북", names: ["소고", "승전고", "용고", "뇌고", "천고", "벽력고", "천뢰고"],
-             val: [0, 0.02, 0.04, 0.07, 0.11, 0.16, 0.22], unit: "연속마다 +", pct: true }
+             val: [0, 0.015, 0.03, 0.05, 0.08, 0.11, 0.145], unit: "연속마다 +", pct: true }
   };
   var TIER = ["예사", "양품", "귀품", "명품", "신물", "전설", "신화"];
   var gear = { atk: 0, time: 0, combo: 0 };
@@ -1533,6 +1581,7 @@ body.quake { animation: shake .42s ease-out; }
     }
     el.gold.textContent = gold;
     el.gem.textContent = gem;
+    drawAd();
     drawTrain();
     var left = remaining().length;
     el.gFound.textContent = run.ans.length - left;
@@ -1870,6 +1919,29 @@ body.quake { animation: shake .42s ease-out; }
     return mt <= 1 ? 1 : mt <= 3 ? 2 : mt <= 5 ? 3 : mt <= 7 ? 4 : mt === 8 ? 5 : 6;
   }
 
+  // ── 광고로 여는 함 ──────────────────────────────────────────────
+  //
+  // 광고는 '횟수'를 살 뿐, 등급을 사지 못한다.
+  //
+  // 광고 함의 등급 상한은 지금까지 오른 가장 높은 산보다 한 칸 아래다.
+  // 북한산에 있는 사람이 광고를 백 번 봐도 사인검은 안 나온다. 산을 올라야
+  // 나온다. 그래서 "광고 몇 개를 봐야 좋은 게 나오나"라는 물음이 아예
+  // 생기지 않는다 — 답이 "안 나온다"로 고정되어 있기 때문이다.
+  //
+  // 쌓기도 두지 않는다. 광고 스무 개를 모아 한 등급 올리는 구조는 광고를
+  // 노동으로 만든다. 하루 세 번, 한 번에 하나. 그걸로 끝이다.
+  var ADS_PER_DAY = 3;
+  function adsUsed() {
+    try { return +localStorage.getItem("nathero-ads-" + todayKey()) || 0; } catch (e) { return 0; }
+  }
+  function adsLeft() { return Math.max(0, ADS_PER_DAY - adsUsed()); }
+  function adsSpend() {
+    try { localStorage.setItem("nathero-ads-" + todayKey(), adsUsed() + 1); } catch (e) {}
+  }
+  // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
+  function topMountain() { return Math.max(0, Math.floor((stage - 1) / 10)); }
+  function adCap() { return Math.max(1, tierCap(topMountain()) - 1); }
+
   var CHEST = [
     { p: 30, k: "냥", t: "냥 꾸러미",   d: "냥 +120",              go: function () { gold += 120; } },
     { p: 22, k: "옥", t: "옥 두 알",     d: "힌트 두 번",            go: function () { gem += 2; } },
@@ -1880,16 +1952,16 @@ body.quake { animation: shake .42s ease-out; }
   var GEAR_P = 23;                               // 나머지 23%가 장비
   var TIER_W = [0, 13, 6, 3, 0.89, 0.1, 0.01];   // 예사(0)는 나오지 않는다
 
-  function rollTier(mt) {
-    var cap = tierCap(mt), tot = 0, i;
+  function rollTier(cap) {
+    var tot = 0, i;
     for (i = 1; i <= cap; i++) tot += TIER_W[i];
     var r = Math.random() * tot, acc = 0;
     for (i = 1; i <= cap; i++) { acc += TIER_W[i]; if (r < acc) return i; }
     return 1;
   }
 
-  function chestOdds(mt) {
-    var cap = tierCap(mt), tot = 0, i, out = [];
+  function chestOdds(cap) {
+    var tot = 0, i, out = [];
     CHEST.forEach(function (c) { out.push(c.t + " " + c.p + "%"); });
     for (i = 1; i <= cap; i++) tot += TIER_W[i];
     for (i = 1; i <= cap; i++) {
@@ -1920,26 +1992,36 @@ body.quake { animation: shake .42s ease-out; }
     return { t: nm, d: oldName + " → " + nm + " · " + eff, tier: tier, got: true, id: id };
   }
 
-  // 잔별이 앉는 자리 — 왼쪽/위/오른쪽/아래로 흩고 시간차를 준다
-  var SPARK = [[12, 18, 0], [78, 10, .45], [90, 52, .9], [26, 74, .25], [58, 88, .65]];
+  // 내려오는 반짝이. 자리와 시간차를 흩어 놓아야 비처럼 보인다.
+  function makeRain(n) {
+    var r = document.createElement("div"); r.className = "rain";
+    for (var i = 0; i < n; i++) {
+      var sp = document.createElement("i");
+      sp.style.left = (Math.random() * 100).toFixed(1) + "%";
+      sp.style.setProperty("--dl", (Math.random() * 3.2).toFixed(2) + "s");
+      sp.style.setProperty("--d", (2.8 + Math.random() * 2.6).toFixed(2) + "s");
+      sp.style.setProperty("--dx", Math.round(-40 + Math.random() * 80) + "px");
+      sp.style.width = sp.style.height = (6 + Math.random() * 7).toFixed(1) + "px";
+      r.appendChild(sp);
+    }
+    return r;
+  }
 
-  function openChest(mt, after) {
-    var ov = document.createElement("div"); ov.className = "ov";
-    var card = document.createElement("div"); card.className = "card";
+  function openChest(mt, after, capIn) {
+    var cap = capIn == null ? tierCap(mt) : capIn;
+    var ov = document.createElement("div"); ov.className = "ov hoard";
+    ov.appendChild(document.createElement("div")).className = "flash";
+    var card = document.createElement("div"); card.className = "card hoard";
     var h = document.createElement("h2");
-    h.textContent = MOUNTAINS[mt].m + "의 보물함";
+    h.textContent = capIn == null ? MOUNTAINS[mt].m + "의 보물함" : "보물함";
     card.appendChild(h);
 
-    new Image().src = "art/chest-open.jpg";   // 누르는 순간 깜빡이지 않게 미리 받아 둔다
+    new Image().src = "art/chest-open-wide.jpg";   // 누르는 순간 깜빡이지 않게 미리 받아 둔다
 
     var box = document.createElement("button");
-    box.className = "chest c" + tierCap(mt);
+    box.className = "chest c" + cap;
     box.setAttribute("aria-label", "보물함 열기");
-    box.innerHTML = '<img src="art/chest.jpg" alt=""><span class="shine"></span>'
-      + SPARK.map(function (q) {
-          return '<i class="sp" style="left:' + q[0] + '%;top:' + q[1]
-               + '%;animation-delay:' + q[2] + 's"></i>';
-        }).join("");
+    box.innerHTML = '<img src="art/chest-wide.jpg" alt="">';
     card.appendChild(box);
 
     // 함이 열린 자리에 나온 물건을 띄운다. 이름만 적어 두면 무엇을 얻었는지
@@ -1952,7 +2034,7 @@ body.quake { animation: shake .42s ease-out; }
     card.appendChild(tip);
 
     var odds = document.createElement("p"); odds.className = "lead odds";
-    odds.textContent = chestOdds(mt);
+    odds.textContent = chestOdds(cap);
     card.appendChild(odds);
 
     var next = document.createElement("button"); next.className = "btn";
@@ -1970,38 +2052,57 @@ body.quake { animation: shake .42s ease-out; }
       var title, body, gid = null;
       if (got) { got.go(); title = got.t; body = got.d; }
       else {
-        tier = rollTier(mt);
+        tier = rollTier(cap);
         var g = grantGear(tier); title = g.t; body = g.d; gid = g.id;
       }
       saveS();
       drawTrain();            // 수련 패널이 한 박자 늦게 바뀌면 뭘 얻었는지 모른다
       logEv("T", got ? got.k : "g" + tier);
-      box.querySelector("img").src = "art/chest-open.jpg";
+      box.querySelector("img").src = "art/chest-open-wide.jpg";
       box.classList.add("open");
-      if (tier != null && tier >= 5) box.classList.add("gleam");   // 전설·신화
+      var rare = tier != null && tier >= 5;                 // 전설·신화
+      ov.classList.add("lit");
+      if (rare) ov.classList.add("twice");
+      ov.appendChild(makeRain(rare ? 26 : 12));
       if (window.SFX) SFX.up();
       h.textContent = title;
       h.className = "win" + (tier != null && tier >= 5 ? " myth" : tier != null && tier >= 3 ? " rare" : "");
-      if (gid) {
-        shot.className = "gearshot t" + tier;
-        shot.innerHTML = '<img src="art/gear/' + gid + '-' + tier + '.jpg" alt="">'
-          + '<span class="tag">' + TIER[tier] + '</span>';
-        shot.hidden = false;
-      }
       tip.textContent = body;
       tip.className = "lead got";
-      next.hidden = false;
       drawStatsOnly();
-      next.focus();
+      // 물건은 빛이 지나간 뒤에 떠오른다. 한꺼번에 나오면 아무것도 안 보인다.
+      setTimeout(function () {
+        if (gid) {
+          shot.className = "gearshot t" + tier;
+          shot.innerHTML = '<img src="art/gear/' + gid + '-' + tier + '.jpg" alt="">'
+            + '<span class="tag">' + TIER[tier] + '</span>';
+          shot.hidden = false;
+        }
+        next.hidden = false;
+        next.focus();
+      }, rare ? 900 : 520);
     });
 
-    ov.appendChild(card); document.body.appendChild(ov); box.focus();
+    // 초점은 카드가 받는다. 함이 받으면 타원 표시가 열기 전부터 떠 있어
+    // 장식처럼 보인다. 손가락으로 누르는 사람에게는 보일 일이 없어야 한다.
+    card.tabIndex = -1;
+    ov.appendChild(card); document.body.appendChild(ov); card.focus();
   }
 
   function drawStatsOnly() {
     el.gold.textContent = gold;
     el.gem.textContent = gem;
     el.lv.textContent = "수련 " + trainLv() + "단";
+  }
+
+  function drawAd() {
+    var left = adsLeft(), cap = adCap();
+    el.adSub.textContent = "오늘 " + left + " / " + ADS_PER_DAY + "번";
+    el.adWhat.textContent = left
+      ? TIER[cap] + "까지 나옵니다 · 지금은 " + MOUNTAINS[topMountain()].m + "까지 오르셨습니다"
+      : "오늘 몫을 다 쓰셨습니다 · 내일 다시 세 번";
+    el.btnAd.disabled = !left;
+    el.btnAd.textContent = left ? "광고 보기" : "내일";
   }
 
   function drawTrain() {
@@ -2385,6 +2486,16 @@ body.quake { animation: shake .42s ease-out; }
     }
     var w = withMean[Math.floor(Math.random() * withMean.length)];
     toast(w.length + "글자 · " + MEAN[w]);
+  });
+
+  el.btnAd.addEventListener("click", function () {
+    if (!adsLeft()) return;
+    adsSpend(); drawAd();
+    // 시험판에는 광고가 아직 안 붙어 있다. 붙기 전까지는 바로 열어
+    // 횟수와 등급 상한이 어떻게 느껴지는지만 먼저 본다.
+    toast("시험판에서는 광고 없이 바로 열립니다");
+    logEv("T", "ad");
+    openChest(topMountain(), function () { drawAd(); }, adCap());
   });
 
   loadS();

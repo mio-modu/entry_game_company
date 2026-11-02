@@ -170,7 +170,7 @@ ul.plain b { color: var(--fg); }
     <div class="s">한 번 사면 끝 · 월정액 아님</div>
     <ul>
       <li>광고 없음 (영구)</li>
-      <li>하루 보물함 하나 더</li>
+      <li>광고 없이 하루 함 셋 — 광고 보던 몫을 그냥 받습니다</li>
       <li>옥 스무 알</li>
     </ul>
   </div>
@@ -188,22 +188,82 @@ ul.plain b { color: var(--fg); }
 
 <section>
   <p class="eyebrow">광고</p>
-  <h2>광고로는 낮은 등급까지만</h2>
+  <h2>광고는 횟수를 살 뿐, 등급을 사지 못한다</h2>
   <div class="body">
-    <p>보물함 등급은 <b>산 등급</b>을 따릅니다. 북한산에서는 양품까지, 백두산에서는
-      신화까지 나옵니다. 광고로 받는 함은 <b>1~2등급 산의 함</b>으로 고정합니다.</p>
-    <p>그러면 광고를 아무리 봐도 전설은 안 나옵니다. <b>좋은 장비는 산을 올라야만
-      나옵니다.</b> 시간으로도 돈으로도 등급을 살 수 없고, 오직 올라가야 합니다.</p>
+    <p>이것 하나만 지키면 광고에 관한 모든 물음이 사라집니다.
+      <b>“광고를 백 번 보면 좋은 게 나오나?” — 안 나옵니다.</b>
+      광고 함의 등급 상한은 <b>지금까지 오른 가장 높은 산보다 한 칸 아래</b>로 묶여 있습니다.</p>
   </div>
   <div class="scroll">
     <table>
-      <thead><tr><th>여는 길</th><th>함 등급</th><th>하루 한도</th></tr></thead>
+      <thead><tr><th>지금 오른 곳</th><th>수호신 함</th><th>광고 함</th></tr></thead>
       <tbody>
-        <tr><td class="name">수호신 격파</td><td>그 산의 등급 (예사~신화)</td><td class="num">무제한</td></tr>
-        <tr><td class="name">광고 1회</td><td>양품까지</td><td class="num">3</td></tr>
-        <tr><td class="name">길동무</td><td>양품까지</td><td class="num">+1</td></tr>
+        <tr><td class="name">북한산·속리산</td><td>양품까지</td><td>양품까지</td></tr>
+        <tr><td class="name">계룡산·설악산</td><td>귀품까지</td><td>양품까지</td></tr>
+        <tr><td class="name">소백산·덕유산</td><td>명품까지</td><td>귀품까지</td></tr>
+        <tr><td class="name">지리산·한라산</td><td>신물까지</td><td>명품까지</td></tr>
+        <tr><td class="name">금강산</td><td>전설까지</td><td>신물까지</td></tr>
+        <tr><td class="name">백두산</td><td class="ok">신화까지</td><td>전설까지</td></tr>
       </tbody>
     </table>
+  </div>
+  <div class="body">
+    <p>가장 귀한 <b>신화는 수호신을 쓰러뜨린 함에서만</b> 나옵니다. 광고로는 절대
+      닿지 않습니다. 그래야 <b>100단계가 값을 합니다.</b></p>
+  </div>
+
+  <h3>왜 쌓기를 두지 않는가</h3>
+  <div class="body">
+    <p>“광고 스무 개를 모으면 한 등급 위”는 흔한 구조지만, <b>광고를 노동으로
+      만듭니다.</b> 40~60대가 가장 싫어하는 형태입니다. 스무 개를 채웠는데 안 좋은
+      게 나오면 그때는 화가 납니다. 억울함은 결제가 아니라 삭제로 이어집니다.</p>
+    <p>그래서 <b>하루 세 번, 한 번에 하나.</b> 세 번이면 “이것만 보면 끝”이고,
+      등급은 어차피 산이 정하니 더 볼 이유도 없습니다.</p>
+  </div>
+
+  <div class="call">
+    <div class="t">저절로 뜨는 광고는 하나도 두지 않는다</div>
+    <p>진짜 짜증의 원인은 광고 길이가 아니라 <b>안 누른 광고가 뜨는 것</b>입니다.
+      단계가 끝날 때마다 전면 광고를 꽂는 게임이 그래서 욕을 먹습니다.
+      우리는 <b>플레이어가 「광고 보기」를 누를 때만</b> 광고를 띄웁니다.
+      보상형 광고는 보통 15~30초인데, 스스로 누른 30초는 참아지고
+      안 누른 5초는 못 참습니다.</p>
+  </div>
+</section>
+
+<section>
+  <p class="eyebrow">노력과 운</p>
+  <h2>강화가 장비보다 세야 한다</h2>
+  <div class="body">
+    <p>강화는 <b>냥만 모으면 누구나</b> 아홉 단계까지 갑니다. 장비는 <b>함에서
+      운으로</b> 나옵니다. 둘 중 어느 쪽이 세냐가 “이 게임이 공정한가”를 정합니다.</p>
+    <p>재 보니 <b>세 가지 모두 운이 이기고 있었습니다.</b> 고쳤습니다.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th></th><th>강화 9단계</th><th>장비 신화</th><th>전</th><th>후</th></tr></thead>
+      <tbody>
+        <tr><td class="name">검</td><td class="num">×3.25</td><td class="num">×2.60</td>
+            <td class="num bad">49 : 51</td><td class="num ok">56 : 44</td></tr>
+        <tr><td class="name">등</td><td class="num">+27초</td><td class="num">+22초</td>
+            <td class="num bad">42 : 58</td><td class="num ok">55 : 45</td></tr>
+        <tr><td class="name">북</td><td class="num">+18%</td><td class="num">+14.5%</td>
+            <td class="num bad">45 : 55</td><td class="num ok">55 : 45</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="body">
+    <p>검은 둘이 <b>곱해집니다.</b> 다 갖춘 사람은 ×8.5, 장비 운이 하나도 없으면 ×3.25.
+      전에는 ×11.1 대 ×3.25라 <b>같은 노력을 들이고도 운 하나로 3.4배</b>가 갈렸습니다.
+      이제 2.6배입니다.</p>
+    <p>그리고 이 차이는 <b>산에서만</b> 납니다. 리그는 강화도 장비도 닿지 않으므로,
+      운이 좋았던 사람이 등수에서 앞설 길은 없습니다.</p>
+  </div>
+  <div class="call">
+    <div class="t">왜 완전히 같게 만들지 않는가</div>
+    <p>운이 아무 몫도 없으면 함을 열 이유가 없고, 함을 열 이유가 없으면
+      수호신을 깰 이유도 반쯤 사라집니다. <b>노력이 뼈대고 운은 살입니다.</b>
+      55 대 45가 그 선입니다.</p>
   </div>
 </section>
 
@@ -241,6 +301,10 @@ ul.plain b { color: var(--fg); }
       “그거 돈 주고 산 거잖아”가 됩니다.</li>
     <li><b>“이어하기를 팔면”</b> — 실패가 돈이 되는 순간 실패는 벌이 됩니다.
       이 게임은 <b>실패를 길로 바꾸는 쪽</b>을 골랐습니다.</li>
+    <li><b>“광고를 더 보면 더 주게 하면”</b> — 하루 세 번을 늘리는 순간
+      광고가 일이 됩니다. 수익은 조금 늘고 <b>사람은 줄어듭니다.</b></li>
+    <li><b>“단계 끝날 때마다 광고를 띄우면”</b> — 수익이 가장 크게 느는 선택이고,
+      <b>별점이 가장 크게 떨어지는 선택</b>이기도 합니다.</li>
   </ul>
 </section>
 
