@@ -1,5 +1,4 @@
 <meta charset="utf-8">
-<meta name="claude:viewport-fit-sides" content="cover">
 <title>낱말 채우기</title>
 <!-- 카톡·밴드에 링크를 붙였을 때 뜨는 카드.
      없으면 민 주소만 떠서, 퍼지는 길의 첫 칸이 비어 버린다.
@@ -575,7 +574,17 @@ body.quake { animation: shake .42s ease-out; }
   box-shadow: 0 0 var(--gg, 0px) 1px var(--ggc, transparent);
   animation: gearIn .55s cubic-bezier(.2,1.5,.35,1);
 }
-.gearshot img { height: 100%; width: auto; display: block; }
+.gearshot img, .gearshot svg { height: 100%; width: auto; display: block; }
+/* 함에서 나온 소모품. 장비에는 일곱 등급 그림이 있는데 옥·반딧불·기름·숫돌은
+   이름만 떴다 — 함을 열고도 아무것도 안 보이는 칸이 생겼다. 수묵 그림을
+   받을 때까지는 붓으로 친 것처럼 그린 그림이 같은 칸을 지킨다. 나중에
+   art/item/<이름>.jpg 를 넣어 두면 그쪽이 조용히 올라온다. */
+.itemshot { aspect-ratio: 1; }
+.itemshot.i-coin { --gb:#8A7250; --gg:12px; --ggc:rgba(184,145,74,.40); }
+.itemshot.i-gem  { --gb:#4E8F6E; --gg:14px; --ggc:rgba(78,143,110,.45); }
+.itemshot.i-fly  { --gb:#B99227; --gg:20px; --ggc:rgba(255,224,106,.55); }
+.itemshot.i-oil  { --gb:#8C9A86; --gg:14px; --ggc:rgba(140,154,134,.45); }
+.itemshot.i-hone { --gb:#6E7682; --gg:14px; --ggc:rgba(110,118,130,.45); }
 .gearshot .tag {
   position: absolute; left: 0; right: 0; bottom: 0; text-align: center;
   font-size: 10.5px; letter-spacing: .1em; padding: 2px 0;
@@ -2251,13 +2260,130 @@ body.quake { animation: shake .42s ease-out; }
   }
 
   var CHEST = [
-    { p: 30, k: "냥", t: "냥 꾸러미", x: 2,   // x는 바닥 냥을 몇 곱절 더 얹는가
+    { p: 30, k: "냥", t: "냥 꾸러미", x: 2, a: "coin",   // x는 바닥 냥을 몇 곱절 더 얹는가
       go: function () { return "곱절로 들어 있었습니다"; } },
-    { p: 22, k: "옥", t: "옥 두 알",     go: function () { gem += 2;    return "힌트 두 번"; } },
-    { p: 12, k: "반", t: "반딧불",       go: function () { bag.brush++; return "빈칸 하나를 비춰 준다"; } },
-    { p:  8, k: "기", t: "기름 한 병",   go: function () { bag.ink++;   return "마무리 시간 +15초"; } },
-    { p:  5, k: "숫", t: "숫돌",         go: function () { bag.charm++; return "강화 성공률 +20%p"; } }
+    { p: 22, k: "옥", t: "옥 두 알",   a: "gem",     go: function () { gem += 2;    return "힌트 두 번"; } },
+    { p: 12, k: "반", t: "반딧불",     a: "fly",       go: function () { bag.brush++; return "빈칸 하나를 비춰 준다"; } },
+    { p:  8, k: "기", t: "기름 한 병", a: "oil",   go: function () { bag.ink++;   return "마무리 시간 +15초"; } },
+    { p:  5, k: "숫", t: "숫돌",       a: "hone",         go: function () { bag.charm++; return "강화 성공률 +20%p"; } }
   ];
+  // 소모품 그림. 수묵으로 받아 올 때까지 붓자국을 흉내 내 직접 친다.
+  // 종이색·테두리는 장비 칸과 같은 것을 쓰므로 나란히 놓아도 어긋나지 않는다.
+  var ITEM_ART = {
+    coin: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs><linearGradient id="ac" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="#E2C27B"/><stop offset=".5" stop-color="#B8914A"/>'
+      + '<stop offset="1" stop-color="#7A5C25"/></linearGradient></defs>'
+      + '<ellipse cx="52" cy="92" rx="25" ry="4" fill="#2B2219" opacity=".12"/>'
+      // 끈을 위로 묶어 올린다 — 구멍으로 비치게 두면 흠집처럼 읽힌다
+      + '<path d="M50 8c-8 1-9 9-2 13 5 3 9 7 9 13" fill="none"'
+      + ' stroke="#6B5434" stroke-width="3.8" stroke-linecap="round"/>'
+      + '<path d="M50 8c7-2 12 3 9 8-2 4-7 5-11 3" fill="none"'
+      + ' stroke="#6B5434" stroke-width="3.2" stroke-linecap="round"/>'
+      + '<g stroke="#3B2C18" stroke-width="2.1" stroke-linejoin="round">'
+      + '<circle cx="58" cy="38" r="17" fill="url(#ac)"/>'
+      + '<rect x="53.5" y="33.5" width="9" height="9" fill="#2B2219"/>'
+      + '<circle cx="41" cy="58" r="19" fill="url(#ac)"/>'
+      + '<rect x="36" y="53" width="10" height="10" fill="#2B2219"/>'
+      + '<circle cx="54" cy="77" r="21" fill="url(#ac)"/>'
+      + '<rect x="48.5" y="71.5" width="11" height="11" fill="#2B2219"/>'
+      + '</g>'
+      + '<g fill="none" stroke="#5A431F" stroke-width="1.1" opacity=".5">'
+      + '<circle cx="58" cy="38" r="12.5"/><circle cx="41" cy="58" r="14"/>'
+      + '<circle cx="54" cy="77" r="15.5"/></g>'
+      // 끈 끝이 아래로 빠져나온다
+      + '<path d="M60 86c3 4 3 7 2 10" fill="none" stroke="#6B5434"'
+      + ' stroke-width="3" stroke-linecap="round"/></svg>',
+
+    gem: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs><radialGradient id="aj" cx=".34" cy=".3" r=".78">'
+      + '<stop offset="0" stop-color="#BFE6CE"/><stop offset=".45" stop-color="#6DB391"/>'
+      + '<stop offset="1" stop-color="#235741"/></radialGradient></defs>'
+      + '<ellipse cx="50" cy="83" rx="30" ry="5" fill="#2B2219" opacity=".12"/>'
+      + '<circle cx="64" cy="45" r="18" fill="url(#aj)" stroke="#1D4433" stroke-width="2.1"/>'
+      + '<circle cx="39" cy="60" r="22" fill="url(#aj)" stroke="#1D4433" stroke-width="2.3"/>'
+      + '<g fill="none" stroke="#1D4433" stroke-width="1" opacity=".4">'
+      + '<path d="M28 54c6 4 10 10 11 17"/><path d="M34 70c8 1 15-3 18-10"/>'
+      + '<path d="M56 39c5 2 8 7 8 12"/></g>'
+      + '<ellipse cx="31" cy="51" rx="7" ry="4.5" fill="#FFFFFF" opacity=".6"'
+      + ' transform="rotate(-32 31 51)"/>'
+      + '<ellipse cx="58" cy="38" rx="5" ry="3.2" fill="#FFFFFF" opacity=".55"'
+      + ' transform="rotate(-32 58 38)"/></svg>',
+
+    fly: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs><radialGradient id="ag" cx=".5" cy=".5" r=".5">'
+      + '<stop offset="0" stop-color="#FFF6C4"/><stop offset=".35" stop-color="#FFD84D" stop-opacity=".8"/>'
+      + '<stop offset="1" stop-color="#FFD84D" stop-opacity="0"/></radialGradient></defs>'
+      + '<circle cx="66" cy="64" r="32" fill="url(#ag)"/>'
+      // 날아온 자취
+      + '<path d="M10 82c9-2 13-9 10-14-3-4-10-2-10 4s7 9 15 7 15-7 21-13"'
+      + ' fill="none" stroke="#C9A227" stroke-width="2.2" stroke-linecap="round"'
+      + ' stroke-dasharray="1.5 6.5" opacity=".7"/>'
+      // 더듬이
+      + '<g fill="none" stroke="#241B10" stroke-width="1.9" stroke-linecap="round">'
+      + '<path d="M40 30c-6-4-11-5-16-4"/><path d="M44 26c-2-6-5-9-9-11"/></g>'
+      // 딱지날개
+      + '<ellipse cx="55" cy="48" rx="13.5" ry="19" fill="#4A3B26" stroke="#241B10"'
+      + ' stroke-width="2.1" transform="rotate(38 55 48)"/>'
+      + '<path d="M47 36c-3 6-3 15 0 23 2 6 5 9 8 11" fill="none" stroke="#6B573A"'
+      + ' stroke-width="3" opacity=".75" transform="rotate(38 55 48)"/>'
+      // 앞가슴 — 반딧불이의 붉은 등판
+      + '<ellipse cx="43" cy="33" rx="9" ry="6.5" fill="#B7472A" stroke="#241B10"'
+      + ' stroke-width="2.1" transform="rotate(38 43 33)"/>'
+      // 빛나는 꼬리
+      + '<circle cx="68" cy="65" r="10" fill="#FFE06A" stroke="#C9A227" stroke-width="1.8"/>'
+      + '<circle cx="66" cy="62" r="4.6" fill="#FFFBE3"/></svg>',
+
+    oil: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + '<defs><linearGradient id="ao" x1="0" y1="0" x2="1" y2="1">'
+      + '<stop offset="0" stop-color="#F6F8EF"/><stop offset=".55" stop-color="#DEE4D5"/>'
+      + '<stop offset="1" stop-color="#AAB5A3"/></linearGradient>'
+      + '<clipPath id="ab"><path d="M50 38c-16 0-25 12-25 25s11 24 25 24 25-10 25-24-9-25-25-25z"/>'
+      + '</clipPath></defs>'
+      + '<ellipse cx="50" cy="89" rx="25" ry="4.5" fill="#2B2219" opacity=".12"/>'
+      + '<path d="M44 26h12v14H44z" fill="url(#ao)" stroke="#5E6B59" stroke-width="2.1"/>'
+      + '<path d="M50 38c-16 0-25 12-25 25s11 24 25 24 25-10 25-24-9-25-25-25z"'
+      + ' fill="url(#ao)" stroke="#5E6B59" stroke-width="2.3"/>'
+      // 안에 든 기름이 비친다 — 병만 그리면 무엇이 들었는지 알 길이 없다
+      + '<g clip-path="url(#ab)"><rect x="20" y="62" width="60" height="30" fill="#C98A2E" opacity=".62"/>'
+      + '<ellipse cx="50" cy="62" rx="26" ry="4" fill="#E3A94A" opacity=".8"/></g>'
+      // 마개
+      + '<path d="M38 24c0-6 5-10 12-10s12 4 12 10c0 3-4 4-12 4s-12-1-12-4z"'
+      + ' fill="#D6CBB0" stroke="#6B5F45" stroke-width="2.1"/>'
+      + '<path d="M40 22c4 2 16 2 20 0" fill="none" stroke="#6B5F45" stroke-width="1.6"/>'
+      + '<g fill="none" stroke="#7C8878" stroke-width=".9" opacity=".5">'
+      + '<path d="M33 54c4 4 5 9 4 14"/><path d="M63 50c3 5 4 10 3 15"/></g>'
+      + '<ellipse cx="38" cy="52" rx="6.5" ry="10" fill="#FFFFFF" opacity=".5"'
+      + ' transform="rotate(-18 38 52)"/>'
+      // 목에서 흘러내린 한 줄기
+      + '</svg>',
+
+    hone: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + '<ellipse cx="52" cy="80" rx="32" ry="5" fill="#2B2219" opacity=".12"/>'
+      + '<g stroke="#2F3640" stroke-width="2.2" stroke-linejoin="round">'
+      + '<path d="M16 48 50 34 86 46 52 61Z" fill="#9AA3AE"/>'
+      + '<path d="M16 48 52 61 52 74 16 61Z" fill="#6E7682"/>'
+      + '<path d="M52 61 86 46 86 59 52 74Z" fill="#848C97"/></g>'
+      // 오래 쓴 자리가 가운데로 패였다
+      + '<ellipse cx="51" cy="47" rx="20" ry="6.5" fill="#7E8793" opacity=".9"'
+      + ' transform="rotate(-9 51 47)"/>'
+      + '<ellipse cx="51" cy="47" rx="20" ry="6.5" fill="none" stroke="#4A525E"'
+      + ' stroke-width="1" opacity=".5" transform="rotate(-9 51 47)"/>'
+      // 물기
+      + '<ellipse cx="46" cy="45" rx="12" ry="3.4" fill="#FFFFFF" opacity=".5"'
+      + ' transform="rotate(-9 46 45)"/>'
+      + '<ellipse cx="68" cy="50" rx="3.2" ry="1.8" fill="#D6E2EC" opacity=".85"'
+      + ' stroke="#4A525E" stroke-width=".8" transform="rotate(-9 68 50)"/>'
+      + '<ellipse cx="30" cy="50" rx="2.4" ry="1.4" fill="#D6E2EC" opacity=".85"'
+      + ' stroke="#4A525E" stroke-width=".8" transform="rotate(-9 30 50)"/>'
+      + '<path d="M40 64c0 4 1 7 1 9" fill="none" stroke="#B7C3CE" stroke-width="2.4"'
+      + ' stroke-linecap="round" opacity=".8"/>'
+      + '<g fill="none" stroke="#4A525E" stroke-width=".9" opacity=".45">'
+      + '<path d="M26 50 58 38"/><path d="M36 55 72 42"/>'
+      + '<path d="M60 52 80 45"/></g></svg>'
+  };
+
+
   // 장비가 나올 확률은 함을 '어떻게 얻었는가'에 따라 다르다.
   //
   // 수호신을 쓰러뜨린 함에서는 셋에 하나가 장비고, 광고로 받은 함에서는
@@ -2440,6 +2566,16 @@ body.quake { animation: shake .42s ease-out; }
           shot.innerHTML = '<img src="art/gear/' + gid + '-' + tier + '.jpg" alt="">'
             + '<span class="tag">' + TIER[tier] + '</span>';
           shot.hidden = false;
+        } else if (got && ITEM_ART[got.a]) {
+          shot.className = "gearshot itemshot i-" + got.a;
+          shot.innerHTML = ITEM_ART[got.a];
+          shot.hidden = false;
+          // 수묵 그림이 들어와 있으면 조용히 갈아 끼운다. 없으면 붓그림 그대로다.
+          var real = new Image();
+          real.onload = function () {
+            shot.innerHTML = '<img src="' + real.src + '" alt="">';
+          };
+          real.src = "art/item/" + got.a + ".jpg";
         }
         next.hidden = false;
         next.focus();
