@@ -621,6 +621,16 @@ body.quake { animation: shake .42s ease-out; }
 .words span { font-family: var(--font-display); font-size: 13px; background: var(--surface-2);
   border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
 /* 아래 단추 줄. 네 칸이 똑같은 폭으로 가지런히 선다. */
+/* 광고 진행. 열째 점이 보물함이다. */
+.addots { display: flex; gap: 5px; align-items: center; margin-top: 8px; }
+.addots i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--line); flex: none;
+}
+.addots i.mid { width: 9px; height: 9px; }
+.addots i.big { width: 13px; height: 13px; margin-left: 3px; box-shadow: 0 0 0 1px var(--line); }
+.addots i.on { background: var(--gold); }
+.addots i.big.on { background: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.8); }
+
 .tray {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px;
 }
@@ -735,15 +745,18 @@ body.quake { animation: shake .42s ease-out; }
     <h2>보물함 <small id="adSub"></small></h2>
     <div class="up">
       <div>
-        <div class="t">광고 두 편에 함 하나</div>
+        <div class="t">광고 열 편에 보물함 하나</div>
         <div class="d" id="adWhat"></div>
+        <div class="addots" id="adDots"></div>
       </div>
       <button id="btnAd">광고 보기</button>
     </div>
-    <p class="cite">광고 <b>두 편</b>에 함 하나, 하루 <b>세 개</b>까지.
-      등급은 <b>지금 오른 산보다 한 칸 아래</b>까지입니다 — 아무리 봐도 그 위는
-      안 나옵니다. 가장 귀한 <b>신화는 수호신 함에서만</b> 나옵니다.
-      이미 가진 장비가 나오면 <b>벼림</b>이 되니 버려지지 않습니다.</p>
+    <p class="cite">보물함은 <b>열 판</b>을 깨야 하나 나옵니다. 광고로 그만큼을
+      채우려면 서른 편이 넘습니다 — 그래서 광고는 <b>다른 것</b>을 줍니다.
+      <b>두 편마다 보급품</b>(냥·옥·소모품, 장비는 없습니다),
+      <b>열 편이면 보물함</b> 하나. 등급은 <b>지금 오른 산보다 한 칸 아래</b>까지라
+      광고만으로는 끝내 따라잡지 못합니다. 이미 가진 장비가 나오면
+      <b>벼림</b>이 되니 버려지지 않습니다.</p>
   </div>
 
   <div class="panel" id="pTrain">
@@ -965,7 +978,7 @@ body.quake { animation: shake .42s ease-out; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
-   "adSub","adWhat","btnAd","ho","guide","btnIntro",
+   "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
    "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
@@ -2177,19 +2190,29 @@ body.quake { animation: shake .42s ease-out; }
   //
   // 쌓기도 두지 않는다. 광고 스무 개를 모아 한 등급 올리는 구조는 광고를
   // 노동으로 만든다. 하루 세 번, 한 번에 하나. 그걸로 끝이다.
-  // 광고 한 편에 함 하나는 값이 안 맞았다.
+  // 보물함은 '열 판'을 깨야 나온다. 거기에 값을 맞춰야 한다.
   //
-  // 재 보니 광고 함 하나가 한 판을 다 푼 것과 거의 같았다 (10단계 101%,
-  // 50단계 100%, 100단계 88%). 30초 광고가 한 판과 같으면 푸는 일이
-  // 값을 잃는다. 두 편에 하나로 올리고 바닥 냥도 낮춘다.
-  var ADS_PER_CHEST = 2, CHESTS_PER_DAY = 3;
+  // 처음에는 한 판과 견주어 "광고 함이 한 판 값이니 맞다"고 봤는데,
+  // 기준이 틀렸다. 열 판 + 수호신 함을 광고로 채우려면 30편이 넘는다
+  // (50단계 30.8편, 100단계 34.3편). 두 편은 열다섯 배 싼 값이었다.
+  //
+  // 그렇다고 서른 편을 보라고 할 수는 없다. 그래서 값을 맞추는 대신
+  // 물건을 나눈다.
+  //
+  //   두 편마다   보급품 — 냥·옥·소모품. 장비는 없다. 연출도 없다.
+  //   열 편에     보물함 — 장비가 나온다. 하루 한 번.
+  //
+  // 장비는 열 편을 봐야 나오고, 그래도 열 판보다는 싸다. 대신 등급
+  // 상한이 한 칸 아래라 광고만으로는 끝내 따라잡지 못한다. 보급품은
+  // 가볍게 자주 받는 자리라 광고가 일이 되지 않는다.
+  var AD_DAY = 10, AD_SMALL = 2;
   function adKey() { return "nathero-ads-" + todayKey(); }
   function adState() {
     try { return JSON.parse(localStorage.getItem(adKey()) || "null") || { n: 0, c: 0 }; }
     catch (e) { return { n: 0, c: 0 }; }
   }
   function adSave(v) { try { localStorage.setItem(adKey(), JSON.stringify(v)); } catch (e) {} }
-  function chestsLeft() { return Math.max(0, CHESTS_PER_DAY - adState().c); }
+  function adsLeft() { return Math.max(0, AD_DAY - adState().n); }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
   // '지금 이 회차에서 올라 있는 산'이다. 회차가 바뀌면 다시 북한산부터다 —
   // 2회차 북한산에서 광고 함이 신화를 뱉으면 2회차를 오를 이유가 없어진다.
@@ -2249,6 +2272,7 @@ body.quake { animation: shake .42s ease-out; }
     if (gp < 100) CHEST.forEach(function (c) {
       out.push(c.t + " " + (c.p * sc).toFixed(c.p * sc < 10 ? 1 : 0) + "%");
     });
+    if (gp <= 0) return out.join("  ·  ");
     for (i = 1; i <= cap; i++) tot += TIER_W[i];
     for (i = 1; i <= cap; i++) {
       var pc = gp * TIER_W[i] / tot;
@@ -2428,8 +2452,8 @@ body.quake { animation: shake .42s ease-out; }
     });
     el.tTrainSub.textContent = trainLv() + "단";
     el.tTrain.classList.toggle("lit", can);
-    var left = chestsLeft();
-    el.tChestSub.textContent = left ? left + "개 남음" : "내일";
+    var left = adsLeft();
+    el.tChestSub.textContent = left ? (AD_DAY - left) + " / " + AD_DAY + "편" : "내일";
     el.tChest.classList.toggle("lit", left > 0);
   }
 
@@ -2554,17 +2578,20 @@ body.quake { animation: shake .42s ease-out; }
   function drawAd() {
     drawHo();
     drawTray();
-    var st = adState(), left = chestsLeft(), cap = adCap();
-    el.adSub.textContent = left
-      ? "오늘 함 " + left + " / " + CHESTS_PER_DAY + "개"
-      : "오늘 몫을 다 썼습니다";
-    el.adWhat.textContent = left
-      ? TIER[cap] + "까지 나옵니다 · 이미 가진 것이 나오면 벼림이 됩니다"
-      : "내일 다시 " + CHESTS_PER_DAY + "개";
+    var n = adState().n, left = adsLeft(), cap = adCap();
+    el.adSub.textContent = left ? "오늘 " + n + " / " + AD_DAY + "편" : "오늘 몫을 다 봤습니다";
+    // 점 열 개로 어디까지 왔는지 보여 준다. 열째가 함이다.
+    var dots = "";
+    for (var i = 1; i <= AD_DAY; i++) {
+      dots += '<i class="' + (i <= n ? "on " : "")
+        + (i === AD_DAY ? "big" : i % AD_SMALL === 0 ? "mid" : "") + '"></i>';
+    }
+    el.adDots.innerHTML = dots;
+    el.adWhat.textContent = !left ? "내일 다시 열 편"
+      : n === AD_DAY - 1 ? "한 편만 더 보시면 보물함이 열립니다"
+      : "두 편마다 보급품 · 열 편이면 보물함 (" + TIER[cap] + "까지)";
     el.btnAd.disabled = !left;
-    el.btnAd.textContent = !left ? "내일"
-      : st.n ? "광고 보기 (" + st.n + "/" + ADS_PER_CHEST + ")"
-      : "광고 보기";
+    el.btnAd.textContent = left ? "광고 보기" : "내일";
   }
 
   function drawTrain() {
@@ -2990,21 +3017,28 @@ body.quake { animation: shake .42s ease-out; }
   });
 
   el.btnAd.addEventListener("click", function () {
-    if (!chestsLeft()) return;
-    var st = adState();
-    st.n++;
-    if (st.n < ADS_PER_CHEST) {
-      adSave(st); drawAd();
-      toast("광고 " + st.n + " / " + ADS_PER_CHEST + " · 한 편 더 보시면 함이 열립니다");
+    if (!adsLeft()) return;
+    var st = adState(); st.n++; adSave(st); drawAd();
+    logEv("T", "ad" + st.n);
+
+    if (st.n === AD_DAY) {                       // 열 편 — 진짜 함
+      toast("시험판에서는 광고 없이 바로 열립니다");
+      openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_BOSS, 0.8);
       return;
     }
-    st.n = 0; st.c++;
-    adSave(st); drawAd();
-    // 시험판에는 광고가 아직 안 붙어 있다. 붙기 전까지는 바로 열어
-    // 횟수와 등급 상한이 어떻게 느껴지는지만 먼저 본다.
-    toast("시험판에서는 광고 없이 바로 열립니다");
-    logEv("T", "ad");
-    openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_AD, 0.3);
+    if (st.n % AD_SMALL === 0) {                 // 두 편 — 보급품
+      // 연출은 함에만 쓴다. 보급품까지 함을 열면 함이 흔해진다.
+      var g = chestFloor(0.25), sc = 100 / CHEST_SUM, roll = Math.random() * 100, acc = 0, got = CHEST[0];
+      for (var i = 0; i < CHEST.length; i++) { acc += CHEST[i].p * sc; if (roll < acc) { got = CHEST[i]; break; } }
+      var coinGot = g * (1 + (got.x ? got.x : 0));
+      gold += coinGot;
+      var d = got.go();
+      saveS(); drawStatsOnly(); drawTrain();
+      if (window.SFX) SFX.up();
+      toast("보급품 · " + got.t + " · 냥 +" + coinGot.toLocaleString());
+      return;
+    }
+    toast("광고 " + st.n + " / " + AD_DAY + " · 두 편마다 보급품, 열 편이면 보물함");
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
