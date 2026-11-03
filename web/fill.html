@@ -384,6 +384,19 @@ body.quake { animation: shake .42s ease-out; }
 .panel p { font-size: 12.5px; color: var(--fg-dim); }
 .panel p b { color: var(--fg); font-weight: 600; }
 .cite { font-size: 10.5px; color: var(--fg-faint); line-height: 1.6; }
+/* 설명이 길어지면 한 덩이로 붙여 두지 않는다. 어디서 끊어 읽을지를
+   읽는 사람이 정하게 하면, 안 읽는다. 한 줄에 한 가지만 적는다. */
+.lines { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.lines p { font-size: 12px; line-height: 1.6; color: var(--fg-dim);
+  padding-left: 11px; position: relative; }
+.lines p::before { content: ""; position: absolute; left: 0; top: .62em;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--line); }
+.lines p b { color: var(--fg); font-weight: 600; }
+.panel .subh { font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--gold); margin: 16px 0 8px; padding-top: 13px;
+  border-top: 1px solid var(--line); }
+.panel .subh:first-of-type { border-top: 0; padding-top: 0; }
+.lines p.pivot::before { background: var(--gold); }
 .panel h2 small { font-family: var(--font-mono); font-size: 11px; font-weight: 400;
   color: var(--fg-faint); margin-left: 7px; letter-spacing: .04em; }
 .up { display: flex; align-items: center; gap: 11px; padding-block: 10px;
@@ -824,12 +837,16 @@ body.quake { animation: shake .42s ease-out; }
       </div>
       <button id="btnAd">광고 보기</button>
     </div>
-    <p class="cite">보물함은 <b>열 판</b>을 깨야 하나 나옵니다. 광고로 그만큼을
-      채우려면 서른 편이 넘습니다 — 그래서 광고는 <b>다른 것</b>을 줍니다.
-      <b>두 편마다 보급품</b>(냥·옥·소모품, 장비는 없습니다),
-      <b>열 편이면 보물함</b> 하나. 등급은 <b>지금 오른 산보다 한 칸 아래</b>까지라
-      광고만으로는 끝내 따라잡지 못합니다. 이미 가진 장비가 나오면
-      <b>벼림</b>이 되니 버려지지 않습니다.</p>
+    <div class="lines">
+      <p>보물함은 <b>열 판</b>을 깨야 하나 나옵니다.</p>
+      <p>광고로 그만큼을 채우려면 <b>서른 편</b>이 넘습니다.</p>
+      <p class="pivot">그래서 광고는 <b>다른 것</b>을 줍니다.</p>
+      <p><b>두 편</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>
+      <p><b>열 편</b>이면 보물함 하나. 여기엔 장비도 들어 있습니다.</p>
+      <p>다만 등급은 <b>지금 오른 산보다 한 칸 아래</b>까지입니다.
+         광고만 봐서는 산을 오른 사람을 <b>끝내 따라잡지 못합니다.</b></p>
+      <p>이미 가진 장비가 나와도 버려지지 않습니다 — <b>겹쳐져 더 세집니다.</b></p>
+    </div>
   </div>
 
   <div class="panel" id="pTrain">
@@ -861,25 +878,41 @@ body.quake { animation: shake .42s ease-out; }
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
     </div>
-    <p>이기는 길은 하나입니다 — <b>수호신의 기세를 0으로 만들면</b> 쓰러집니다.
-       빈칸이 다섯이어도 <b>정해진 개수만 채우면</b> 쓰러집니다. 몇 개인지는
-       수호신 이름 아래에 적혀 있습니다.</p>
-    <p>산마다 <b>규칙이 다릅니다.</b> 계룡산부터 <b>금빛 글자</b>가 하나 뜹니다 —
-       그 글자를 끼워 넣은 낱말은 크게 들어가고, 쓰고 나면 다른 자리로 옮겨 갑니다.
-       소백산·한라산에서는 수호신이 글자 하나를 <b>잠깐 눌러 둡니다.</b>
-       지리산·금강산은 <b>안개</b>가 끼어 빈칸의 글자 수가 가려지고,
-       하나 채울 때마다 하나씩 걷힙니다.</p>
-    <p>같은 산 안에서도 올라갈수록 <b>빈칸과 채울 개수는 늘고 시간은 줄어듭니다.</b></p>
-    <p>기세를 깎는 것은 <b>빈칸뿐</b>입니다. 긴 낱말일수록 깊게 들어가고,
-       빈칸을 채우면 <b>언제든 글자당 15냥</b>을 받습니다.</p>
-    <p>빈칸에 없는 낱말도 사전에 있으면 <b>보너스 낱말</b>로 인정해
-       <b>글자당 4냥과 연속</b>을 줍니다 — 기세는 깎이지 않지만
-       <b>다음 빈칸 한 방이 더 크게</b> 들어갑니다. 아는 낱말이 헛되지 않습니다.</p>
-    <p>수호신이 쓰러져도 <b>남은 시간</b>은 그대로 흐릅니다. 그 시간에 빈칸을 더 채우면
-       냥을 더 받고, 다 채우면 <b>완전 격파</b>입니다. 생각이 안 나면
-       <b>「여기서 마무리」</b>로 바로 끝내면 됩니다 — 기다릴 필요가 없습니다.</p>
-    <p><b>남은 시간도 냥이 됩니다</b>(1초당 1냥). 빨리 끝낼수록 더 받지만,
-       빈칸 하나를 채우는 편이 대개 더 큽니다. 어느 쪽을 고를지는 그때그때 다릅니다.</p>
+    <p class="subh">이기는 법</p>
+    <div class="lines">
+      <p>수호신의 <b>기세를 0으로</b> 만들면 쓰러집니다.</p>
+      <p>빈칸이 다섯이어도 <b>정해진 개수만</b> 채우면 됩니다.</p>
+      <p>몇 개인지는 <b>수호신 이름 아래</b>에 적혀 있습니다.</p>
+    </div>
+
+    <p class="subh">냥을 받는 법</p>
+    <div class="lines">
+      <p>기세를 깎는 것은 <b>빈칸뿐</b>입니다. 긴 낱말일수록 깊게 들어갑니다.</p>
+      <p>빈칸을 채우면 언제든 <b>글자당 15냥</b>.</p>
+      <p>빈칸에 없는 낱말도 사전에 있으면 <b>보너스 낱말</b>입니다 — 글자당 4냥.</p>
+      <p class="pivot">보너스는 기세를 못 깎지만 <b>다음 한 방을 더 크게</b> 만듭니다.
+         아는 낱말이 헛되지 않습니다.</p>
+      <p><b>남은 시간도 1초에 1냥</b>입니다.
+         다만 빈칸 하나를 채우는 편이 대개 더 큽니다.</p>
+    </div>
+
+    <p class="subh">쓰러뜨린 뒤</p>
+    <div class="lines">
+      <p>수호신이 쓰러져도 <b>남은 시간은 그대로 흐릅니다.</b></p>
+      <p>그 시간에 더 채우면 냥이 늘고, 다 채우면 <b>완전 격파</b>입니다.</p>
+      <p>생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내도 됩니다.</p>
+    </div>
+
+    <p class="subh">산마다 다른 것</p>
+    <div class="lines">
+      <p><b>계룡산</b>부터 <b>금빛 글자</b>가 하나 뜹니다 —
+         끼워 넣은 낱말은 크게 들어가고, 쓰고 나면 자리를 옮깁니다.</p>
+      <p><b>소백산·한라산</b>은 수호신이 글자 하나를 <b>잠깐 눌러 둡니다.</b></p>
+      <p><b>지리산·금강산</b>은 <b>안개</b>가 끼어 빈칸의 글자 수가 가려집니다 —
+         하나 채울 때마다 하나씩 걷힙니다.</p>
+      <p>같은 산 안에서도 올라갈수록 <b>빈칸은 늘고 시간은 줄어듭니다.</b></p>
+    </div>
+
     <p class="cite">낱말·뜻풀이 자료: 국립국어원 <b>한국어 학습용 어휘 목록</b>,
       <b>한국어기초사전</b>, <b>표준국어대사전</b> (CC BY-SA 2.0 KR).</p>
   </div>
@@ -1119,9 +1152,10 @@ body.quake { animation: shake .42s ease-out; }
   var TIER = ["예사", "양품", "귀품", "명품", "신물", "전설", "신화"];
   var gear = { atk: 0, time: 0, combo: 0 };
 
-  // ── 벼림 ────────────────────────────────────────────────────────
+  // ── 겹침 ────────────────────────────────────────────────────────
   //
-  // 중복으로 나온 장비는 녹여 쓰던 것에 겹쳐 벼린다.
+  // 중복으로 나온 장비는 녹여 쓰던 것에 겹친다. "벼림"은 쓰는 말이 아니라
+  // 설명을 한 번 더 해야 했다 — "겹침"은 설명이 필요 없다.
   //
   // 흔한 방식은 '같은 등급 둘을 합쳐 윗 등급'이다. 그건 운을 시간으로
   // 바꿔 주는 장치라, 오래 하면 누구나 신화에 닿는다. 그 순간 신화는
@@ -1302,7 +1336,7 @@ body.quake { animation: shake .42s ease-out; }
     return Math.round(cap * (1 - Math.exp(-raw / cap)));
   }
 
-  // 아무리 벼려도 산이 요구하는 것의 절반은 채워야 한다.
+  // 아무리 겹쳐도 산이 요구하는 것의 절반은 채워야 한다.
   //
   // 하한이 없으면 검과 북이 쌓이는 대로 '한 낱말'로 수렴한다. 실제로
   // 강화 9에 장비 4를 갖추면 1단계부터 70단계까지 전부 한 개였다.
@@ -2486,13 +2520,14 @@ body.quake { animation: shake .42s ease-out; }
     if (tier <= gear[id]) {
       var room = FORGE_MAX - forge[id], pts = Math.min(room, FORGE_PT[tier]);
       forge[id] += pts;
-      // 벼림이 다 찼으면 녹일 자리가 없으니 냥으로 온전히 돌려준다
+      // 겹칠 자리가 다 찼으면 녹일 데가 없으니 냥으로 온전히 돌려준다
       var back = Math.round((60 + tier * 90) * (pts ? 0.5 : 1));
       gold += back;
       var d = pts
-        ? "겹쳐 벼렸습니다 · " + G.t + " 벼림 " + forge[id] + "/" + FORGE_MAX
+        ? "같은 " + G.t + "을 겹쳤습니다 · 더 세집니다 · 겹침 " + forge[id]
+          + "/" + FORGE_MAX
           + " (+" + (forge[id] * FORGE_STEP * 100).toFixed(1) + "%) · 냥 +" + back
-        : G.t + " 벼림이 다 찼습니다 · 냥 +" + back;
+        : G.t + "은 더 겹칠 자리가 없습니다 · 냥 +" + back;
       return { t: nm, d: d, tier: tier, id: id };
     }
     var oldName = G.names[gear[id]];
@@ -2832,7 +2867,7 @@ body.quake { animation: shake .42s ease-out; }
       tags.appendChild(g);
       if (forge[u.id]) {
         var fz = document.createElement("span"); fz.className = "forge";
-        fz.textContent = "벼림 " + forge[u.id];
+        fz.textContent = "겹침 " + forge[u.id];
         tags.appendChild(fz);
       }
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
