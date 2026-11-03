@@ -1,5 +1,8 @@
 <meta charset="utf-8">
 <title>낱말 채우기</title>
+<!-- 이게 없으면 크롬은 980픽셀짜리 화면인 줄 알고 통째로 줄여 그린다.
+     Claude 안에서는 그쪽 껍데기가 넣어 줘서 멀쩡해 보였다. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- 카톡·밴드에 링크를 붙였을 때 뜨는 카드.
      없으면 민 주소만 떠서, 퍼지는 길의 첫 칸이 비어 버린다.
      og:image 는 반드시 절대 주소여야 한다 — 상대 주소를 못 읽는
@@ -55,7 +58,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   flex-direction: column; gap: 11px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 12px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  padding-block: calc(12px + env(safe-area-inset-top, 0px))
+                 calc(16px + env(safe-area-inset-bottom, 0px)); }
 h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 700; }
 p { margin: 0; }
 button { font-family: inherit; cursor: pointer; border: 0; }
