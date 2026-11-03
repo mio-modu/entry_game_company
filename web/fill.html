@@ -89,6 +89,26 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   padding: 10px 15px; font: inherit; font-size: 13.5px; font-weight: 700; white-space: nowrap;
 }
 .exambar button:disabled { background: #39303F; color: #7A6C82; }
+.attrow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.att {
+  border: 1px solid var(--line); border-radius: 9px; padding: 7px 2px 6px;
+  text-align: center; background: var(--surface-2);
+}
+.att .d { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-faint); }
+.att .r { font-size: 11px; font-weight: 700; color: var(--fg-dim); margin-top: 3px; }
+.att.got { border-color: var(--jade); }
+.att.got .r { color: var(--jade); }
+.att.now { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
+.att.now .r { color: var(--gold); }
+.att.big .r { color: var(--gold); }
+.qrow { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.qrow:first-child { border-top: 0; }
+.qrow .qt { font-size: 13px; font-weight: 600; }
+.qrow .qp { font-size: 11.5px; color: var(--fg-dim); margin-top: 2px; }
+.qrow .qb { flex: none; font-family: var(--font-mono); font-size: 11.5px;
+  border-radius: 20px; padding: 4px 10px; border: 1px solid var(--line); color: var(--fg-dim); }
+.qrow .qb.on { border-color: var(--jade); color: var(--jade); }
 .shoprow { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .shoprow:first-child { border-top: 0; }
@@ -810,7 +830,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 .addots i.big.on { background: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.8); }
 
 .tray {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 18px;
 }
 .tbtn {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -930,6 +950,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   </button>
 
   <div class="tray">
+    <button class="tbtn" id="tToday"><b>오늘</b><small id="tTodaySub">—</small></button>
     <button class="tbtn" id="tTrain"><b>수련</b><small id="tTrainSub">0단</small></button>
     <button class="tbtn" id="tChest"><b>보물함</b><small id="tChestSub">—</small></button>
     <button class="tbtn" id="tRule"><b>규칙</b><small>어떻게 하나</small></button>
@@ -960,6 +981,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
          광고만 봐서는 산을 오른 사람을 <b>끝내 따라잡지 못합니다.</b></p>
       <p>이미 가진 장비가 나와도 버려지지 않습니다 — <b>겹쳐져 더 세집니다.</b></p>
     </div>
+  </div>
+
+  <div class="panel" id="pToday">
+    <h2>오늘</h2>
+    <p class="subh">출석</p>
+    <div class="attrow" id="attRow"></div>
+    <p class="subh">오늘 할 일</p>
+    <div id="questList"></div>
+    <p class="subh">바꾸기</p>
+    <div id="exchange"></div>
   </div>
 
   <div class="panel" id="pTrain">
@@ -1227,7 +1258,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
-   "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
+   "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
+   "pToday","attRow","questList","exchange",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
@@ -1708,6 +1740,153 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     timerId = setInterval(onSecond, 1000);
     if (window.SFX) SFX.up();
     draw();
+  }
+
+  // ── 오늘 ───────────────────────────────────────────────────────────
+  //
+  // 두 재화가 하는 일이 다르다.
+  //
+  //   냥 — 수련·겹침·장터. 많이 벌고 많이 쓴다. 실력과 시간이 번다.
+  //   옥 — 힌트와 시험 한 번 더. 귀하고 적다. 수호신·광고·결제가 준다.
+  //
+  // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
+  // 약해지고, 전부 냥이면 올 이유가 약해진다. 작은 옥을 드물게 섞는다.
+  var ATT = [
+    { r: "냥", n: 0 }, { r: "옥", n: 1 }, { r: "냥", n: 0 },
+    { r: "반", n: 1 }, { r: "옥", n: 1 }, { r: "냥", n: 0 }, { r: "옥", n: 3 }
+  ];
+  function attGold() { return Math.round((300 + stage * 14) * (1 + cycle() * 0.6)); }
+  function dayKey(k) { return "nathero-" + k + "-" + todayKey(); }
+  function dGet(k, d) {
+    try { var v = localStorage.getItem(dayKey(k)); return v == null ? d : JSON.parse(v); }
+    catch (e) { return d; }
+  }
+  function dSet(k, v) { try { localStorage.setItem(dayKey(k), JSON.stringify(v)); } catch (e) {} }
+  function attState() {
+    try { return JSON.parse(localStorage.getItem("nathero-att") || "null")
+      || { last: "", streak: 0 }; } catch (e) { return { last: "", streak: 0 }; }
+  }
+  function attSave(v) { try { localStorage.setItem("nathero-att", JSON.stringify(v)); } catch (e) {} }
+  function attDay() {
+    var a = attState();
+    return a.last === todayKey() ? ((a.streak - 1) % 7) : (a.streak % 7);
+  }
+  function attTaken() { return attState().last === todayKey(); }
+
+  function takeAtt() {
+    if (attTaken()) return;
+    var a = attState(), idx = a.streak % 7, g = ATT[idx], say = "";
+    if (g.r === "냥") { var v = attGold(); gold += v; say = "냥 +" + v.toLocaleString(); }
+    else if (g.r === "옥") { gem += g.n; say = "옥 +" + g.n; }
+    else { bag.brush += g.n; say = "반딧불 +" + g.n; }
+    a.streak = idx + 1; a.last = todayKey(); attSave(a);
+    saveS(); drawStatsOnly(); drawToday(); drawTray();
+    if (window.SFX) SFX.up();
+    toast("출석 " + (idx + 1) + "일째 · " + say);
+  }
+
+  // 할 일 셋. 날마다 바뀌지 않는다 — 바뀌면 외울 수가 없고,
+  // 40~60대에게 매일 다른 숙제는 숙제가 아니라 짐이다.
+  var QUESTS = [
+    { id: "win",   t: "단계 셋을 깨기",      goal: 3,  r: "냥" },
+    { id: "perf",  t: "완전 격파 한 번",     goal: 1,  r: "옥", n: 1 },
+    { id: "bonus", t: "보너스 낱말 열 개",   goal: 10, r: "냥" }
+  ];
+  function qCount() { return dGet("q", { win: 0, perf: 0, bonus: 0 }); }
+  function qBump(k, n) {
+    var c = qCount(); c[k] = (c[k] || 0) + (n || 1); dSet("q", c);
+  }
+  function qTaken() { return dGet("qt", {}); }
+  function qReward(q) {
+    return q.r === "냥" ? Math.round((500 + stage * 20) * (1 + cycle() * 0.6)) : q.n;
+  }
+  function takeQuest(q) {
+    var c = qCount(), t = qTaken();
+    if (t[q.id] || (c[q.id] || 0) < q.goal) return;
+    var say;
+    if (q.r === "냥") { var v = qReward(q); gold += v; say = "냥 +" + v.toLocaleString(); }
+    else { gem += q.n; say = "옥 +" + q.n; }
+    t[q.id] = 1; dSet("qt", t);
+    saveS(); drawStatsOnly(); drawToday(); drawTray();
+    if (window.SFX) SFX.up();
+    toast(q.t + " · " + say);
+  }
+
+  // 냥을 옥으로. 아주 큰 단위라야 옥이 값을 지킨다.
+  //
+  // 끝까지 올라가도 냥이 만 남짓 남는다. 그 마지막 배출구가 여기다.
+  // 값이 싸면 힌트가 공짜가 되고 결제가 설 자리가 사라지므로,
+  // 하루 두 알까지만 바꾼다.
+  var EX_GOLD = 5000, EX_DAY = 2;
+  function exLeft() { return Math.max(0, EX_DAY - dGet("ex", 0)); }
+  function takeExchange() {
+    if (!exLeft() || gold < EX_GOLD) return;
+    gold -= EX_GOLD; gem += 1; dSet("ex", dGet("ex", 0) + 1);
+    saveS(); drawStatsOnly(); drawToday();
+    if (window.SFX) SFX.up();
+    toast("냥 " + EX_GOLD.toLocaleString() + "을 옥 한 알로 바꿨습니다");
+  }
+
+  function drawToday() {
+    if (!el.attRow) return;
+    var a = attState(), idx = a.streak % 7, taken = attTaken();
+    el.attRow.textContent = "";
+    ATT.forEach(function (g, i) {
+      var box = document.createElement("div");
+      var done = taken ? i < ((a.streak - 1) % 7) + 1 : i < idx;
+      box.className = "att" + (done ? " got" : "")
+        + (!taken && i === idx ? " now" : "") + (i === 6 ? " big" : "");
+      var d = document.createElement("div"); d.className = "d"; d.textContent = (i + 1) + "일";
+      var r = document.createElement("div"); r.className = "r";
+      r.textContent = g.r === "냥" ? "냥" : g.r === "옥" ? "옥 " + g.n : "반딧불";
+      box.appendChild(d); box.appendChild(r);
+      el.attRow.appendChild(box);
+    });
+    // 단추는 한 번만 만들고 다시 쓴다. 그릴 때마다 새로 끼우면 쌓인다.
+    var ab = document.getElementById("attBtn");
+    if (!ab) {
+      ab = document.createElement("button");
+      ab.id = "attBtn"; ab.style.marginTop = "10px";
+      ab.addEventListener("click", takeAtt);
+      el.attRow.parentNode.insertBefore(ab, el.attRow.nextSibling);
+    }
+    ab.className = "btn" + (taken ? " ghost" : "");
+    ab.textContent = taken ? "오늘 받았습니다" : "오늘 받기";
+    ab.disabled = taken;
+
+    var c = qCount(), t = qTaken();
+    el.questList.textContent = "";
+    QUESTS.forEach(function (q) {
+      var have = Math.min(c[q.id] || 0, q.goal), done = have >= q.goal, got = !!t[q.id];
+      var row = document.createElement("div"); row.className = "qrow";
+      var L = document.createElement("div");
+      var qt = document.createElement("div"); qt.className = "qt"; qt.textContent = q.t;
+      var qp = document.createElement("div"); qp.className = "qp";
+      qp.textContent = have + " / " + q.goal + " · "
+        + (q.r === "냥" ? "냥 " + qReward(q).toLocaleString() : "옥 " + q.n);
+      L.appendChild(qt); L.appendChild(qp);
+      var b = document.createElement("button");
+      b.className = "qb" + (done && !got ? " on" : "");
+      b.textContent = got ? "받음" : done ? "받기" : "하는 중";
+      b.disabled = got || !done;
+      b.addEventListener("click", function () { takeQuest(q); });
+      row.appendChild(L); row.appendChild(b);
+      el.questList.appendChild(row);
+    });
+
+    el.exchange.textContent = "";
+    var xr = document.createElement("div"); xr.className = "shoprow";
+    var XL = document.createElement("div");
+    var xt = document.createElement("div"); xt.className = "st"; xt.textContent = "옥 한 알";
+    var xd = document.createElement("div"); xd.className = "sd";
+    xd.textContent = "냥 " + EX_GOLD.toLocaleString() + " · 오늘 " + exLeft() + " / " + EX_DAY + "번";
+    XL.appendChild(xt); XL.appendChild(xd);
+    var xb = document.createElement("button");
+    xb.textContent = exLeft() ? "냥 " + EX_GOLD.toLocaleString() : "내일 다시";
+    xb.disabled = !exLeft() || gold < EX_GOLD;
+    xb.addEventListener("click", takeExchange);
+    xr.appendChild(XL); xr.appendChild(xb);
+    el.exchange.appendChild(xr);
   }
 
   // ── 승급 시험 ──────────────────────────────────────────────────────
@@ -3215,6 +3394,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       return up[u.id] < cap && gold >= Math.round(u.base * Math.pow(u.r, up[u.id]));
     });
     el.tTrainSub.textContent = trainLv() + "단";
+    var qn = 0, qc = qCount(), qt2 = qTaken();
+    QUESTS.forEach(function (q) {
+      if (!qt2[q.id] && (qc[q.id] || 0) >= q.goal) qn++;
+    });
+    var waiting = (attTaken() ? 0 : 1) + qn;
+    el.tTodaySub.textContent = waiting ? "받을 것 " + waiting : "다 받음";
+    el.tToday.classList.toggle("lit", waiting > 0);
     el.tTrain.classList.toggle("lit", can);
     var left = adsLeft();
     el.tChestSub.textContent = left ? (AD_DAY - left) + " / " + AD_DAY + "편" : "내일";
@@ -3615,6 +3801,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     }
     gold += reward + timePay + firstWin + clean;
     // 깨면 발자국은 지워진다. 길을 냈으니 더 필요 없다.
+    if (won) { qBump("win"); if (r.perfect) qBump("perf"); }
+    if (r.bonus && r.bonus.length) qBump("bonus", r.bonus.length);
     if (won) delete steps[stage];
     else steps[stage] = Math.min(STEP_MAX, stepsAt(stage) + 1);
     if (won) stage += 1;
@@ -4136,6 +4324,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     card.appendChild(shut);
     ov.appendChild(card); document.body.appendChild(ov); shut.focus();
   }
+  el.tToday.addEventListener("click", function () { drawToday(); openPanel(el.pToday); });
   el.tTrain.addEventListener("click", function () { drawTrain(); openPanel(el.pTrain); });
   el.tChest.addEventListener("click", function () { drawAd(); openPanel(el.pChest); });
   el.tRule.addEventListener("click", function () { openPanel(el.pRule); });
