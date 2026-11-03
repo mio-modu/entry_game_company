@@ -25,8 +25,8 @@
 <!-- 휴대전화에 깔리게 한다. 링크로만 두면 열 때마다 주소를 찾아야 하고
      지하철에서는 사전 3.6MB를 다시 받느라 안 열린다. -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon/apple-touch-icon.png">
-<link rel="icon" href="icon/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icon/v2/apple-touch-icon.png">
+<link rel="icon" href="icon/v2/icon-192.png" sizes="192x192">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="낱말 채우기">
@@ -1124,9 +1124,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   ["고급", "기타"].forEach(function (lv) {
     (D[lv] || []).forEach(function (r) { MEAN[r[0]] = r[1]; });
   });
-  var LONG = [];
+  var LONG = [], FOUR = [];
   COMMON.forEach(function (w) {
     if (w.length >= 3) LONG.push(w);
+    if (w.length === 4) FOUR.push(w);   // 넉 자는 643개뿐이라 따로 챙긴다
     var seen = Object.create(null);
     for (var i = 0; i < w.length; i++) {
       var c = w.charAt(i);
@@ -1174,7 +1175,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function makePuzzle(M) {
     var best = null, bestScore = 1e9;
     for (var t = 0; t < 130; t++) {
-      var w1 = LONG[Math.floor(Math.random() * LONG.length)];
+      // 넉 자를 요구하는 판은 넉 자에서 시작해야 모인다. 석 자에서 키우면
+      // 넉 자가 거의 안 붙는다 — 사전에 643개뿐이라 그렇다.
+      var w1 = (M.seed4 && FOUR.length)
+        ? FOUR[Math.floor(Math.random() * FOUR.length)]
+        : LONG[Math.floor(Math.random() * LONG.length)];
       var pool = counts(w1), size = w1.length, guard = 0;
       while (size < M.t && guard++ < 50) {
         var ks = Object.keys(pool);
@@ -1182,7 +1187,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         if (!src || !src.length) continue;
         // 긴 빈칸만 쓰는 산에서는 긴 낱말을 끌어와야 글자가 모인다
         var cand = src;
-        if (M.lo >= 3) {
+        if (M.seed4) {
+          var f4 = src.filter(function (w) { return w.length === 4; });
+          if (f4.length) cand = f4;
+          else {
+            var l3 = src.filter(function (w) { return w.length >= 3; });
+            if (l3.length) cand = l3;
+          }
+        } else if (M.lo >= 3) {
           var lg = src.filter(function (w) { return w.length >= 3; });
           if (lg.length) cand = lg;
         }
@@ -1708,18 +1720,33 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 돈으로 살 수 없고, 그 사실이 호를 값지게 만든다.
   //
   // 떨어져도 잃는 것은 없다. 실력은 운이 아니라서 몇 번을 봐도 괜찮다.
+  // 칸 구성은 눈대중으로 못 정한다.
+  //
+  // 출제 사전은 2글자 3,443 · 3글자 2,722 · 4글자 643이다. 4글자가 유독
+  // 적어서, 4글자를 많이 요구하면 글자판이 아예 안 만들어진다. 조합마다
+  // 130번 안에 나오는 비율을 재서 90%를 넘는 것만 골랐다 —
+  // 4글자는 셋이 실질 상한이고, 그 위부터는 시간으로 조인다.
   var DAN = [
-    { n: "무급",              need: 0, sec: 0,  t: 7, lo: 2, hi: 3 },
-    { n: "첫 글자를 뗀 이",   need: 4, sec: 70, t: 7, lo: 2, hi: 3 },
-    { n: "낱말을 아는 이",    need: 5, sec: 68, t: 7, lo: 2, hi: 3 },
-    { n: "글자를 모으는 이",  need: 5, sec: 64, t: 7, lo: 2, hi: 4 },
-    { n: "붓을 잡은 이",      need: 6, sec: 62, t: 8, lo: 2, hi: 4 },
-    { n: "먹을 아는 이",      need: 6, sec: 58, t: 8, lo: 3, hi: 4 },
-    { n: "글을 짓는 이",      need: 7, sec: 56, t: 8, lo: 3, hi: 4 },
-    { n: "낱말을 부리는 이",  need: 7, sec: 52, t: 8, lo: 3, hi: 4 },
-    { n: "말을 꿰는 이",      need: 8, sec: 50, t: 8, lo: 3, hi: 4 },
-    { n: "글의 주인",         need: 8, sec: 46, t: 8, lo: 4, hi: 4 }
+    { n: "무급",             t: 7,  sec: 0,  mix: { 2: 0, 3: 0, 4: 0 } },
+    { n: "첫 글자를 뗀 이",  t: 7,  sec: 75, mix: { 2: 3, 3: 1, 4: 0 } },
+    { n: "낱말을 아는 이",   t: 7,  sec: 72, mix: { 2: 3, 3: 2, 4: 0 } },
+    { n: "글자를 모으는 이", t: 7,  sec: 66, mix: { 2: 2, 3: 3, 4: 0 } },
+    { n: "붓을 잡은 이",     t: 8,  sec: 68, mix: { 2: 2, 3: 3, 4: 1 } },
+    { n: "먹을 아는 이",     t: 8,  sec: 66, mix: { 2: 2, 3: 4, 4: 1 } },
+    { n: "글을 짓는 이",     t: 8,  sec: 62, mix: { 2: 2, 3: 3, 4: 2 } },
+    { n: "낱말을 부리는 이", t: 10, sec: 72, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "말을 꿰는 이",     t: 10, sec: 64, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "글을 세우는 이",   t: 10, sec: 56, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "낱말의 스승",      t: 12, sec: 64, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "글의 주인",        t: 12, sec: 56, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "말을 깨운 이",     t: 12, sec: 48, mix: { 2: 2, 3: 4, 4: 3 } }
   ];
+  function danNeed(d) { return (d.mix[2] || 0) + (d.mix[3] || 0) + (d.mix[4] || 0); }
+  function danMixText(d) {
+    var out = [];
+    [2, 3, 4].forEach(function (L) { if (d.mix[L]) out.push(L + "자 " + d.mix[L]); });
+    return out.join(" · ");
+  }
   function danName() { return DAN[Math.min(dan, DAN.length - 1)].n; }
   // 하루에 볼 수 있는 횟수. 단이 오를수록 조금씩 늘어난다 — 위로 갈수록
   // 어려우니 기회도 같이 늘어야 공평하다.
@@ -1758,6 +1785,37 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
   function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
 
+  // 시험 글자판. 4글자를 씨로 심고 3글자로 키운 뒤, 원하는 구성이 나온
+  // 판만 받는다. 130번 안에 못 찾으면 가장 가까운 판으로 간다.
+  function makeExam(d) {
+    var want = d.mix, need = danNeed(d), close = null, closeGap = 1e9;
+    for (var i = 0; i < 130; i++) {
+      var p = makePuzzle({ t: d.t, lo: 2, hi: 4, w: need * 2, k: 1,
+                           seed4: (want[4] || 0) > 0 });
+      if (!p) continue;
+      var by = { 2: [], 3: [], 4: [] };
+      p.ans.forEach(function (w) { if (by[w.length]) by[w.length].push(w); });
+      var gap = 0;
+      [2, 3, 4].forEach(function (L) {
+        gap += Math.max(0, (want[L] || 0) - by[L].length);
+      });
+      if (gap === 0) {
+        var pick = [];
+        [4, 3, 2].forEach(function (L) { pick = pick.concat(by[L].slice(0, want[L] || 0)); });
+        pick.sort(function (a, b) { return b.length - a.length || a.localeCompare(b); });
+        return { tiles: p.tiles, ans: pick };
+      }
+      if (gap < closeGap) {
+        closeGap = gap;
+        var pk = [];
+        [4, 3, 2].forEach(function (L) { pk = pk.concat(by[L].slice(0, want[L] || 0)); });
+        pk.sort(function (a, b) { return b.length - a.length || a.localeCompare(b); });
+        close = { tiles: p.tiles, ans: pk };
+      }
+    }
+    return close;
+  }
+
   function startExam() {
     var d = nextDan();
     if (!d) { toast("더 오를 단이 없습니다 · " + danName()); return; }
@@ -1766,8 +1824,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       return;
     }
     examBump();
-    var spec = { t: d.t, lo: d.lo, hi: d.hi, w: d.need, k: d.need };
-    var p = makePuzzle(spec);
+    var p = makeExam(d);
+    if (!p || !p.ans.length) { toast("글자판을 못 만들었습니다 · 다시 한 번"); return; }
+    var spec = { t: d.t, lo: 2, hi: 4, w: p.ans.length, k: p.ans.length };
     var cells = 0;
     p.ans.forEach(function (w) { cells += w.length; });
     run = { b: { n: "승급 시험", art: "bonghwang", m: (dan + 1) + "단", no: 0,
@@ -1783,10 +1842,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.startBar.hidden = true;
     el.pimg.src = "art/bonghwang.jpg";
     el.bossName.textContent = (dan + 1) + "단 — " + d.n;
-    el.bossHint.textContent = "맨몸으로 봅니다 · 장비도 수련도 힌트도 통하지 않습니다";
+    el.bossHint.textContent = danMixText(d) + " · 맨몸으로 봅니다";
     el.stageNo.textContent = "승급 시험";
     el.stageUnit.textContent = "";
-    el.mtName.textContent = d.need + "칸을 " + d.sec + "초 안에";
+    el.mtName.textContent = p.ans.length + "칸 · " + d.sec + "초";
     el.hpMax.textContent = cells;
     el.hpTail.textContent = "남은 빈칸";
     el.bonus.textContent = "";
@@ -2373,7 +2432,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function drawTiles() {
-    el.tiles.style.setProperty("--tn", run.tiles.length);
+    var tn = run.tiles.length;
+    el.tiles.style.setProperty("--tn", tn > 8 ? Math.ceil(tn / 2) : tn);
     el.tiles.textContent = "";
     run.tiles.forEach(function (ch, i) {
       var b = document.createElement("button");
@@ -3436,7 +3496,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.examHead.textContent = dan ? dan + "단 · " + danName() : "승급 시험";
     var lf = examLeft();
     el.examSub.textContent = d
-      ? (dan + 1) + "단 — 빈칸 " + d.need + "칸을 " + d.sec + "초 안에 · 맨몸"
+      ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
         + "  ·  오늘 " + lf + " / " + (examCap() + (examExtraUsed() ? 1 : 0)) + "번"
       : "더 오를 단이 없습니다";
     el.btnExam.disabled = !d || !lf;
