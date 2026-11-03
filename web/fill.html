@@ -76,6 +76,19 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .lesson b { display: block; font-family: var(--font-display); font-size: 19px;
   color: var(--fg); margin-bottom: 3px; }
 .lesson .m { display: block; font-size: 12px; line-height: 1.6; color: var(--fg-dim); }
+.exambar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(90deg, #2A1F2E, #1E1724);
+  border: 1px solid #533F5C; border-radius: 12px; padding: 10px 10px 10px 14px;
+  margin-bottom: 13px;
+}
+.exambar b { display: block; font-size: 13.5px; color: #D9BFE6; }
+.exambar small { display: block; font-size: 11px; color: #9A85A6; margin-top: 2px; }
+.exambar button {
+  flex: none; background: #7E57A0; color: #FFF6FF; border-radius: 10px;
+  padding: 10px 15px; font: inherit; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+}
+.exambar button:disabled { background: #39303F; color: #7A6C82; }
 .shoprow { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .shoprow:first-child { border-top: 0; }
@@ -951,6 +964,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   <div class="panel" id="pTrain">
     <h2>수련 <small id="trainSub"></small></h2>
+    <!-- 수련은 실력을 올리는 곳, 시험은 재는 곳. 짝이 맞는 자리에 둔다. -->
+    <div class="exambar" id="examBar">
+      <div>
+        <b id="examHead">승급 시험</b>
+        <small id="examSub"></small>
+      </div>
+      <button id="btnExam">시험 보기</button>
+    </div>
     <div id="ups"></div>
     <p class="subh">장터</p>
     <div id="shop"></div>
@@ -1198,7 +1219,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "trainSub","shop","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "trainSub","shop","examBar","examHead","examSub","btnExam","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -1349,7 +1370,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     try {
       localStorage.setItem(SKEY, JSON.stringify(
         { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
-          gear: gear, steps: steps, forge: forge, gran: 3 }));
+          gear: gear, steps: steps, forge: forge, dan: dan, gran: 3 }));
     } catch (e) {}
   }
   function loadS() {
@@ -1359,6 +1380,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       gold = v.gold || 0;
       gem = v.gem == null ? 5 : v.gem;
       stage = v.stage || 0;
+      dan = v.dan || 0;
       if (v.bag) bag = v.bag;
       if (v.up) up = v.up;
       // 수련 칸을 셋으로 쪼갰다. 그 전에 저장된 값은 옛 눈금이므로 세 배로
@@ -1375,6 +1397,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     } catch (e) {}
   }
 
+  var dan = 0;                      // 승급 시험으로 받은 단
   var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
   // ── 시험판 기록 ─────────────────────────────────────────────────────
@@ -1672,6 +1695,118 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     timerId = setInterval(onSecond, 1000);
     if (window.SFX) SFX.up();
     draw();
+  }
+
+  // ── 승급 시험 ──────────────────────────────────────────────────────
+  //
+  // 산 오르기는 노력과 운과 (나중에는) 돈이 섞인 자리다. 그래서 거기서
+  // 얻은 단계는 "내가 얼마나 아는가"를 말해 주지 못한다.
+  //
+  // 시험은 맨몸으로 본다. 검도 등도 북도 겹침도 꺼지고, 힌트도 소모품도
+  // 못 쓴다. 남는 것은 아는 낱말과 손이 전부다. 그래서 여기서 받은 호는
+  // 돈으로 살 수 없고, 그 사실이 호를 값지게 만든다.
+  //
+  // 떨어져도 잃는 것은 없다. 실력은 운이 아니라서 몇 번을 봐도 괜찮다.
+  var DAN = [
+    { n: "무급",              need: 0, sec: 0,  t: 7, lo: 2, hi: 3 },
+    { n: "첫 글자를 뗀 이",   need: 4, sec: 70, t: 7, lo: 2, hi: 3 },
+    { n: "낱말을 아는 이",    need: 5, sec: 68, t: 7, lo: 2, hi: 3 },
+    { n: "글자를 모으는 이",  need: 5, sec: 64, t: 7, lo: 2, hi: 4 },
+    { n: "붓을 잡은 이",      need: 6, sec: 62, t: 8, lo: 2, hi: 4 },
+    { n: "먹을 아는 이",      need: 6, sec: 58, t: 8, lo: 3, hi: 4 },
+    { n: "글을 짓는 이",      need: 7, sec: 56, t: 8, lo: 3, hi: 4 },
+    { n: "낱말을 부리는 이",  need: 7, sec: 52, t: 8, lo: 3, hi: 4 },
+    { n: "말을 꿰는 이",      need: 8, sec: 50, t: 8, lo: 3, hi: 4 },
+    { n: "글의 주인",         need: 8, sec: 46, t: 8, lo: 4, hi: 4 }
+  ];
+  function danName() { return DAN[Math.min(dan, DAN.length - 1)].n; }
+  function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
+
+  function startExam() {
+    var d = nextDan();
+    if (!d) { toast("더 오를 단이 없습니다 · " + danName()); return; }
+    var spec = { t: d.t, lo: d.lo, hi: d.hi, w: d.need, k: d.need };
+    var p = makePuzzle(spec);
+    var cells = 0;
+    p.ans.forEach(function (w) { cells += w.length; });
+    run = { b: { n: "승급 시험", art: "bonghwang", m: (dan + 1) + "단", no: 0,
+                 need: p.ans.length, spec: spec, mod: null, mod2: null, d: "" },
+            exam: true, daily: true,          // 셈은 오늘의 낱말과 같다 — 빈칸이 곧 기세
+            hp: cells, max: cells, left: d.sec, combo: 0, phase: "fight",
+            bonus: [], cleared: 0, perfect: 0, found: 0, extra: 0, score: 0,
+            tiles: p.tiles, ans: p.ans, got: Object.create(null),
+            hint: Object.create(null),
+            weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 99, t0: Date.now() };
+    picked = [];
+    document.body.classList.remove("ready");
+    el.startBar.hidden = true;
+    el.pimg.src = "art/bonghwang.jpg";
+    el.bossName.textContent = (dan + 1) + "단 — " + d.n;
+    el.bossHint.textContent = "맨몸으로 봅니다 · 장비도 수련도 힌트도 통하지 않습니다";
+    el.stageNo.textContent = "승급 시험";
+    el.stageUnit.textContent = "";
+    el.mtName.textContent = d.need + "칸을 " + d.sec + "초 안에";
+    el.hpMax.textContent = cells;
+    el.hpTail.textContent = "남은 빈칸";
+    el.bonus.textContent = "";
+    el.bonusBar.hidden = true;
+    el.portrait.classList.remove("down");
+    logEv("X", "d" + (dan + 1));
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(onSecond, 1000);
+    draw();
+  }
+
+  function endExam(pass) {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    var r = run; run.phase = "over"; run = null;
+    var got = r.ans.filter(function (w) { return r.got[w]; });
+    if (pass) { dan++; saveS(); drawStatsOnly(); drawHo(); }
+    logEv("Y", (pass ? "P" : "F") + (dan));
+    if (window.SFX) { pass ? SFX.win() : SFX.lose(); }
+
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2");
+    h.className = pass ? "win" : "lose";
+    h.textContent = pass ? "통과하셨습니다" : "다음에 다시";
+    card.appendChild(h);
+    var big = document.createElement("div"); big.className = "big";
+    big.textContent = pass ? dan + "단" : got.length + " / " + r.ans.length;
+    card.appendChild(big);
+    var lead = document.createElement("p"); lead.className = "lead";
+    lead.textContent = pass ? danName() : "빈칸 " + r.ans.length + "칸을 다 채우셔야 합니다";
+    card.appendChild(lead);
+
+    if (!pass) {
+      var left2 = r.ans.filter(function (w) { return !r.got[w]; });
+      var mh = document.createElement("p"); mh.className = "subh";
+      mh.textContent = "못 채운 빈칸"; card.appendChild(mh);
+      var ml = document.createElement("div"); ml.className = "lines";
+      left2.slice(0, 5).forEach(function (w) {
+        var li = document.createElement("p");
+        li.innerHTML = "<b>" + w + "</b>" + (MEAN[w] ? " · " + MEAN[w] : "");
+        ml.appendChild(li);
+      });
+      card.appendChild(ml);
+      var fn = document.createElement("p"); fn.className = "lead foot";
+      fn.innerHTML = "떨어져도 <b>잃는 것은 없습니다</b> · 몇 번이든 다시 보실 수 있습니다";
+      card.appendChild(fn);
+    }
+
+    var row = document.createElement("div"); row.className = "trow";
+    var again = document.createElement("button"); again.className = "btn ghost";
+    again.textContent = pass && !nextDan() ? "" : (pass ? "바로 다음 단" : "다시 보기");
+    if (again.textContent) {
+      again.addEventListener("click", function () { ov.remove(); startExam(); });
+      row.appendChild(again);
+    }
+    var back = document.createElement("button"); back.className = "btn";
+    back.textContent = "산으로 돌아가기";
+    back.addEventListener("click", function () { ov.remove(); setMode("quest"); });
+    row.appendChild(back);
+    card.appendChild(row);
+    ov.appendChild(card); document.body.appendChild(ov); back.focus();
   }
 
   // ── 오늘의 낱말 ───────────────────────────────────────────────────
@@ -2427,7 +2562,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 할 일을 갖는다. 다 채웠다면 그 자리에서 끝이다.
     if (run.daily) {
       run.score += Math.round(20 * Math.pow(w.length, 1.9) * (1 + Math.min(run.combo, 10) * 0.06));
-      if (!remaining().length) return endDaily();
+      if (!remaining().length) return run.exam ? endExam(true) : endDaily();
       return;
     }
 
@@ -2458,7 +2593,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (run.chain) return chainSecond();
     run.left--;
     if (run.daily) {
-      if (run.left <= 0) { run.left = 0; draw(); return endDaily(); }
+      if (run.left <= 0) {
+        run.left = 0; draw();
+        return run.exam ? endExam(false) : endDaily();
+      }
       draw(); return;
     }
     if (run.phase === "fight") ruleSecond();
@@ -2973,9 +3111,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function drawHo() {
-    var h = rankName();
-    el.ho.hidden = !h;
-    el.ho.textContent = h;
+    var c = rankName(), parts = [];
+    if (dan) parts.push(danName());
+    if (c) parts.push(c);
+    el.ho.hidden = !parts.length;
+    el.ho.textContent = parts.join(" · ");
   }
 
   // ── 처음 오신 길 ───────────────────────────────────────────────
@@ -3236,6 +3376,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.ups.appendChild(row);
     });
     drawShop();
+    drawExam();
+  }
+
+  function drawExam() {
+    if (!el.examBar) return;
+    var d = nextDan();
+    el.examHead.textContent = dan ? dan + "단 · " + danName() : "승급 시험";
+    el.examSub.textContent = d
+      ? (dan + 1) + "단 — 빈칸 " + d.need + "칸을 " + d.sec + "초 안에 · 맨몸"
+      : "더 오를 단이 없습니다";
+    el.btnExam.disabled = !d;
+    el.btnExam.textContent = d ? (dan ? (dan + 1) + "단 보기" : "시험 보기") : "끝";
   }
 
   function drawShop() {
@@ -3622,6 +3774,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     for (var oi = 0; oi < ovs.length; oi++) ovs[oi].remove();
     document.body.classList.remove("raging");
     document.body.classList.remove("ready");   // 산 오르기에서만 쓰는 잠금
+    if (run && run.exam) run = null;
     el.startBar.hidden = true;
     el.portrait.classList.remove("down");
     el.bonusBar.hidden = true;
@@ -3685,6 +3838,22 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (window.SFX) SFX.up();
     saveS(); drawStatsOnly(); draw();
     toast("기름 한 병 · 마무리 시간 +15초");
+  });
+
+  el.btnExam.addEventListener("click", function () {
+    var ov = document.querySelector(".ov");
+    // 열려 있던 패널들을 걷고 시험만 남긴다
+    document.querySelectorAll(".ov").forEach(function (x) {
+      var sheet = x.querySelector(".sheet");
+      if (sheet) {
+        var sh = [].slice.call(x.querySelectorAll("button")).filter(function (b) {
+          return /닫기/.test(b.textContent);
+        })[0];
+        if (sh) return sh.click();
+      }
+      x.remove();
+    });
+    setTimeout(startExam, 60);
   });
 
   el.btnStart.addEventListener("click", beginRun);
@@ -3752,7 +3921,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function hintLabel() {
-    if (!run || run.daily) return "옥 1개";
+    if (!run || run.daily) return run.exam ? "맨몸" : "옥 1개";
     var w = hintTarget();
     if (!w) return "옥 1개";
     var nx = (run.hint[w] || 0) + 1;
@@ -3770,6 +3939,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 오늘의 낱말은 리그의 씨앗이다. 여기 힌트가 통하면 보물함을 많이 연
     // 사람이, 즉 돈과 시간을 더 쓴 사람이 순위에서 앞선다. 그 순간 등수는
     // 실력이 아니라 지갑이 되고, 공유할 이유도 같이 사라진다.
+    if (run.exam) { toast("시험은 맨몸으로 봅니다 · 힌트가 통하지 않습니다"); return; }
     if (run.daily) { toast("오늘의 낱말은 모두 같은 조건입니다"); return; }
     var w = hintTarget();
     if (!w) { toast("더 밝힐 빈칸이 없습니다"); return; }
