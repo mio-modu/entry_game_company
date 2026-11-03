@@ -611,6 +611,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   line-height: 1.8; white-space: pre-wrap; }
 .trow { display: grid; grid-template-columns: 1.4fr 1fr; gap: 7px; }
 .btn.ghost { background: transparent; color: var(--fg-faint); font-size: 12.5px; }
+/* 기록 코드. 긴 글이 한 줄로 흘러 화면을 밀지 않게 가둔다. */
+.codebox {
+  width: 100%; margin-top: 9px; background: #0E1017; color: var(--fg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px;
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.6;
+  resize: vertical; word-break: break-all;
+}
+.codebox:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 /* 길어진 패널이 화면을 넘으면 가운데 맞춤이 위아래를 잘라 먹는다.
    넘칠 때는 잘라 먹지 않고 굴러가도록 safe center 로 둔다. */
@@ -1137,6 +1145,27 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
     </div>
+
+    <p class="subh">기록 옮기기</p>
+    <div class="lines">
+      <p>이 게임은 <b>계정도 로그인도 없습니다.</b> 그래서 기록은
+         <b>이 기기 안에만</b> 있습니다 — 이름도 전화번호도 묻지 않는 대신,
+         폰을 바꾸면 따라오지 않습니다.</p>
+      <p>옮기시려면 <b>기록 코드</b>를 만들어 메모장이나 메일에 붙여 두십시오.
+         새 폰에서 그 코드를 넣으면 <b>단계·냥·옥·호가 그대로</b> 돌아옵니다.</p>
+    </div>
+    <div class="trow" style="margin-top:9px">
+      <button class="btn" id="btnCodeMake">기록 코드 만들기</button>
+      <button class="btn ghost" id="btnCodeUse">코드로 되살리기</button>
+    </div>
+    <textarea id="codeBox" class="codebox" hidden rows="4" spellcheck="false"
+              autocomplete="off" autocapitalize="off"
+              placeholder="여기에 기록 코드를 붙여 넣으십시오"></textarea>
+    <div class="trow" id="codeAct" hidden>
+      <button class="btn" id="btnCodeCopy">코드 복사</button>
+      <button class="btn go" id="btnCodeLoad">이 코드로 되살리기</button>
+    </div>
+    <p class="cite" id="codeNote" hidden></p>
     <p class="subh">이기는 법</p>
     <div class="lines">
       <p>수호신의 <b>기세를 0으로</b> 만들면 쓰러집니다.</p>
@@ -1370,6 +1399,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
+   "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange","streaks","cal","calNote",
    "startBar","startHead","startSub","btnStart","hpLine",
@@ -1539,7 +1569,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-03-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-03-e";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -4848,6 +4878,123 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
+
+  // ── 기록 옮기기 ───────────────────────────────────────────────
+  //
+  // 결제에는 로그인이 필요 없다. Play 가 신원도 결제도 맡으므로 우리는
+  // 계정도 카드도 보지 않는다. 그런데 그 대가로 기록이 기기 안에만 남고,
+  // 폰을 바꾸면 산 옥도 따라오지 않는다. 그게 환불과 악평이 나는 자리다.
+  //
+  // 서버를 두면 해결되지만 그러면 이름과 연락처를 받아야 하고, 개인정보를
+  // 한 톨도 안 받는다는 약속이 깨진다. 그래서 가운데를 고른다 —
+  // 기록을 글 한 줄로 내보내고 그 줄로 되살린다. 계정도 서버도 없이
+  // 폰만 바뀐다. 그 줄은 사람이 제 메모장에 두는 것이라 우리는 못 본다.
+  var CODE_HEAD = "NATMALSAN1";
+  function b64(str) {
+    return btoa(unescape(encodeURIComponent(str)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function unb64(str) {
+    var t = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (t.length % 4) t += "=";
+    return decodeURIComponent(escape(atob(t)));
+  }
+  // 한 글자만 빠져도 엉뚱한 기록이 들어오면 안 된다. 짧은 검산을 붙인다.
+  function sumOf(str) {
+    var n = 0;
+    for (var i = 0; i < str.length; i++) n = (n * 31 + str.charCodeAt(i)) % 99991;
+    return n.toString(36);
+  }
+  function makeCode() {
+    var body = localStorage.getItem(SKEY) || "{}";
+    var day = {};
+    // 오늘 치(출석·퀘스트·광고)는 옮기지 않는다. 날짜가 바뀌면 어차피
+    // 새로 열리고, 옮겨 주면 하루 몫을 두 번 받는 길이 된다.
+    var extra = { tut: localStorage.getItem("nathero-fill-tut") || "",
+                  att: localStorage.getItem("nathero-att") || "" };
+    var raw = JSON.stringify({ s: body, x: extra });
+    var enc = b64(raw);
+    return CODE_HEAD + "." + sumOf(enc) + "." + enc;
+  }
+  function readCode(txt) {
+    var t = (txt || "").replace(/\s+/g, "");
+    var bits = t.split(".");
+    if (bits.length !== 3 || bits[0] !== CODE_HEAD) return null;
+    if (sumOf(bits[2]) !== bits[1]) return null;
+    try {
+      var o = JSON.parse(unb64(bits[2]));
+      if (!o || typeof o.s !== "string") return null;
+      var sv = JSON.parse(o.s);
+      if (!sv || typeof sv !== "object") return null;
+      return o;
+    } catch (e) { return null; }
+  }
+  function showCodeNote(msg, bad) {
+    el.codeNote.hidden = false;
+    el.codeNote.innerHTML = msg;
+    el.codeNote.style.color = bad ? "var(--danger)" : "";
+  }
+  el.btnCodeMake.addEventListener("click", function () {
+    var code = makeCode();
+    el.codeBox.hidden = false; el.codeAct.hidden = false;
+    el.codeBox.value = code;
+    el.codeBox.focus(); el.codeBox.select();
+    showCodeNote("이 글을 <b>통째로</b> 메모장이나 자기 메일에 붙여 두십시오. "
+      + "새 폰에서 이 줄을 넣으면 그대로 돌아옵니다. "
+      + "<b>남에게 주지 마십시오</b> — 받은 사람도 같은 기록이 됩니다.");
+  });
+  el.btnCodeUse.addEventListener("click", function () {
+    el.codeBox.hidden = false; el.codeAct.hidden = false;
+    el.codeBox.value = ""; el.codeBox.focus();
+    showCodeNote("메모해 두신 기록 코드를 붙여 넣고 <b>되살리기</b>를 누르십시오.");
+  });
+  el.btnCodeCopy.addEventListener("click", function () {
+    var v = el.codeBox.value;
+    if (!v) { toast("먼저 코드를 만드십시오"); return; }
+    var ok = function () { toast("기록 코드를 복사했습니다"); };
+    if (navigator.clipboard) { navigator.clipboard.writeText(v).then(ok, function () {}); return; }
+    el.codeBox.select();
+    try { document.execCommand("copy"); ok(); } catch (e) {}
+  });
+  el.btnCodeLoad.addEventListener("click", function () {
+    var o = readCode(el.codeBox.value);
+    if (!o) {
+      showCodeNote("이 코드를 읽을 수 없습니다. <b>한 글자도 빠뜨리지 말고</b> "
+        + "통째로 붙여 넣으셨는지 보십시오.", 1);
+      return;
+    }
+    // 지금 기록을 덮어쓴다. 되돌릴 수 없으니 한 번 묻는다.
+    askCode(o);
+  });
+  function askCode(o) {
+    var sv = {};
+    try { sv = JSON.parse(o.s) || {}; } catch (e) {}
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.textContent = "이 기록으로 바꿀까요";
+    var lead = document.createElement("p"); lead.className = "lead";
+    lead.innerHTML = "코드 속 기록 — <b>" + ((sv.stage || 0) + 1) + "단계</b> · 냥 "
+      + (sv.gold || 0).toLocaleString() + " · 옥 " + (sv.gem == null ? 5 : sv.gem);
+    var warn = document.createElement("p"); warn.className = "lead foot";
+    warn.innerHTML = "지금 이 폰에 있는 기록은 <b>사라집니다.</b> 되돌릴 수 없습니다.";
+    var row = document.createElement("div"); row.className = "trow";
+    var no = document.createElement("button"); no.className = "btn ghost";
+    no.textContent = "그만두기";
+    no.addEventListener("click", function () { ov.remove(); });
+    var yes = document.createElement("button"); yes.className = "btn go";
+    yes.textContent = "바꾸기";
+    yes.addEventListener("click", function () {
+      try {
+        localStorage.setItem(SKEY, o.s);
+        if (o.x && o.x.tut) localStorage.setItem("nathero-fill-tut", o.x.tut);
+        if (o.x && o.x.att) localStorage.setItem("nathero-att", o.x.att);
+      } catch (e) {}
+      location.reload();
+    });
+    row.appendChild(no); row.appendChild(yes);
+    card.appendChild(h); card.appendChild(lead); card.appendChild(warn); card.appendChild(row);
+    ov.appendChild(card); document.body.appendChild(ov); yes.focus();
+  }
 
   // 서랍에서 패널을 꺼내 띄우고, 닫으면 제자리로 돌려놓는다.
   // 통째로 옮기므로 걸어 둔 손잡이와 el.* 참조가 그대로 산다.
