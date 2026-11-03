@@ -1765,9 +1765,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
   // 약해지고, 전부 냥이면 올 이유가 약해진다. 작은 옥을 드물게 섞는다.
+  // 사흘째에 또 옥 하나면 "힌트 한 번 더"가 전부라 야박하다.
+  // 올수록 커지고, 이렛날에 일곱 알로 끝난다.
   var ATT = [
-    { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "냥", n: 0 },
-    { r: "반", n: 2 }, { r: "옥", n: 3 }, { r: "냥", n: 0 }, { r: "옥", n: 6 }
+    { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "반", n: 2 },
+    { r: "옥", n: 3 }, { r: "냥", n: 0 }, { r: "옥", n: 4 }, { r: "옥", n: 7 }
   ];
   function attGold() { return Math.round((300 + stage * 14) * (1 + cycle() * 0.6)); }
   function dayKey(k) { return "nathero-" + k + "-" + todayKey(); }
@@ -2020,25 +2022,43 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 붙이면 입에 붙고, 남에게 말할 때 한 마디로 끝난다 — 「현무 2」.
   // 넷으로 나누고 위로 갈수록 귀한 신수를 준다. 용은 백두산 수호신이라
   // 호로는 쓰지 않는다 — 넘어야 할 상대의 이름을 호로 달 수는 없다.
+  // 호에는 숫자를 붙이지 않는다.
+  //
+  // 「현무 2」는 칭호가 아니라 레벨이다. 남에게 말할 때 "나 현무 2단이야"는
+  // 게임 얘기고, "나 현무야"는 이름이다. 스무 자리에 스무 이름을 둔다.
+  //
+  // 땅에서 시작해 물·바람·불·벼락을 지나 하늘에 닿고, 마지막 다섯은
+  // 신수의 이름이다. 그리고 꼭대기는 「용」 하나뿐이다 — 숫자도 꾸밈도 없이.
   var DAN = [
-    { n: "무급",   t: 7,  sec: 0,  mix: { 2: 0, 3: 0, 4: 0 } },
-    { n: "해태 1", t: 7,  sec: 75, mix: { 2: 3, 3: 1, 4: 0 } },
-    { n: "해태 2", t: 7,  sec: 72, mix: { 2: 3, 3: 2, 4: 0 } },
-    { n: "해태 3", t: 7,  sec: 66, mix: { 2: 2, 3: 3, 4: 0 } },
-    { n: "백호 1", t: 8,  sec: 68, mix: { 2: 2, 3: 3, 4: 1 } },
-    { n: "백호 2", t: 8,  sec: 66, mix: { 2: 2, 3: 4, 4: 1 } },
-    { n: "백호 3", t: 8,  sec: 62, mix: { 2: 2, 3: 3, 4: 2 } },
-    { n: "현무 1", t: 10, sec: 72, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "현무 2", t: 10, sec: 64, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "현무 3", t: 10, sec: 56, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "봉황 1", t: 12, sec: 64, mix: { 2: 2, 3: 4, 4: 3 } },
-    { n: "봉황 2", t: 12, sec: 56, mix: { 2: 2, 3: 4, 4: 3 } },
-    { n: "봉황 3", t: 12, sec: 48, mix: { 2: 2, 3: 4, 4: 3 } }
+    { n: "무급", t: 7,  sec: 0,  mix: { 2: 0, 3: 0, 4: 0 } },
+    { n: "초석", t: 7,  sec: 80, mix: { 2: 3, 3: 1, 4: 0 } },
+    { n: "반석", t: 7,  sec: 72, mix: { 2: 3, 3: 1, 4: 0 } },
+    { n: "금석", t: 7,  sec: 74, mix: { 2: 3, 3: 2, 4: 0 } },
+    { n: "창해", t: 7,  sec: 66, mix: { 2: 3, 3: 2, 4: 0 } },
+    { n: "노도", t: 7,  sec: 68, mix: { 2: 2, 3: 3, 4: 0 } },
+    { n: "운해", t: 7,  sec: 60, mix: { 2: 2, 3: 3, 4: 0 } },
+    { n: "청풍", t: 8,  sec: 70, mix: { 2: 2, 3: 3, 4: 1 } },
+    { n: "질풍", t: 8,  sec: 62, mix: { 2: 2, 3: 3, 4: 1 } },
+    { n: "광풍", t: 8,  sec: 68, mix: { 2: 2, 3: 4, 4: 1 } },
+    { n: "화광", t: 8,  sec: 60, mix: { 2: 2, 3: 4, 4: 1 } },
+    { n: "열화", t: 8,  sec: 64, mix: { 2: 2, 3: 3, 4: 2 } },
+    { n: "뇌성", t: 8,  sec: 56, mix: { 2: 2, 3: 3, 4: 2 } },
+    { n: "벽력", t: 10, sec: 74, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "은하", t: 10, sec: 66, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "천공", t: 10, sec: 58, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "백호", t: 12, sec: 72, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "주작", t: 12, sec: 64, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "현무", t: 12, sec: 56, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "봉황", t: 12, sec: 50, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "용",   t: 12, sec: 44, mix: { 2: 2, 3: 4, 4: 3 } }
   ];
-  // 시험 화면에 띄울 그림도 호를 따라간다
-  var DAN_ART = ["bulgasari", "haetae", "haetae", "haetae", "baekho", "baekho",
-                 "baekho", "hyeonmu", "hyeonmu", "hyeonmu", "bonghwang",
-                 "bonghwang", "bonghwang"];
+  var DAN_ART = ["bulgasari",
+    "bulgasari", "bulgasari", "bulgasari",
+    "samjogo", "samjogo", "samjogo",
+    "haetae", "haetae", "haetae",
+    "kirin", "kirin", "kirin",
+    "baekrok", "baekrok", "baekrok",
+    "baekho", "jujak", "hyeonmu", "bonghwang", "yong"];
   function danNeed(d) { return (d.mix[2] || 0) + (d.mix[3] || 0) + (d.mix[4] || 0); }
   function danMixText(d) {
     var out = [];
@@ -2053,7 +2073,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // "실력"이 아니라 "시도 횟수"가 되고, 몇 번이고 돌리면 운 좋은 글자판이
   // 언젠가 나온다. 그러면 호가 값을 잃고, 돈으로 못 산다는 사실 하나로
   // 지탱되던 이 자리가 통째로 무너진다.
-  function examCap() { return 2 + Math.floor(dan / 2); }
+  function examCap() { return 2 + Math.floor(dan / 4); }
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
     try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
