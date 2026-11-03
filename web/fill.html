@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>낱말 채우기</title>
+<title>낱말산</title>
 <!-- 이게 없으면 크롬은 980픽셀짜리 화면인 줄 알고 통째로 줄여 그린다.
      Claude 안에서는 그쪽 껍데기가 넣어 줘서 멀쩡해 보였다. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,8 +11,8 @@
 <meta name="description" content="글자판에서 빈칸에 들어갈 낱말을 찾아 수호신을 쓰러뜨리고 열 개의 산을 오릅니다. 하루 한 판, 모두 같은 글자판.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:site_name" content="낱말 채우기">
-<meta property="og:title" content="낱말 채우기">
+<meta property="og:site_name" content="낱말산">
+<meta property="og:title" content="낱말산 — 낱말로 수호신을 쓰러뜨리는 게임">
 <meta property="og:description" content="빈칸에 들어갈 낱말을 찾아 열 개의 산을 오릅니다. 하루 한 판, 모두 같은 글자판.">
 <meta property="og:url" content="https://wordgamebest.vercel.app/">
 <meta property="og:image" content="https://wordgamebest.vercel.app/art/og.jpg">
@@ -29,7 +29,7 @@
 <link rel="icon" href="icon/v2/icon-192.png" sizes="192x192">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="낱말 채우기">
+<meta name="apple-mobile-web-app-title" content="낱말산">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -863,7 +863,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
 <div class="wrap">
   <div class="hud">
-    <div class="brand">낱말 채우기 <span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
+    <div class="brand">낱말산 <span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
     <div class="purse">냥 <b id="gold">0</b> · 옥 <b id="gem">0</b></div>
   </div>
   <div class="modes">
@@ -1905,21 +1905,31 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 적어서, 4글자를 많이 요구하면 글자판이 아예 안 만들어진다. 조합마다
   // 130번 안에 나오는 비율을 재서 90%를 넘는 것만 골랐다 —
   // 4글자는 셋이 실질 상한이고, 그 위부터는 시간으로 조인다.
+  // 호는 수호신에게서 이름을 받는 것이다.
+  //
+  // "…하는 이" 같은 풀어 쓴 이름은 길고 흐리다. 두세 글자로 끊고 숫자를
+  // 붙이면 입에 붙고, 남에게 말할 때 한 마디로 끝난다 — 「현무 2」.
+  // 넷으로 나누고 위로 갈수록 귀한 신수를 준다. 용은 백두산 수호신이라
+  // 호로는 쓰지 않는다 — 넘어야 할 상대의 이름을 호로 달 수는 없다.
   var DAN = [
-    { n: "무급",             t: 7,  sec: 0,  mix: { 2: 0, 3: 0, 4: 0 } },
-    { n: "첫 글자를 뗀 이",  t: 7,  sec: 75, mix: { 2: 3, 3: 1, 4: 0 } },
-    { n: "낱말을 아는 이",   t: 7,  sec: 72, mix: { 2: 3, 3: 2, 4: 0 } },
-    { n: "글자를 모으는 이", t: 7,  sec: 66, mix: { 2: 2, 3: 3, 4: 0 } },
-    { n: "붓을 잡은 이",     t: 8,  sec: 68, mix: { 2: 2, 3: 3, 4: 1 } },
-    { n: "먹을 아는 이",     t: 8,  sec: 66, mix: { 2: 2, 3: 4, 4: 1 } },
-    { n: "글을 짓는 이",     t: 8,  sec: 62, mix: { 2: 2, 3: 3, 4: 2 } },
-    { n: "낱말을 부리는 이", t: 10, sec: 72, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "말을 꿰는 이",     t: 10, sec: 64, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "글을 세우는 이",   t: 10, sec: 56, mix: { 2: 2, 3: 3, 4: 3 } },
-    { n: "낱말의 스승",      t: 12, sec: 64, mix: { 2: 2, 3: 4, 4: 3 } },
-    { n: "글의 주인",        t: 12, sec: 56, mix: { 2: 2, 3: 4, 4: 3 } },
-    { n: "말을 깨운 이",     t: 12, sec: 48, mix: { 2: 2, 3: 4, 4: 3 } }
+    { n: "무급",   t: 7,  sec: 0,  mix: { 2: 0, 3: 0, 4: 0 } },
+    { n: "해태 1", t: 7,  sec: 75, mix: { 2: 3, 3: 1, 4: 0 } },
+    { n: "해태 2", t: 7,  sec: 72, mix: { 2: 3, 3: 2, 4: 0 } },
+    { n: "해태 3", t: 7,  sec: 66, mix: { 2: 2, 3: 3, 4: 0 } },
+    { n: "백호 1", t: 8,  sec: 68, mix: { 2: 2, 3: 3, 4: 1 } },
+    { n: "백호 2", t: 8,  sec: 66, mix: { 2: 2, 3: 4, 4: 1 } },
+    { n: "백호 3", t: 8,  sec: 62, mix: { 2: 2, 3: 3, 4: 2 } },
+    { n: "현무 1", t: 10, sec: 72, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "현무 2", t: 10, sec: 64, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "현무 3", t: 10, sec: 56, mix: { 2: 2, 3: 3, 4: 3 } },
+    { n: "봉황 1", t: 12, sec: 64, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "봉황 2", t: 12, sec: 56, mix: { 2: 2, 3: 4, 4: 3 } },
+    { n: "봉황 3", t: 12, sec: 48, mix: { 2: 2, 3: 4, 4: 3 } }
   ];
+  // 시험 화면에 띄울 그림도 호를 따라간다
+  var DAN_ART = ["bulgasari", "haetae", "haetae", "haetae", "baekho", "baekho",
+                 "baekho", "hyeonmu", "hyeonmu", "hyeonmu", "bonghwang",
+                 "bonghwang", "bonghwang"];
   function danNeed(d) { return (d.mix[2] || 0) + (d.mix[3] || 0) + (d.mix[4] || 0); }
   function danMixText(d) {
     var out = [];
@@ -2019,7 +2029,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     picked = [];
     document.body.classList.remove("ready");
     el.startBar.hidden = true;
-    el.pimg.src = "art/bonghwang.jpg";
+    el.pimg.src = "art/" + (DAN_ART[dan + 1] || "bonghwang") + ".jpg";
     el.bossName.textContent = (dan + 1) + "단 — " + d.n;
     el.bossHint.textContent = danMixText(d) + " · 맨몸으로 봅니다";
     el.stageNo.textContent = "승급 시험";
@@ -2131,6 +2141,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
             hp: cells, max: cells, left: DAILY_SEC, combo: 0, phase: "fight",
             bonus: [], cleared: 0, perfect: 0, found: 0, extra: 0, score: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
+            hint: Object.create(null),
             weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 99, t0: Date.now() };
     picked = [];
     el.pimg.src = "art/" + M.a + ".jpg";
@@ -2189,7 +2200,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var n = run.ans.filter(function (w) { return run.got[w]; }).length;
     var ratio = run.ans.length ? n / run.ans.length : 0;
     var ho = rankName();
-    return "낱말 채우기 · 오늘의 낱말 " + (d.getMonth() + 1) + "." + d.getDate() + "\n"
+    return "낱말산 · 오늘의 낱말 " + (d.getMonth() + 1) + "." + d.getDate() + "\n"
       + "\ud83c\udfc5 " + rank(ratio) + (ho ? "  \u00b7  " + ho : "") + "\n\n"
       + dailyRows().map(function (r) {
           return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
@@ -2553,11 +2564,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var HINT_STEP = ["", "뜻", "첫 글자", "실루엣"];
   var HINT_SAY  = ["", "뜻을 밝혔습니다", "첫 글자를 밝혔습니다", "실루엣이 비칩니다"];
   function drawHints() {
-    var keys = Object.keys(run && run.hint ? run.hint : {});
+    var keys = Object.keys((run && run.hint) || {});
     el.hints.textContent = "";
     el.hints.hidden = !keys.length;
     keys.forEach(function (w) {
-      var lv = run.hint[w], done = !!run.got[w];
+      var lv = (run.hint && run.hint[w]) || 0, done = !!run.got[w];
       var line = document.createElement("div"); line.className = "hint";
       var k = document.createElement("span"); k.className = "k";
       k.textContent = done ? "찾음" : w.length + "자";
@@ -2597,7 +2608,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var lab = document.createElement("span");
       lab.className = "lenlab"; lab.textContent = w.length + "자";
       row.appendChild(lab);
-      var lv = run.hint[w] || 0;
+      var lv = (run.hint && run.hint[w]) || 0;
       for (var i = 0; i < w.length; i++) {
         var c = document.createElement("b");
         // 밝힌 깊이에 따라 비쳐 보인다. 넣는 일은 끝까지 사람이 한다.
