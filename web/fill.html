@@ -165,7 +165,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .gempack.best { border-color: var(--jade); }
 .gempack .pic { width: 100%; max-width: 68px; aspect-ratio: 1; border-radius: 9px;
   overflow: hidden; border: 1.5px solid #4E8F6E; background: #F3EFE4; }
-.gempack .pic svg { width: 100%; height: 100%; display: block; }
+.gempack .pic svg, .gempack .pic img { width: 100%; height: 100%; display: block;
+  object-fit: cover; }
 .gempack .n { font-family: var(--font-display); font-size: 19px; font-weight: 700;
   color: var(--jade); line-height: 1.1; }
 .gempack .nm { font-size: 11px; color: var(--fg-dim); }
@@ -1398,6 +1399,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 가장 작은 단위(힌트 한 걸음 = 옥 1)를 기준으로 나머지를 다시 맞춘다.
   var BOSS_GEM = 3, PERFECT_GEM = 1, AD_GEM_EVERY = 3;
+  // 완전 격파의 옥은 두 가지 조건을 단다.
+  //
+  // 첫째, 맨손이어야 한다. 옥으로 빈칸을 열어 완전 격파를 하면 그 옥이
+  // 고스란히 돌아왔다 — 힌트가 영원히 공짜였다는 뜻이다. 반딧불도 같다.
+  // 냥 210으로 산 반딧불이 옥 한 알이 되면 장터가 환전소가 된다.
+  //
+  // 둘째, 하루 몫이 있다. 잘하는 사람은 판마다 맨손으로 다 채운다.
+  // 그러면 하루에 열 알이 넘게 쌓이고, 옥은 쌓이는 순간 값을 잃는다.
+  // 옥은 모자란 듯 있어야 한다 — 그래야 한 알을 어디에 쓸지 고민한다.
+  var PERFECT_GEM_DAY = 3;
+  function perfGemLeft() { return Math.max(0, PERFECT_GEM_DAY - dGet("pg", 0)); }
   var CAP_PER_CYCLE = 27;
   // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
   // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
@@ -1527,7 +1539,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-03-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-03-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -2933,7 +2945,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.gFound.textContent = run.ans.length - left;
     el.gTotal.textContent = run.ans.length;
     el.gNote.textContent = run.phase === "bonus" ? "마무리 · 남은 시간만큼 냥"
-      : left === 1 ? "하나 남았습니다 · 완전 격파!" : "다 채우면 완전 격파";
+      : left === 1 ? "하나 남았습니다 · 완전 격파!"
+      : run.aided || !perfGemLeft() ? "다 채우면 완전 격파"
+      : "맨손으로 다 채우면 옥 한 알";
     el.hpNow.parentNode.title = run.b.need + "개를 채우면 쓰러집니다";
     el.timer.textContent = run.left;
     el.timer.classList.toggle("low", run.left <= 10);
@@ -4001,6 +4015,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         + '<span class="pz">' + (skuPrice[x.id] || (inApp() ? "…" : "앱에서")) + '</span>';
       if (x.best) html = '<span class="flag">많이 고름</span>' + html;
       c.innerHTML = html;
+      // 수묵 그림이 들어와 있으면 조용히 갈아 끼운다. 없으면 붓그림 그대로다.
+      // 소모품과 같은 길이라 셋을 한꺼번에 넣지 않아도 어긋나지 않는다.
+      (function (slot, id) {
+        if (!slot) return;
+        var real = new Image();
+        real.onload = function () { slot.innerHTML = '<img src="' + real.src + '" alt="">'; };
+        real.src = "art/gem/" + id + ".jpg";
+      })(c.querySelector(".pic"), x.a);
       c.disabled = !inApp();
       c.addEventListener("click", function () { buySku(x); });
       packs.appendChild(c);
@@ -4297,7 +4319,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 채우고 싶은 그 마음이 옥을 쓰게 만들고, 옥을 쓰면 다 채워지고,
     // 다 채우면 옥이 다시 들어온다. 잘하는 사람은 돌고, 막힌 사람은 산다 —
     // 그 자리가 과금이 설 유일하게 떳떳한 자리다.
-    if (won && r.perfect) bossGem += PERFECT_GEM;
+    var perfGem = 0;
+    if (won && r.perfect && !r.aided && perfGemLeft()) {
+      perfGem = PERFECT_GEM; dSet("pg", dGet("pg", 0) + 1);
+    }
+    bossGem += perfGem;
     if (bossGem) gem += bossGem;
     var firstWin = 0;
     if (won && !tut.done) {
@@ -4359,12 +4385,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       sb.textContent = rows.reduce(function (n, x) { return n + x[1]; }, 0).toLocaleString() + "냥";
       sum.appendChild(sa); sum.appendChild(sb); tbl.appendChild(sum);
       card.appendChild(tbl);
+      // 왜 옥이 안 들어왔는지는 적어 준다. 말없이 빠지면 버그로 읽힌다.
+      if (won && r.perfect && !perfGem) {
+        var nt = document.createElement("p"); nt.className = "lead";
+        nt.innerHTML = r.aided
+          ? "완전 격파 — 다만 <b>도움을 쓴 판</b>이라 옥은 들어오지 않습니다"
+          : "완전 격파 — <b>오늘 맨손 몫 옥 " + PERFECT_GEM_DAY
+            + "알</b>을 다 받으셨습니다";
+        card.appendChild(nt);
+      }
       // 옥은 냥과 셈이 다르다. 합계에 섞지 않고 따로 적는다.
       if (bossGem) {
         var gm = document.createElement("p"); gm.className = "lead gemline";
         var why = [];
         if (r.b.boss) why.push("수호신");
-        if (r.perfect) why.push("완전 격파");
+        if (perfGem) why.push("맨손 완전 격파");
         gm.innerHTML = why.join(" · ") + ' <b>옥 +' + bossGem + '</b>'
           + '<span>옥은 힌트에만 쓰입니다 · 냥으로는 살 수 없습니다</span>';
         card.appendChild(gm);
@@ -4389,7 +4424,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         });
         card.appendChild(ml);
         var mn = document.createElement("p"); mn.className = "lead foot";
-        mn.innerHTML = "다 채웠으면 <b>완전 격파 · 옥 +" + PERFECT_GEM + "</b> 이었습니다";
+        mn.innerHTML = r.aided
+          ? "다 채웠으면 <b>완전 격파</b>였습니다"
+          : "맨손으로 다 채웠으면 <b>완전 격파 · 옥 +" + PERFECT_GEM + "</b> 이었습니다";
         card.appendChild(mn);
       }
     }
@@ -4750,6 +4787,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function giveHint(w, lv) {
+    run.aided = 1;                       // 이 판은 더 이상 맨손이 아니다
     run.hint[w] = Math.max(run.hint[w] || 0, lv);
     LOG.hint++; logEv("H");
     draw();
