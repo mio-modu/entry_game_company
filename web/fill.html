@@ -970,6 +970,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         <b id="examHead">승급 시험</b>
         <small id="examSub"></small>
       </div>
+      <button id="btnExamX" hidden>옥 3 · 한 번 더</button>
       <button id="btnExam">시험 보기</button>
     </div>
     <div id="ups"></div>
@@ -1219,7 +1220,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "trainSub","shop","examBar","examHead","examSub","btnExam","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "trainSub","shop","examBar","examHead","examSub","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -1736,7 +1737,25 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function examBump() {
     try { localStorage.setItem(examKey(), String(examUsed() + 1)); } catch (e) {}
   }
-  function examLeft() { return Math.max(0, examCap() - examUsed()); }
+  // 다만 하루 한 번은 옥으로 더 본다.
+  //
+  // 그날 횟수를 다 쓰고 "한 번만 더"가 되는 자리를 아주 막아 두면,
+  // 들어왔다가 두 번 떨어지고 그냥 나가는 사람이 생긴다. 한 번은 열어 둔다.
+  //
+  // 돈이 아니라 옥으로 받는다. 옥은 수호신을 쓰러뜨려도 나오고 광고로도
+  // 나오니, 돈 쓰는 사람만의 길이 아니다. 그리고 하루 한 번에서 멈추므로
+  // 몇 번이고 돌려 운 좋은 글자판을 뽑는 일은 여전히 못 한다.
+  var EXAM_EXTRA_GEM = 3;
+  function examExtraKey() { return "nathero-examx-" + todayKey(); }
+  function examExtraUsed() {
+    try { return localStorage.getItem(examExtraKey()) === "1"; } catch (e) { return false; }
+  }
+  function examExtraTake() {
+    try { localStorage.setItem(examExtraKey(), "1"); } catch (e) {}
+  }
+  function examLeft() {
+    return Math.max(0, examCap() + (examExtraUsed() ? 1 : 0) - examUsed());
+  }
   function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
 
   function startExam() {
@@ -1819,9 +1838,12 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var row = document.createElement("div"); row.className = "trow";
     var lf = examLeft();
     var note = document.createElement("p"); note.className = "lead foot";
-    note.innerHTML = nextDan()
-      ? "오늘 남은 시험 <b>" + lf + "번</b> · 횟수는 돈으로 살 수 없습니다"
-      : "아홉 단을 모두 지나셨습니다";
+    note.innerHTML = !nextDan() ? "아홉 단을 모두 지나셨습니다"
+      : lf ? "오늘 남은 시험 <b>" + lf + "번</b>"
+      : examExtraUsed()
+        ? "오늘 시험은 여기까지입니다 · <b>내일 다시</b>"
+        : "오늘 횟수를 다 쓰셨습니다 · <b>수련</b>에서 옥 "
+          + EXAM_EXTRA_GEM + "을 들이면 한 번 더";
     card.appendChild(note);
 
     var again = document.createElement("button"); again.className = "btn ghost";
@@ -3415,12 +3437,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var lf = examLeft();
     el.examSub.textContent = d
       ? (dan + 1) + "단 — 빈칸 " + d.need + "칸을 " + d.sec + "초 안에 · 맨몸"
-        + "  ·  오늘 " + lf + " / " + examCap() + "번"
+        + "  ·  오늘 " + lf + " / " + (examCap() + (examExtraUsed() ? 1 : 0)) + "번"
       : "더 오를 단이 없습니다";
     el.btnExam.disabled = !d || !lf;
     el.btnExam.textContent = !d ? "끝"
       : !lf ? "내일 다시"
       : (dan ? (dan + 1) + "단 보기" : "시험 보기");
+    // 다 쓴 날에만, 하루 한 번만 나타난다
+    var canX = !!d && !lf && !examExtraUsed();
+    el.btnExamX.hidden = !canX;
+    el.btnExamX.disabled = gem < EXAM_EXTRA_GEM;
+    el.btnExamX.textContent = "옥 " + EXAM_EXTRA_GEM + " · 한 번 더";
   }
 
   function drawShop() {
@@ -3871,6 +3898,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (window.SFX) SFX.up();
     saveS(); drawStatsOnly(); draw();
     toast("기름 한 병 · 마무리 시간 +15초");
+  });
+
+  el.btnExamX.addEventListener("click", function () {
+    if (examExtraUsed() || gem < EXAM_EXTRA_GEM) return;
+    gem -= EXAM_EXTRA_GEM; examExtraTake();
+    saveS(); drawStatsOnly(); drawExam();
+    toast("옥 " + EXAM_EXTRA_GEM + "을 들여 오늘 한 번 더 보십니다");
   });
 
   el.btnExam.addEventListener("click", function () {
