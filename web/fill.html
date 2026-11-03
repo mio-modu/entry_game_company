@@ -961,6 +961,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 <div id="stash" hidden>
   <div class="panel" id="pChest">
     <h2>보물함 <small id="adSub"></small></h2>
+    <p class="subh">옥 사기</p>
+    <div id="gemShop"></div>
+    <p class="muted" id="gemNote" style="margin:6px 0 14px"></p>
     <div class="up">
       <div>
         <div class="t">광고 열 편에 보물함 하나</div>
@@ -1257,7 +1260,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
-   "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
+   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange",
    "startBar","startHead","startSub","btnStart","hpLine",
@@ -1415,7 +1418,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     try {
       localStorage.setItem(SKEY, JSON.stringify(
         { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
-          gear: gear, steps: steps, forge: forge, dan: dan, gran: 3 }));
+          gear: gear, steps: steps, forge: forge, dan: dan,
+          noAds: noAds, firstBuy: firstBuy, gran: 3 }));
     } catch (e) {}
   }
   function loadS() {
@@ -1426,6 +1430,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       gem = v.gem == null ? 5 : v.gem;
       stage = v.stage || 0;
       dan = v.dan || 0;
+      noAds = v.noAds || 0;
+      firstBuy = v.firstBuy || 0;
       if (v.bag) bag = v.bag;
       if (v.up) up = v.up;
       // 수련 칸을 셋으로 쪼갰다. 그 전에 저장된 값은 옛 눈금이므로 세 배로
@@ -1443,6 +1449,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   var dan = 0;                      // 승급 시험으로 받은 단
+  var noAds = 0, firstBuy = 0;      // 광고 없애기 · 첫 구매를 썼는가
   var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
   // ── 시험판 기록 ─────────────────────────────────────────────────────
@@ -1887,6 +1894,98 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     xb.addEventListener("click", takeExchange);
     xr.appendChild(XL); xr.appendChild(xb);
     el.exchange.appendChild(xr);
+  }
+
+  // ── 옥 상점 ────────────────────────────────────────────────────────
+  //
+  // 웹에서는 구글 플레이 결제를 쓸 수 없다. 앱(TWA)으로 싸서 스토어에
+  // 올린 판에서만 Digital Goods API 가 살아난다. 그래서 상점은
+  //   · 앱 안이면  — 진짜 결제 창이 뜬다
+  //   · 웹이면    — "앱에서만 살 수 있습니다"라고 적고 막는다
+  // 두 갈래로 돈다. 코드를 미리 넣어 두면 앱으로 싸는 날 그냥 켜진다.
+  //
+  // 서버가 없으므로 영수증을 뒤에서 확인하지 못한다. 그래서 파는 것은
+  // 게임 안 재화뿐이고, 등수나 호에는 닿지 않게 두었다 — 설령 조작당해도
+  // 남의 자리를 빼앗지 못한다.
+  var BILLING = "https://play.google.com/billing";
+  var SKUS = [
+    { id: "gem_10",  t: "옥 한 줌",   n: 10,  d: "힌트 열 번" },
+    { id: "gem_55",  t: "옥 한 자루", n: 55,  d: "가장 많이 고르는 꾸러미", best: 1 },
+    { id: "gem_120", t: "옥 한 궤",   n: 120, d: "오래 쓸 분께" },
+    { id: "no_ads",  t: "광고 없애기", once: 1,
+      d: "광고가 사라지고, 광고로 받던 옥은 하루 세 알씩 그냥 들어옵니다" }
+  ];
+  var dgs = null, dgsTried = false, skuPrice = Object.create(null);
+
+  function inApp() {
+    return typeof window !== "undefined" && "getDigitalGoodsService" in window;
+  }
+  function billing(cb) {
+    // 웹에서 한 번 실패했다고 기억해 두면, 앱으로 싸서 열었을 때도
+    // 영영 null 이 돌아온다. 앱 안에서 겪은 실패만 기억한다.
+    if (!inApp()) return cb(null);
+    if (dgsTried) return cb(dgs);
+    dgsTried = true;
+    try {
+      window.getDigitalGoodsService(BILLING).then(function (svc) {
+        dgs = svc;
+        var ids = SKUS.map(function (x) { return x.id; });
+        svc.getDetails(ids).then(function (list) {
+          list.forEach(function (it) {
+            skuPrice[it.itemId] = it.price
+              ? (Number(it.price.value).toLocaleString() + "원") : "";
+          });
+          cb(svc); drawShop();
+        })["catch"](function () { cb(svc); });
+      })["catch"](function () { cb(null); });
+    } catch (e) { cb(null); }
+  }
+
+  function grantSku(x) {
+    if (x.once) {
+      noAds = 1;
+      toast("광고가 사라졌습니다 · 옥은 하루 세 알씩 그냥 들어옵니다");
+    } else {
+      var n = x.n;
+      if (!firstBuy) { firstBuy = 1; n *= 2; toast("첫 구매 · 옥을 곱절로 드립니다"); }
+      gem += n;
+      toast(x.t + " · 옥 +" + n);
+    }
+    if (window.SFX) SFX.up();
+    saveS(); drawStatsOnly(); drawShop(); drawAd();
+  }
+
+  function buySku(x) {
+    billing(function (svc) {
+      if (!svc) { toast("앱에서만 사실 수 있습니다 · 스토어에서 받아 주세요"); return; }
+      var pr;
+      try {
+        pr = new PaymentRequest(
+          [{ supportedMethods: BILLING, data: { sku: x.id } }],
+          { total: { label: x.t, amount: { currency: "KRW", value: "0" } } });
+      } catch (e) { toast("결제를 열 수 없습니다"); return; }
+      pr.show().then(function (resp) {
+        var token = resp.details && resp.details.token;
+        resp.complete("success").then(function () {
+          grantSku(x);
+          // 소모품은 비워 줘야 다시 살 수 있다. 광고 없애기는 남겨 둔다.
+          if (!x.once && token && svc.consume) svc.consume(token)["catch"](function () {});
+          logEv("P", x.id);
+        });
+      })["catch"](function () {});
+    });
+  }
+
+  // 앱을 다시 깔아도 산 것이 살아 있어야 한다
+  function restorePurchases() {
+    billing(function (svc) {
+      if (!svc || !svc.listPurchases) return;
+      svc.listPurchases().then(function (list) {
+        list.forEach(function (p2) {
+          if (p2.itemId === "no_ads") { noAds = 1; saveS(); drawAd(); drawShop(); }
+        });
+      })["catch"](function () {});
+    });
   }
 
   // ── 승급 시험 ──────────────────────────────────────────────────────
@@ -3560,11 +3659,48 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     ov.appendChild(card); document.body.appendChild(ov); next.focus();
   }
 
+  function drawShop2() {   // 옥 상점
+    if (!el.gemShop) return;
+    el.gemShop.textContent = "";
+    SKUS.forEach(function (x) {
+      if (x.once && noAds) return;         // 이미 산 것은 안 보인다
+      var row = document.createElement("div"); row.className = "shoprow";
+      var L = document.createElement("div");
+      var t = document.createElement("div"); t.className = "st";
+      t.innerHTML = x.t + (x.best ? ' <span class="have">많이 고름</span>' : "");
+      var d = document.createElement("div"); d.className = "sd"; d.textContent = x.d;
+      L.appendChild(t); L.appendChild(d);
+      var b = document.createElement("button");
+      b.textContent = skuPrice[x.id] || (inApp() ? "…" : "앱에서");
+      b.disabled = !inApp();
+      b.addEventListener("click", function () { buySku(x); });
+      row.appendChild(L); row.appendChild(b);
+      el.gemShop.appendChild(row);
+    });
+    el.gemNote.textContent = inApp()
+      ? (firstBuy ? "" : "첫 구매는 옥을 곱절로 드립니다")
+      : "옥은 앱에서만 사실 수 있습니다 · 수호신·완전 격파·광고로도 나옵니다";
+  }
+
+  // 광고를 없앤 사람에게는 광고로 받던 몫을 그냥 준다.
+  // 안 그러면 돈을 낸 사람이 더 불편해진다 — 환불과 악평이 거기서 난다.
+  function noAdsDaily() {
+    if (!noAds || dGet("na", 0)) return;
+    gem += 3; dSet("na", 1);
+    saveS(); drawStatsOnly();
+    toast("광고 없애기 · 오늘 몫 옥 세 알이 들어왔습니다");
+  }
+
   function drawAd() {
+    drawShop2();
+    noAdsDaily();
+    var adBox = el.btnAd.closest(".up");
+    if (adBox) adBox.hidden = !!noAds;
     drawHo();
     drawTray();
     var n = adState().n, left = adsLeft(), cap = adCap();
-    el.adSub.textContent = left ? "오늘 " + n + " / " + AD_DAY + "편" : "오늘 몫을 다 봤습니다";
+    el.adSub.textContent = noAds ? "광고 없음"
+      : left ? "오늘 " + n + " / " + AD_DAY + "편" : "오늘 몫을 다 봤습니다";
     // 점 열 개로 어디까지 왔는지 보여 준다. 열째가 함이다.
     var dots = "";
     for (var i = 1; i <= AD_DAY; i++) {
@@ -4344,6 +4480,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   if (el.buildTag) el.buildTag.textContent = "판 " + BUILD;
   loadS();
   loadTut();
+  restorePurchases();
   logLoad();
   drawLog();
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
