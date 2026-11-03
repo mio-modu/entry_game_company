@@ -1282,7 +1282,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 금빛 글자를 끼워 넣었을 때의 배수. 바닥 계산에도 같은 값이 들어간다.
   var WEAK_MUL = 1.5;
   // 수호신 하나에 옥 둘. 열 단계마다 오므로 힌트를 아껴 쓰게 된다.
-  var BOSS_GEM = 2, PERFECT_GEM = 1, AD_GEM_EVERY = 3;
+  // 옥 하나가 받는 값이 자리마다 어긋나 있었다.
+  //
+  // 힌트 한 걸음이 옥 1(결제로 100원)인데 냥으로는 5,000을 불렀다.
+  // 한 판에 1,000냥쯤 버니 "다섯 판 걸려서 힌트 한 번"이고, 그러면
+  // 아무도 안 바꾼다. 반대로 호가 걸린 시험 재도전은 300원이라 쌌다.
+  //
+  // 가장 작은 단위(힌트 한 걸음 = 옥 1)를 기준으로 나머지를 다시 맞춘다.
+  var BOSS_GEM = 3, PERFECT_GEM = 1, AD_GEM_EVERY = 3;
   var CAP_PER_CYCLE = 27;
   // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
   // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
@@ -1759,8 +1766,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
   // 약해지고, 전부 냥이면 올 이유가 약해진다. 작은 옥을 드물게 섞는다.
   var ATT = [
-    { r: "냥", n: 0 }, { r: "옥", n: 1 }, { r: "냥", n: 0 },
-    { r: "반", n: 1 }, { r: "옥", n: 1 }, { r: "냥", n: 0 }, { r: "옥", n: 3 }
+    { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "냥", n: 0 },
+    { r: "반", n: 2 }, { r: "옥", n: 3 }, { r: "냥", n: 0 }, { r: "옥", n: 6 }
   ];
   function attGold() { return Math.round((300 + stage * 14) * (1 + cycle() * 0.6)); }
   function dayKey(k) { return "nathero-" + k + "-" + todayKey(); }
@@ -1796,7 +1803,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 40~60대에게 매일 다른 숙제는 숙제가 아니라 짐이다.
   var QUESTS = [
     { id: "win",   t: "단계 셋을 깨기",      goal: 3,  r: "냥" },
-    { id: "perf",  t: "완전 격파 한 번",     goal: 1,  r: "옥", n: 1 },
+    { id: "perf",  t: "완전 격파 한 번",     goal: 1,  r: "옥", n: 2 },
     { id: "bonus", t: "보너스 낱말 열 개",   goal: 10, r: "냥" }
   ];
   function qCount() { return dGet("q", { win: 0, perf: 0, bonus: 0 }); }
@@ -1824,7 +1831,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 끝까지 올라가도 냥이 만 남짓 남는다. 그 마지막 배출구가 여기다.
   // 값이 싸면 힌트가 공짜가 되고 결제가 설 자리가 사라지므로,
   // 하루 두 알까지만 바꾼다.
-  var EX_GOLD = 5000, EX_DAY = 2;
+  // 한 판에 1,000냥쯤 번다. 두 판이면 옥 한 알이 말이 된다.
+  // 하루 세 알까지 — 끝까지 올라간 사람의 남는 냥(1만 7천)이
+  // 여기로 빠져나가되, 힌트가 공짜가 될 만큼 싸지는 않다.
+  var EX_GOLD = 2200, EX_DAY = 3;
   function exLeft() { return Math.max(0, EX_DAY - dGet("ex", 0)); }
   function takeExchange() {
     if (!exLeft() || gold < EX_GOLD) return;
@@ -2060,7 +2070,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 돈이 아니라 옥으로 받는다. 옥은 수호신을 쓰러뜨려도 나오고 광고로도
   // 나오니, 돈 쓰는 사람만의 길이 아니다. 그리고 하루 한 번에서 멈추므로
   // 몇 번이고 돌려 운 좋은 글자판을 뽑는 일은 여전히 못 한다.
-  var EXAM_EXTRA_GEM = 3;
+  // 호가 걸린 일이라 싸면 안 된다. 하루 한 번뿐이기도 하다.
+  var EXAM_EXTRA_GEM = 8;
   function examExtraKey() { return "nathero-examx-" + todayKey(); }
   function examExtraUsed() {
     try { return localStorage.getItem(examExtraKey()) === "1"; } catch (e) { return false; }
