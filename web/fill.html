@@ -1139,8 +1139,14 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
   // 벽이 생기고, 그 벽을 돈으로만 넘게 만들면 리뷰가 무너진다.
-  var ATK_STEP = 1.14, TIME_STEP = 3, COMBO_STEP = 0.02, COMBO_CAP = 12;
-  var CAP_PER_CYCLE = 9;
+  // 수련 한 칸을 잘게 쪼갠다.
+  //
+  // 전에는 등 한 칸이 +3초였고 1구간 상한이 두 칸이라, 열한 단계를 올라와도
+  // 살 것이 여섯 번뿐이었다. 그 사이 냥은 삼천 넘게 쌓이고 쓸 데가 없었다.
+  // 칸을 셋으로 쪼개 +1초씩 여섯 칸으로 만든다. 끝에서 닿는 힘은 그대로고
+  // (등 +27초, 검 x3.25, 북 +18%), 사는 횟수만 세 배가 된다.
+  var ATK_STEP = 1.04464, TIME_STEP = 1, COMBO_STEP = 0.0066667, COMBO_CAP = 12;
+  var CAP_PER_CYCLE = 27;
   // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
   // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
   // 셋 다 조선 세계관 안에 그대로 있다 — 산을 오르는 사람이 검과 등과 북을
@@ -1149,13 +1155,13 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   //   등  밤을 밝혀 시간을 번다
   //   북  연달아 두드릴수록 기세가 오른다 — 연속 배수의 은유 그 자체
   var UPGRADES = [
-    { id: "atk",   t: "검",   w: "공격력",   base: 40,  r: 1.16,
+    { id: "atk",   t: "검",   w: "공격력",   base: 40,  r: 1.0507,
       desc: function () { return "빈칸 피해 x" + (gearVal("atk") * Math.pow(ATK_STEP, up.atk)).toFixed(2); } },
-    { id: "time",  t: "등",   w: "제한시간", base: 90,  r: 1.22,
+    { id: "time",  t: "등",   w: "제한시간", base: 90,  r: 1.0685,
       desc: function () {
         return "제한시간 +" + Math.round(up.time * TIME_STEP + gearVal("time")) + "초";
       } },
-    { id: "combo", t: "북",   w: "연속 배수", base: 150, r: 1.22,
+    { id: "combo", t: "북",   w: "연속 배수", base: 150, r: 1.0685,
       desc: function () { return "연속마다 +"
         + Math.round((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100) + "%"; } }
   ];
@@ -1248,7 +1254,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 산 하나를 넘을 때마다 한 단계씩 열어 두면, 강화가 산을 앞지르지 않고
   // 냥이 끝까지 쓸모를 갖는다.
   function upCap() {
-    return Math.min(CAP_PER_CYCLE * (cycle() + 1), 2 + Math.floor(stage / 12));
+    return Math.min(CAP_PER_CYCLE * (cycle() + 1), 6 + Math.floor(stage / 4));
   }
   function trainLv() { return Math.floor((up.atk + up.time + up.combo) / 3); }
 
@@ -1257,8 +1263,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 리뷰가 무너진다. 대신 연속 실패를 보정으로 갚는다.
   function successRate(lvl, f) {
     var k = lvl % CAP_PER_CYCLE;
-    if (k < 3) return 1;
-    return Math.min(1, Math.max(0.20, 0.92 - (k - 2) * 0.095) + f * 0.10);
+    if (k < 9) return 1;                 // 앞 아홉 칸은 반드시 된다
+    return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
   var SKEY = "nathero-fill-save";
@@ -1266,7 +1272,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     try {
       localStorage.setItem(SKEY, JSON.stringify(
         { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
-          gear: gear, steps: steps, forge: forge }));
+          gear: gear, steps: steps, forge: forge, gran: 3 }));
     } catch (e) {}
   }
   function loadS() {
@@ -1278,6 +1284,13 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       stage = v.stage || 0;
       if (v.bag) bag = v.bag;
       if (v.up) up = v.up;
+      // 수련 칸을 셋으로 쪼갰다. 그 전에 저장된 값은 옛 눈금이므로 세 배로
+      // 옮겨 준다 — 안 그러면 올려 둔 등이 +6초에서 +2초로 줄어든다.
+      if (v.gran !== 3) {
+        up.atk = (up.atk || 0) * 3;
+        up.time = (up.time || 0) * 3;
+        up.combo = (up.combo || 0) * 3;
+      }
       if (v.fails) fails = v.fails;
       if (v.gear) gear = v.gear;
       if (v.steps) steps = v.steps;
@@ -3033,7 +3046,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     run = null;
     el.bonusBar.hidden = true;
     // 단수는 장식이 아니라 수입이다. 고르게 올린 사람이 더 번다.
-    var reward = won ? Math.round((40 + r.max * 0.3) * (1 + trainLv() * 0.05)) : 0;
+    var reward = won ? Math.round((40 + r.max * 0.3) * (1 + trainLv() * 0.0167)) : 0;
     // 미끄러지지 않고 한 번에 깼으면 3할을 더 얹는다.
     // 실패에 벌을 주는 대신 성공에 상을 주는 쪽이다 — 같은 신중함을
     // 끌어내면서 진 사람을 더 밀어내지 않는다.
