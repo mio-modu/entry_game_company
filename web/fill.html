@@ -1171,6 +1171,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 칸을 셋으로 쪼개 +1초씩 여섯 칸으로 만든다. 끝에서 닿는 힘은 그대로고
   // (등 +27초, 검 x3.25, 북 +18%), 사는 횟수만 세 배가 된다.
   var ATK_STEP = 1.04464, TIME_STEP = 1, COMBO_STEP = 0.0066667, COMBO_CAP = 12;
+  // 금빛 글자를 끼워 넣었을 때의 배수. 바닥 계산에도 같은 값이 들어간다.
+  var WEAK_MUL = 1.5;
   var CAP_PER_CYCLE = 27;
   // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
   // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
@@ -1504,7 +1506,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 기세는 공식으로 찍지 않고, '가장 짧은 need개를 채우면 정확히 0'이 되도록
   // 글자판에서 거꾸로 계산한다. 그래야 "두 개만 맞춰도 깨진다"는 약속이
   // 어느 판에서나 그대로 지켜진다.
-  function hpFor(ans, need) {
+  function hpFor(ans, need, boost) {
     var byLen = ans.slice().sort(function (a, b) { return a.length - b.length; });
     var hp = 0;
     // 기세는 '강화가 하나도 없을 때' 기준으로 잡는다.
@@ -1524,8 +1526,17 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     // 화면이 "N개면 쓰러집니다"라고 적는 N은 기세에서 거꾸로 나온 값이다.
     // 그러니 바닥은 표시가 아니라 기세에 둬야 한다. 표시에만 두면 화면은
     // 네 개라고 하는데 두 개에 쓰러지는, 전에 한 번 겪은 그 어긋남이 또 난다.
-    var lo = floorNeed(need), acc = 0;
-    for (var j = 0; j < lo - 1 && j < byLen.length; j++) acc += dmgOf(byLen[j].length, j);
+    // 바닥은 '가장 잘 두는 사람' 기준으로 깔아야 한다.
+    //
+    // 전에는 짧은 낱말부터 세고 있었다. 그런데 사람은 긴 것부터 친다 —
+    // 길수록 깊게 들어가니까. 그래서 바닥이 헐거웠고, 갖춘 사람은 화면이
+    // 세 개라는 판을 한 개로 눕혔다. 금빛 글자가 붙으면 더 빨랐다.
+    // 가장 긴 것부터, 금빛까지 얹어서 센다.
+    var best = ans.slice().sort(function (a, b) { return b.length - a.length; });
+    var lo = floorNeed(need), acc = 0, bo = boost || 1;
+    for (var j = 0; j < lo - 1 && j < best.length; j++) {
+      acc += Math.round(dmgOf(best[j].length, j) * bo);
+    }
     if (lo > 1 && acc >= hp) hp = acc + 1;
     return hp;
   }
@@ -1543,7 +1554,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     // 화면이 말하는 승리 조건은 이제 하나뿐이라 어긋날 자리가 없다.
     var b = stageInfo(stage);
     var p = makePuzzle(b.spec);
-    var hp = Math.round(hpFor(p.ans, b.need) * b.hpMul);
+    var hp = Math.round(hpFor(p.ans, b.need, hasMod(b, "weak") ? WEAK_MUL : 1) * b.hpMul);
     run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "ready",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
             payFill: 0, payWord: 0, payPerfect: 0,
@@ -2200,7 +2211,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
           * gearVal("atk") * Math.pow(ATK_STEP, up.atk)
           * (1 + Math.min(run.combo, COMBO_CAP)
                  * (0.08 + gearVal("combo") + up.combo * COMBO_STEP));
-    if (weakHit()) d *= 1.8;               // 금빛 글자를 끼워 넣으면 크게 들어간다
+    if (weakHit()) d *= WEAK_MUL;          // 금빛 글자를 끼워 넣으면 크게 들어간다
     return Math.round(d);
   }
 
@@ -2902,7 +2913,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     if (run.weak >= 0 && run.tiles[run.weak]) {
       var wch = run.tiles[run.weak];
       out.push('금빛 <span class="w">\u300c' + wch + '\u300d</span>' + josaEul(wch) + ' 끼워 넣으면 '
-             + '<b>피해가 1.8배</b> · 쓰고 나면 다른 글자로 옮겨 갑니다');
+             + '<b>피해가 ' + WEAK_MUL + '배</b> · 쓰고 나면 다른 글자로 옮겨 갑니다');
     }
     if (run.sealed >= 0 && run.tiles[run.sealed]) {
       var sch = run.tiles[run.sealed];
