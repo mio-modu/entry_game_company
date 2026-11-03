@@ -63,6 +63,19 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 }
 .muted { color: var(--fg-dim); font-size: 12.5px; }
 .nb { white-space: nowrap; }
+/* 옥을 쓰고 2.6초 만에 사라지면 쓴 사람만 손해다. 쓴 것은 판이 끝날
+   때까지 남는다. 글씨를 느리게 읽는 사람이 이 게임의 손님이다. */
+.hints { display: flex; flex-direction: column; gap: 7px; margin-top: 9px;
+  padding-top: 9px; border-top: 1px dashed var(--line); }
+.hints .hint { display: flex; gap: 8px; align-items: baseline;
+  font-size: 12px; line-height: 1.55; color: var(--fg-dim); }
+.hints .hint .k { flex: none; font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--jade); border: 1px solid var(--jade); border-radius: 20px;
+  padding: 1px 7px; }
+.hints .hint b { color: var(--fg); }
+.hints .hint .ghost { color: var(--gold); letter-spacing: .08em; }
+/* 실루엣 — 글자가 비쳐 보이기만 한다. 눌러 넣는 일은 사람이 한다. */
+.cell.ghost { color: var(--gold); opacity: .26; font-weight: 700; }
 /* 한 낱말만 다음 줄로 떨어지는 것(외톨이 줄)을 막는다. 브라우저가
    마지막 줄을 혼자 두지 않도록 끊는 자리를 다시 고른다. */
 p, li, .d, .t, .lead, .cite, .note, .guide, .startbar small, .bonusbar span {
@@ -816,6 +829,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       <span id="gNote">다 채우면 보너스</span>
     </div>
     <div id="slots"></div>
+    <div class="hints" id="hints" hidden></div>
   </div>
 
   <div id="kwrap" hidden>
@@ -1127,7 +1141,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // ── 상태 ────────────────────────────────────────────────────────────
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
-   "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
+   "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
    "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "startBar","startHead","startSub","btnStart","hpLine",
@@ -1507,7 +1521,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
             payFill: 0, payWord: 0, payPerfect: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
             // 산의 규칙에 쓰는 것들
-            weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 1 };
+            weak: -1, sealed: -1, sealAt: 0, weakAt: 0, shown: 1,
+            hint: Object.create(null) };   // 낱말 -> 밝힌 깊이 (1 뜻 · 2 첫 글자 · 3 실루엣)
     if (hasMod(b, "weak")) moveWeak();
     if (hasMod(b, "fog")) run.shown = 1;
     picked = [];
@@ -1973,7 +1988,9 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
 
   // ── 그리기 ──────────────────────────────────────────────────────────
   function draw() {
-    drawSlots(); drawTiles(); drawWord();
+    drawSlots(); drawHints(); drawTiles(); drawWord();
+    var hs = el.btnHint.querySelector("small");
+    if (hs) hs.textContent = hintLabel();
     fitLine(el.hpLine);
     el.hp.style.width = Math.max(0, (run.hp / run.max) * 100) + "%";
     el.hpNow.textContent = Math.max(0, run.hp);
@@ -2003,6 +2020,31 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     el.timer.classList.toggle("low", run.left <= 10);
   }
 
+  // 옥으로 산 것은 판이 끝날 때까지 남는다.
+  var HINT_STEP = ["", "뜻", "첫 글자", "실루엣"];
+  var HINT_SAY  = ["", "뜻을 밝혔습니다", "첫 글자를 밝혔습니다", "실루엣이 비칩니다"];
+  function drawHints() {
+    var keys = Object.keys(run && run.hint ? run.hint : {});
+    el.hints.textContent = "";
+    el.hints.hidden = !keys.length;
+    keys.forEach(function (w) {
+      var lv = run.hint[w], done = !!run.got[w];
+      var line = document.createElement("div"); line.className = "hint";
+      var k = document.createElement("span"); k.className = "k";
+      k.textContent = done ? "찾음" : w.length + "자";
+      line.appendChild(k);
+      var body = document.createElement("span");
+      var txt = MEAN[w] || "";
+      if (done) body.innerHTML = "<b>" + w + "</b>" + (txt ? " · " + txt : "");
+      else {
+        var head = lv >= 2 ? '<b>' + w.charAt(0) + '</b>' + "□".repeat(w.length - 1) + " · " : "";
+        body.innerHTML = head + (txt || "뜻풀이가 없는 낱말입니다");
+      }
+      line.appendChild(body);
+      el.hints.appendChild(line);
+    });
+  }
+
   function drawSlots() {
     el.slots.textContent = "";
     var fog = hasMod(run.b, "fog") && run.phase === "fight";
@@ -2026,10 +2068,13 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       var lab = document.createElement("span");
       lab.className = "lenlab"; lab.textContent = w.length + "자";
       row.appendChild(lab);
+      var lv = run.hint[w] || 0;
       for (var i = 0; i < w.length; i++) {
         var c = document.createElement("b");
-        c.className = "cell" + (on ? " on" : "");
-        c.textContent = on ? w.charAt(i) : "";
+        // 밝힌 깊이에 따라 비쳐 보인다. 넣는 일은 끝까지 사람이 한다.
+        var see = on ? 2 : (lv >= 3 || (lv >= 2 && i === 0)) ? 1 : 0;
+        c.className = "cell" + (on ? " on" : see ? " ghost" : "");
+        c.textContent = see ? w.charAt(i) : "";
         row.appendChild(c);
       }
       el.slots.appendChild(row);
@@ -3365,37 +3410,61 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     draw();
   });
   // 힌트는 글자가 아니라 뜻을 준다. 답을 알려주면 채우는 맛이 사라진다.
+  // 힌트는 세 걸음으로 깊어진다. 한 걸음에 옥 하나.
+  //
+  //   1  뜻풀이 — "막연히 맞추기"가 "문제 풀기"가 되는 자리다
+  //   2  첫 글자
+  //   3  실루엣 — 글자가 흐리게 비친다. 눌러 넣는 일은 끝까지 사람이 한다
+  //
+  // 셋 다 화면에 남는다. 쓰고 나서 2.6초 만에 사라지면 옥을 쓴 사람만
+  // 손해다. 더구나 이 게임의 손님은 글씨를 느리게 읽는 쪽이다.
+  function hintTarget() {
+    var rest = remaining();
+    if (!rest.length) return null;
+    // 이미 밝히기 시작한 낱말이 있으면 그것을 더 깊이 판다
+    var going = rest.filter(function (w) { return run.hint[w] && run.hint[w] < 3; });
+    if (going.length) return going[0];
+    var fresh = rest.filter(function (w) { return !run.hint[w]; });
+    if (!fresh.length) return null;
+    var withMean = fresh.filter(function (w) { return MEAN[w]; });
+    var pool = withMean.length ? withMean : fresh;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function hintLabel() {
+    if (!run || run.daily) return "옥 1개";
+    var w = hintTarget();
+    if (!w) return "옥 1개";
+    var nx = (run.hint[w] || 0) + 1;
+    return "옥 1개 · " + HINT_STEP[nx];
+  }
+
+  function giveHint(w, lv) {
+    run.hint[w] = Math.max(run.hint[w] || 0, lv);
+    LOG.hint++; logEv("H");
+    draw();
+  }
+
   el.btnHint.addEventListener("click", function () {
-    if (!run) return;
+    if (!run || run.phase === "ready") return;
     // 오늘의 낱말은 리그의 씨앗이다. 여기 힌트가 통하면 보물함을 많이 연
     // 사람이, 즉 돈과 시간을 더 쓴 사람이 순위에서 앞선다. 그 순간 등수는
     // 실력이 아니라 지갑이 되고, 공유할 이유도 같이 사라진다.
     if (run.daily) { toast("오늘의 낱말은 모두 같은 조건입니다"); return; }
-    // 힌트가 공짜면 보물함에서 나온 옥이 아무 값어치가 없다.
-    // 옥을 쓰게 해야 보물함을 여는 손맛이 생기고, 나중에 광고·결제가
-    // 붙을 자리도 여기 하나로 모인다.
+    var w = hintTarget();
+    if (!w) { toast("더 밝힐 빈칸이 없습니다"); return; }
+    var nx = (run.hint[w] || 0) + 1;
+    // 반딧불이 있으면 먼저 쓴다. 옥보다 흔한 것부터 쓰는 쪽이 늘 이득이다.
     if (bag.brush > 0) {
-      bag.brush--;
-      var rest0 = remaining();
-      if (rest0.length) {
-        var w0 = rest0[Math.floor(Math.random() * rest0.length)];
-        toast("반딧불 · " + w0.length + "글자, 첫 글자는 “" + w0.charAt(0) + "”");
-        LOG.hint++; logEv("H"); draw(); return;
-      }
+      bag.brush--; saveS(); drawStatsOnly();
+      giveHint(w, nx);
+      toast("반딧불 · " + HINT_SAY[nx]);
+      return;
     }
     if (gem < 1) { toast("옥이 없습니다 · 수호신을 쓰러뜨리면 보물함에서 나옵니다"); return; }
     gem--; saveS(); drawStatsOnly();   // 쓴 것이 바로 줄어야 쓴 줄 안다
-    LOG.hint++; logEv("H");
-    var rest = remaining();
-    if (!rest.length) { toast("남은 빈칸이 없습니다"); return; }
-    var withMean = rest.filter(function (w) { return MEAN[w]; });
-    if (!withMean.length) {
-      var w0 = rest[0];
-      toast(w0.length + "글자 · 첫 글자는 “" + w0.charAt(0) + "”");
-      return;
-    }
-    var w = withMean[Math.floor(Math.random() * withMean.length)];
-    toast(w.length + "글자 · " + MEAN[w]);
+    giveHint(w, nx);
+    toast("옥 하나 · " + HINT_SAY[nx]);
   });
 
   el.btnAd.addEventListener("click", function () {
