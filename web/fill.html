@@ -328,6 +328,14 @@ body.quake { animation: shake .42s ease-out; }
   background: none; border: 0; color: var(--fg-faint); font-size: 12.5px;
   margin-top: 10px; cursor: pointer; font-family: inherit; text-decoration: underline;
 }
+.rulenote {
+  margin-top: 7px; font-size: 11.5px; line-height: 1.6; color: var(--fg-dim);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.rulenote > span { display: block; }
+.rulenote .w, .rulenote .s { display: inline; }
+.rulenote .w { color: var(--gold); font-weight: 700; }
+.rulenote .s { color: var(--danger); font-weight: 700; }
 .rulechip {
   display: inline-block; font-family: var(--font-mono); font-size: 10.5px;
   letter-spacing: .06em; padding: 1px 8px; border-radius: 20px;
@@ -850,6 +858,9 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
 
   <div class="slot" id="slot"></div>
   <div class="tiles" id="tiles"></div>
+  <!-- 규칙은 수호신 이름 옆 꼬리표에만 적혀 있었다. 정작 금빛 글자가
+       뜬 자리 옆에는 아무 말이 없어서, 저게 뭔지 알 길이 없었다. -->
+  <p class="rulenote" id="ruleNote" hidden></p>
   <div class="acts">
     <button class="btn" id="btnClear">지우기<small>한 글자씩</small></button>
     <button class="btn" id="btnHint">힌트<small>옥 1개</small></button>
@@ -1141,7 +1152,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // ── 상태 ────────────────────────────────────────────────────────────
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
-   "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","tiles","btnClear","btnHint",
+   "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
    "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "startBar","startHead","startSub","btnStart","hpLine",
@@ -1378,6 +1389,23 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     var c = n.charCodeAt(n.length - 1);
     if (c < 0xAC00 || c > 0xD7A3) return n + "을";
     return n + (((c - 0xAC00) % 28) ? "을" : "를");
+  }
+
+  // 받침이 있으면 은, 없으면 는
+  function neun(n) {
+    var c = n.charCodeAt(n.length - 1);
+    if (c < 0xAC00 || c > 0xD7A3) return n + "은";
+    return n + (((c - 0xAC00) % 28) ? "은" : "는");
+  }
+  function josaEul(n) {
+    var c = n.charCodeAt(n.length - 1);
+    if (c < 0xAC00 || c > 0xD7A3) return "을";
+    return ((c - 0xAC00) % 28) ? "을" : "를";
+  }
+  function josaEun(n) {
+    var c = n.charCodeAt(n.length - 1);
+    if (c < 0xAC00 || c > 0xD7A3) return "은";
+    return ((c - 0xAC00) % 28) ? "은" : "는";
   }
 
   function lerp(a, b, sub) { return Math.round(a + (b - a) * (sub / 9)); }
@@ -1991,6 +2019,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     drawSlots(); drawHints(); drawTiles(); drawWord();
     var hs = el.btnHint.querySelector("small");
     if (hs) hs.textContent = hintLabel();
+    drawRuleNote();
     fitLine(el.hpLine);
     el.hp.style.width = Math.max(0, (run.hp / run.max) * 100) + "%";
     el.hpNow.textContent = Math.max(0, run.hp);
@@ -2864,6 +2893,28 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     catch (e) {}
   }
   function saveTut() { try { localStorage.setItem(TKEY, JSON.stringify(tut)); } catch (e) {} }
+
+  // 지금 이 판에 걸린 규칙을, 그 글자를 짚어서 적는다.
+  function drawRuleNote() {
+    var n = el.ruleNote;
+    if (!run || run.chain || run.phase === "ready") { n.hidden = true; return; }
+    var out = [];
+    if (run.weak >= 0 && run.tiles[run.weak]) {
+      var wch = run.tiles[run.weak];
+      out.push('금빛 <span class="w">\u300c' + wch + '\u300d</span>' + josaEul(wch) + ' 끼워 넣으면 '
+             + '<b>피해가 1.8배</b> · 쓰고 나면 다른 글자로 옮겨 갑니다');
+    }
+    if (run.sealed >= 0 && run.tiles[run.sealed]) {
+      var sch = run.tiles[run.sealed];
+      out.push('<span class="s">\u300c' + sch + '\u300d</span>' + josaEun(sch) + ' 수호신이 눌러 두었습니다 '
+             + '· 잠시 뒤 풀립니다');
+    }
+    if (hasMod(run.b, "fog") && run.phase === "fight") {
+      out.push('<b>안개</b> — 빈칸의 글자 수가 가려집니다 · 하나 채울 때마다 하나씩 걷힙니다');
+    }
+    n.innerHTML = out.map(function (t) { return "<span>" + t + "</span>"; }).join("");
+    n.hidden = !out.length;
+  }
 
   function drawGuide() {
     var g = el.guide;
