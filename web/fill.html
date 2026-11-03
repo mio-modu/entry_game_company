@@ -141,6 +141,42 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px;
   font: inherit; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
 .shoprow button:disabled { color: var(--fg-faint); border-color: #2A2F42; }
+/* 장터 칸의 작은 그림. 결과 칸(.gearshot)과 같은 종이·테두리를 써서
+   함에서 나온 그 물건이 여기 놓여 있다고 읽히게 한다. */
+.sart { flex: none; width: 46px; height: 46px; border-radius: 8px; overflow: hidden;
+  border: 1.5px solid var(--gb, #8A7250); background: #F3EFE4; display: block; }
+.sart svg, .sart img { width: 100%; height: 100%; display: block; }
+.sart.i-fly  { --gb:#B99227; } .sart.i-oil { --gb:#8C9A86; }
+.sart.i-hone { --gb:#6E7682; } .sart.i-gem { --gb:#4E8F6E; }
+.shoprow .sl { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+/* 옥 사기.
+   글로만 늘어놓으면 「옥 한 줌·한 자루·한 궤」가 다 같은 줄로 보인다.
+   돈을 쓰는 자리일수록 무엇을 얼마나 받는지 눈으로 먼저 들어와야 한다.
+   그래서 세 꾸러미는 그림 한 장씩 들고 나란히 선다. 칸 전체가 단추다. */
+.gempacks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gempack {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 13px;
+  padding: 12px 6px 10px; font-family: inherit; color: var(--fg); text-align: center;
+  transition: border-color .18s ease, transform .08s ease;
+}
+.gempack:active { transform: scale(.96); }
+.gempack.best { border-color: var(--jade); }
+.gempack .pic { width: 100%; max-width: 68px; aspect-ratio: 1; border-radius: 9px;
+  overflow: hidden; border: 1.5px solid #4E8F6E; background: #F3EFE4; }
+.gempack .pic svg { width: 100%; height: 100%; display: block; }
+.gempack .n { font-family: var(--font-display); font-size: 19px; font-weight: 700;
+  color: var(--jade); line-height: 1.1; }
+.gempack .nm { font-size: 11px; color: var(--fg-dim); }
+.gempack .pz { font-family: var(--font-mono); font-size: 12.5px; font-weight: 700;
+  color: var(--gold); margin-top: 2px; }
+.gempack:disabled .pz { color: var(--fg-faint); }
+.gempack .flag {
+  position: absolute; top: -7px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 700; white-space: nowrap;
+  background: var(--jade); color: #06201B; border-radius: 20px; padding: 2px 8px;
+}
 .honebtn { display: inline-block; margin-top: 5px; font: inherit; font-size: 11px;
   background: transparent; color: var(--fg-dim); border: 1px solid var(--line);
   border-radius: 20px; padding: 3px 9px; }
@@ -889,6 +925,31 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   flex: none; margin: 0; border-radius: 0; border: 0; border-top: 1px solid var(--line);
   background: var(--surface-2); padding: 14px 8px; font-size: 15px;
 }
+/* 지갑.
+   값을 치르는 자리에서 가진 것이 안 보이면, 살 수 있는지 없는지를
+   창을 닫았다 열었다 하며 확인해야 한다. 덮개가 위쪽 머리글을 가리므로
+   패널 안에 제 지갑을 따로 들여놓는다. 줄어드는 것도 여기서 보인다. */
+.card.sheet .pursebar {
+  flex: none; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--line);
+  background: var(--surface-2); font-family: var(--font-mono); font-size: 13.5px;
+  color: var(--fg-dim); position: relative;
+}
+.card.sheet .pursebar b { font-size: 16px; color: var(--gold); font-weight: 700; }
+.card.sheet .pursebar .pm b { color: var(--jade); }
+.pursebar .pg.down b, .pursebar .pm.down b { color: var(--danger); }
+/* 깎인 만큼이 숫자에서 떨어져 나와 아래로 흘러내린다 */
+.spendfly {
+  position: absolute; left: 16px; top: calc(100% - 7px); font-family: var(--font-mono);
+  font-size: 13px; font-weight: 700; color: var(--danger); pointer-events: none;
+  text-shadow: 0 0 6px var(--bg), 0 0 6px var(--bg);
+  animation: spendfly 1.05s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes spendfly {
+  0%   { opacity: 0; transform: translateY(-7px); }
+  20%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(19px); }
+}
 
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 40;
   background: #2A2F42; border: 1px solid var(--line); border-radius: 22px;
@@ -1466,7 +1527,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-03-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-03-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -1486,8 +1547,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       dan = v.dan || 0;
       noAds = v.noAds || 0;
       firstBuy = v.firstBuy || 0;
-      if (v.bag) bag = v.bag;
-      if (v.up) up = v.up;
+      function fold(dst, src) {
+        if (!src) return dst;
+        for (var k in dst) if (src[k] != null) dst[k] = src[k];
+        for (var k2 in src) if (dst[k2] == null) dst[k2] = src[k2];
+        return dst;
+      }
+      bag = fold(bag, v.bag);
+      up = fold(up, v.up);
       // 수련 칸을 셋으로 쪼갰다. 그 전에 저장된 값은 옛 눈금이므로 세 배로
       // 옮겨 준다 — 안 그러면 올려 둔 등이 +6초에서 +2초로 줄어든다.
       if (v.gran !== 3) {
@@ -1495,10 +1562,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         up.time = (up.time || 0) * 3;
         up.combo = (up.combo || 0) * 3;
       }
-      if (v.fails) fails = v.fails;
+      fails = fold(fails, v.fails);
       if (v.gear) gear = v.gear;
       if (v.steps) steps = v.steps;
-      if (v.forge) forge = v.forge;
+      forge = fold(forge, v.forge);
     } catch (e) {}
   }
 
@@ -1905,7 +1972,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function takeExchange() {
     if (!exLeft() || gold < EX_GOLD) return;
     gold -= EX_GOLD; gem += 1; dSet("ex", dGet("ex", 0) + 1);
-    saveS(); drawStatsOnly(); drawToday();
+    saveS(); drawStatsOnly(); drawToday(); spent(EX_GOLD, 0);
     if (window.SFX) SFX.up();
     toast("냥 " + EX_GOLD.toLocaleString() + "을 옥 한 알로 바꿨습니다");
   }
@@ -2020,12 +2087,74 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 남의 자리를 빼앗지 못한다.
   var BILLING = "https://play.google.com/billing";
   var SKUS = [
-    { id: "gem_10",  t: "옥 한 줌",   n: 10,  d: "힌트 열 번" },
-    { id: "gem_55",  t: "옥 한 자루", n: 55,  d: "가장 많이 고르는 꾸러미", best: 1 },
-    { id: "gem_120", t: "옥 한 궤",   n: 120, d: "오래 쓸 분께" },
+    { id: "gem_10",  t: "옥 한 줌",   n: 10,  d: "힌트 열 번",              a: "g1" },
+    { id: "gem_55",  t: "옥 한 자루", n: 55,  d: "가장 많이 고르는 꾸러미", a: "g2", best: 1 },
+    { id: "gem_120", t: "옥 한 궤",   n: 120, d: "오래 쓸 분께",            a: "g3" },
     { id: "no_ads",  t: "광고 없애기", once: 1,
       d: "광고가 사라지고, 광고로 받던 옥은 하루 세 알씩 그냥 들어옵니다" }
   ];
+
+  // 꾸러미 그림.
+  //   셋이 같은 옥인데 양만 다르다는 것이 한눈에 보여야 한다. 그래서
+  //   돌은 똑같이 그리고 담은 그릇만 바꾼다 — 맨손 한 줌, 자루, 궤.
+  //   같은 종이·같은 비취빛을 쓰니 셋이 한 계보로 읽힌다.
+  var JADE = '<defs><radialGradient id="%ID%" cx=".34" cy=".3" r=".78">'
+    + '<stop offset="0" stop-color="#BFE6CE"/><stop offset=".45" stop-color="#6DB391"/>'
+    + '<stop offset="1" stop-color="#235741"/></radialGradient></defs>';
+  function jstone(id, cx, cy, r) {
+    return '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + id + ')"'
+      + ' stroke="#1D4433" stroke-width="' + (r > 11 ? 2.1 : 1.6) + '"/>'
+      + '<ellipse cx="' + (cx - r * 0.34) + '" cy="' + (cy - r * 0.38) + '" rx="' + (r * 0.33)
+      + '" ry="' + (r * 0.21) + '" fill="#FFFFFF" opacity=".55"'
+      + ' transform="rotate(-32 ' + (cx - r * 0.34) + ' ' + (cy - r * 0.38) + ')"/>';
+  }
+  var GEM_ART = {
+    // 한 줌 — 돌 셋이 바닥에 놓였다
+    g1: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + JADE.replace("%ID%", "j1")
+      + '<ellipse cx="50" cy="78" rx="30" ry="5.5" fill="#2B2219" opacity=".12"/>'
+      + jstone("j1", 63, 48, 14)
+      + jstone("j1", 37, 58, 17)
+      + jstone("j1", 55, 68, 12)
+      + '</svg>',
+
+    // 한 자루 — 무명 자루를 목만 묶어 세우고, 입에서 돌이 넘친다
+    g2: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + JADE.replace("%ID%", "j2")
+      + '<ellipse cx="50" cy="90" rx="32" ry="5.5" fill="#2B2219" opacity=".12"/>'
+      // 자루 몸통
+      + '<path d="M31 44c-7 10-9 23-4 33 5 9 41 9 46 0 5-10 3-23-4-33z"'
+      + ' fill="#D8CDB2" stroke="#6B5434" stroke-width="2.3" stroke-linejoin="round"/>'
+      // 주름
+      + '<g fill="none" stroke="#9E9173" stroke-width="1.6" opacity=".8">'
+      + '<path d="M38 56c3 8 2 16-1 22"/><path d="M62 56c-3 8-2 16 1 22"/></g>'
+      // 묶은 목
+      + '<path d="M30 44c13 5 27 5 40 0" fill="none" stroke="#6B5434"'
+      + ' stroke-width="4.2" stroke-linecap="round"/>'
+      + jstone("j2", 36, 32, 11)
+      + jstone("j2", 58, 27, 13)
+      + jstone("j2", 50, 40, 9)
+      + '</svg>',
+
+    // 한 궤 — 뚜껑을 연 작은 궤에 가득 담겼다
+    g3: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">'
+      + JADE.replace("%ID%", "j3")
+      + '<ellipse cx="50" cy="90" rx="34" ry="5.5" fill="#2B2219" opacity=".12"/>'
+      // 열린 뚜껑
+      + '<path d="M20 36l8-16h44l8 16z" fill="#8A6B3E" stroke="#4B3A1F"'
+      + ' stroke-width="2.3" stroke-linejoin="round"/>'
+      + jstone("j3", 34, 46, 12)
+      + jstone("j3", 58, 42, 14)
+      + jstone("j3", 47, 54, 10)
+      + jstone("j3", 68, 55, 9)
+      // 궤 몸통
+      + '<path d="M19 52h62v26a4 4 0 0 1-4 4H23a4 4 0 0 1-4-4z"'
+      + ' fill="#A3814C" stroke="#4B3A1F" stroke-width="2.3" stroke-linejoin="round"/>'
+      + '<rect x="19" y="52" width="62" height="6" fill="#7E6134" stroke="#4B3A1F" stroke-width="2"/>'
+      // 장석
+      + '<rect x="44" y="58" width="12" height="13" rx="2" fill="#D9B35B" stroke="#4B3A1F" stroke-width="2"/>'
+      + '</svg>'
+  };
   var dgs = null, dgsTried = false, skuPrice = Object.create(null);
 
   function inApp() {
@@ -3297,14 +3426,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 기름과 숫돌은 함에서 나오기만 하고 쓰는 자리가 아예 없었다. 함이
   // "마무리 시간 +15초"라고 적어 놓고 아무 일도 안 했다. 먼저 살리고,
   // 그 다음 냥으로도 살 수 있게 한다 — 수련만으로는 냥이 남아돈다.
+  //
+  // 값은 「한 판을 깨면 얼마가 들어오는가」에 매단다. 재어 보니 한 판이
+  // 420~600냥이었다. 그런데 낱말 하나를 밝히는 반딧불이 452냥, 숫돌이
+  // 1,048냥이었다 — 한 판을 통째로 깨도 반딧불 하나를 못 사는 값이다.
+  // 도우미가 도움을 받는 값보다 비싸면 장터는 구경거리가 된다.
+  //
+  // 그래서 값은 내리고, 대신 하루에 살 수 있는 수를 묶는다. 값으로 막으면
+  // 억울하고, 수로 막으면 납득한다. 옥이 값을 잃지 않는 것도 여기서다 —
+  // 냥이 아무리 쌓여도 반딧불을 하루 다섯 개 넘게는 못 산다.
   var SHOP = [
-    { id: "brush", t: "반딧불",     d: "빈칸 한 자리를 한 걸음 더 밝힌다", base: 380, per: 12 },
-    { id: "ink",   t: "기름 한 병", d: "쓰러뜨린 뒤 마무리 시간 +15초",   base: 560, per: 18 },
-    { id: "charm", t: "숫돌",       d: "수련 한 번의 성공률 +20%p",       base: 880, per: 28 }
+    { id: "brush", t: "반딧불",     d: "빈칸 한 자리를 한 걸음 더 밝힌다", a: "fly",  base: 150, per: 5,  cap: 5 },
+    { id: "ink",   t: "기름 한 병", d: "쓰러뜨린 뒤 마무리 시간 +15초",   a: "oil",  base: 230, per: 7,  cap: 3 },
+    { id: "charm", t: "숫돌",       d: "수련 한 번의 성공률 +20%p",       a: "hone", base: 320, per: 11, cap: 3 }
   ];
   function shopCost(it) {
     return Math.round((it.base + stage * it.per) * (1 + cycle() * 0.6));
   }
+  function shopLeft(it) { return Math.max(0, it.cap - dGet("buy_" + it.id, 0)); }
 
   function chestFloor(mul) {
     return Math.round((200 + stage * 6) * (1 + cycle() * 0.6) * (mul == null ? 1 : mul));
@@ -3640,9 +3779,43 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     ov.appendChild(card); document.body.appendChild(ov); card.focus();
   }
 
+  // 띄운 패널 안의 지갑도 같이 돈다. 안 그러면 한 번 산 뒤의 숫자가
+  // 옛날 것이라, 살 수 있는지 없는지를 거기서는 알 수 없다.
+  function drawPurse() {
+    document.querySelectorAll(".pursebar").forEach(function (bar) {
+      var g = bar.querySelector(".pg b"), m = bar.querySelector(".pm b");
+      if (g) g.textContent = gold.toLocaleString();
+      if (m) m.textContent = String(gem);
+    });
+  }
+  // 얼마를 치렀는지 숫자가 바뀐 자리에서 보여 준다. 그냥 줄어 있으면
+  // 얼마가 나갔는지 모르고, 모르면 다음에 살 때 망설인다.
+  function spent(dGold, dGem) {
+    drawPurse();
+    document.querySelectorAll(".pursebar").forEach(function (bar) {
+      if (dGold) {
+        var g = bar.querySelector(".pg"); if (g) { g.classList.add("down");
+          setTimeout(function () { g.classList.remove("down"); }, 900); }
+      }
+      if (dGem) {
+        var m = bar.querySelector(".pm"); if (m) { m.classList.add("down");
+          setTimeout(function () { m.classList.remove("down"); }, 900); }
+      }
+      var fly = document.createElement("span"); fly.className = "spendfly";
+      // 깎인 쪽 아래에 세운다. 한자리에 못박아 두면 옥을 쓴 표시가
+      // 냥 숫자를 덮거나, 그 반대가 된다.
+      if (!dGold) { fly.style.left = "auto"; fly.style.right = "16px"; }
+      fly.textContent = dGold ? "\u2212" + dGold.toLocaleString() + "냥"
+                              : "\u2212" + dGem + "옥";
+      bar.appendChild(fly);
+      setTimeout(function () { fly.remove(); }, 1050);
+    });
+  }
+
   function drawStatsOnly() {
     el.gold.textContent = gold;
     el.gem.textContent = gem;
+    drawPurse();
     el.lv.textContent = "수련 " + trainLv() + "단";
     drawHo();
     drawTray();
@@ -3815,12 +3988,30 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function drawShop2() {   // 옥 상점
     if (!el.gemShop) return;
     el.gemShop.textContent = "";
+    // 세 꾸러미는 그림으로 나란히. 값을 치르는 자리에서 글만 읽게 두면
+    // 무엇을 얼마나 받는지 세 줄을 다 읽어야 안다.
+    var packs = document.createElement("div"); packs.className = "gempacks";
     SKUS.forEach(function (x) {
-      if (x.once && noAds) return;         // 이미 산 것은 안 보인다
+      if (x.once) return;
+      var c = document.createElement("button");
+      c.className = "gempack" + (x.best ? " best" : "");
+      var html = '<span class="pic">' + (GEM_ART[x.a] || "") + '</span>'
+        + '<b class="n">옥 ' + x.n + '</b>'
+        + '<span class="nm">' + x.t.replace("옥 ", "") + '</span>'
+        + '<span class="pz">' + (skuPrice[x.id] || (inApp() ? "…" : "앱에서")) + '</span>';
+      if (x.best) html = '<span class="flag">많이 고름</span>' + html;
+      c.innerHTML = html;
+      c.disabled = !inApp();
+      c.addEventListener("click", function () { buySku(x); });
+      packs.appendChild(c);
+    });
+    el.gemShop.appendChild(packs);
+    SKUS.forEach(function (x) {
+      if (!x.once || noAds) return;        // 이미 산 것은 안 보인다
       var row = document.createElement("div"); row.className = "shoprow";
+      row.style.marginTop = "11px";
       var L = document.createElement("div");
-      var t = document.createElement("div"); t.className = "st";
-      t.innerHTML = x.t + (x.best ? ' <span class="have">많이 고름</span>' : "");
+      var t = document.createElement("div"); t.className = "st"; t.textContent = x.t;
       var d = document.createElement("div"); d.className = "sd"; d.textContent = x.d;
       L.appendChild(t); L.appendChild(d);
       var b = document.createElement("button");
@@ -3928,7 +4119,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         fb.disabled = gold < fcost;
         fb.addEventListener("click", function () {
           if (gold < fcost || forge[u.id] >= FORGE_MAX) return;
-          gold -= fcost; forge[u.id]++;
+          gold -= fcost; forge[u.id]++; spent(fcost, 0);
           if (window.SFX) SFX.up();
           logEv("F", u.id.charAt(0));
           toast(u.t + " 겹침 " + forge[u.id] + "/" + FORGE_MAX
@@ -3953,7 +4144,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       }
       b.addEventListener("click", function () {
         if (maxed || gold < cost) return;
-        gold -= cost;
+        gold -= cost; spent(cost, 0);
         var odds = pr;
         if (useHone && (bag.charm || 0) > 0) { bag.charm--; odds = Math.min(1, pr + 0.2); }
         if (Math.random() < odds) {
@@ -4002,21 +4193,36 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     SHOP.forEach(function (it) {
       var cost = shopCost(it), have = bag[it.id] || 0;
       var row = document.createElement("div"); row.className = "shoprow";
-      var L = document.createElement("div");
+      var L = document.createElement("div"); L.className = "sl";
+      // 함에서 나오던 그 물건이 여기 놓여 있다고 읽혀야 한다 — 같은 그림.
+      if (ITEM_ART[it.a]) {
+        var pic = document.createElement("span");
+        pic.className = "sart i-" + it.a; pic.innerHTML = ITEM_ART[it.a];
+        L.appendChild(pic);
+      }
+      var tx = document.createElement("div");
       var t = document.createElement("div"); t.className = "st";
       t.innerHTML = it.t + (have ? ' <span class="have">' + have + '개</span>' : "");
       var d = document.createElement("div"); d.className = "sd"; d.textContent = it.d;
-      L.appendChild(t); L.appendChild(d);
+      tx.appendChild(t); tx.appendChild(d); L.appendChild(tx);
+      var left = shopLeft(it);
+      var n = document.createElement("div"); n.className = "sd";
+      n.innerHTML = left ? "오늘 <b>" + left + "개</b> 더 살 수 있습니다"
+                         : "오늘 몫을 다 쓰셨습니다 · 내일 다시 열립니다";
+      n.style.color = left ? "" : "var(--fg-faint)";
+      tx.appendChild(n);
       var b = document.createElement("button");
-      b.textContent = "냥 " + cost.toLocaleString();
-      b.disabled = gold < cost;
+      b.textContent = left ? "냥 " + cost.toLocaleString() : "오늘 끝";
+      b.disabled = gold < cost || !left;
       b.addEventListener("click", function () {
-        if (gold < cost) return;
+        if (gold < cost || !shopLeft(it)) return;
+        var was = gold;
         gold -= cost; bag[it.id] = have + 1;
+        dSet("buy_" + it.id, dGet("buy_" + it.id, 0) + 1);
         if (window.SFX) SFX.up();
         logEv("B", it.id.charAt(0));
         toast(it.t + "을(를) 샀습니다 · " + (have + 1) + "개");
-        saveS(); drawShop(); drawStatsOnly();
+        saveS(); drawShop(); drawStatsOnly(); spent(was - gold, 0);
       });
       row.appendChild(L); row.appendChild(b);
       el.shop.appendChild(row);
@@ -4451,7 +4657,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   el.btnExamX.addEventListener("click", function () {
     if (examExtraUsed() || gem < EXAM_EXTRA_GEM) return;
     gem -= EXAM_EXTRA_GEM; examExtraTake();
-    saveS(); drawStatsOnly(); drawExam();
+    saveS(); drawStatsOnly(); drawExam(); spent(0, EXAM_EXTRA_GEM);
     toast("옥 " + EXAM_EXTRA_GEM + "을 들여 오늘 한 번 더 보십니다");
   });
 
@@ -4612,6 +4818,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     node.parentNode.insertBefore(mark, node);
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card sheet";
+    var purse = document.createElement("div"); purse.className = "pursebar";
+    purse.innerHTML = '<span class="pg">냥 <b>' + gold.toLocaleString() + '</b></span>'
+                    + '<span class="pm">옥 <b>' + gem + '</b></span>';
+    card.appendChild(purse);
     card.appendChild(node);
     var shut = document.createElement("button");
     // 결과표에서 열었으면 닫는 게 아니라 '돌아가는' 것이다. 말이 달라야
