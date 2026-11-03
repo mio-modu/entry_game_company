@@ -52,8 +52,25 @@
    새 판마다 "쓰러뜨렸습니다" 띠가 떠 있었다. 한 군데서 막는다. */
 [hidden] { display: none !important; }
 html, body { height: 100%; }
+/* 글씨 크기. 40~60대가 보는 게임이라 기본을 한 단 키워 둔다.
+   값마다 전부 고쳐 적으면 어디 한 곳이 빠져 어긋나므로, 한 군데서 배율로 민다.
+   글자판은 칸이 1fr 이라 늘어난 만큼 알아서 나눠 가진다. */
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
-  font-size: 15px; line-height: 1.6; margin: 0; }
+  font-size: 15px; line-height: 1.6; margin: 0; zoom: var(--z, 1.12); }
+/* 배율을 못 읽는 자리를 위한 대비 — 글씨만이라도 커진다 */
+@supports not (zoom: 1) {
+  body { zoom: normal; font-size: calc(15px * var(--z, 1.12)); }
+}
+.muted { color: var(--fg-dim); font-size: 12.5px; }
+.sizer { display: flex; gap: 7px; margin: 0 0 13px; }
+.sizer button {
+  flex: 1; padding: 9px 0; border-radius: 10px; background: var(--surface-2);
+  border: 1px solid var(--line); color: var(--fg-dim); font: inherit;
+}
+.sizer button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.sizer button:nth-child(1) { font-size: 13px; }
+.sizer button:nth-child(2) { font-size: 16px; }
+.sizer button:nth-child(3) { font-size: 19px; }
 .wrap { max-width: 460px; margin: 0 auto; min-height: 100%; display: flex;
   flex-direction: column; gap: 11px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -835,6 +852,12 @@ body.quake { animation: shake .42s ease-out; }
 
   <div class="panel" id="pRule">
     <h2>규칙</h2>
+    <p class="muted" style="margin-bottom:6px">글씨 크기</p>
+    <div class="sizer" id="sizer">
+      <button data-z="1">보통</button>
+      <button data-z="1.12">크게</button>
+      <button data-z="1.26">더 크게</button>
+    </div>
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
     </div>
@@ -3256,6 +3279,24 @@ body.quake { animation: shake .42s ease-out; }
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
   setMode((location.hash || "").toLowerCase().indexOf("daily") >= 0 ? "daily" : "quest");
   if (!tut.seen) setTimeout(function () { showIntro(false); }, 400);
+
+  // ── 글씨 크기 ─────────────────────────────────────────
+  // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
+  var sizer = document.getElementById("sizer");
+  function setZoom(z, save) {
+    document.documentElement.style.setProperty("--z", z);
+    [].forEach.call(sizer.children, function (b) {
+      b.classList.toggle("on", b.dataset.z === String(z));
+    });
+    if (save) { try { localStorage.setItem("nm.zoom", z); } catch (e) {} }
+  }
+  var savedZ = "1.12";
+  try { savedZ = localStorage.getItem("nm.zoom") || "1.12"; } catch (e) {}
+  setZoom(savedZ, false);
+  sizer.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-z]");
+    if (b) { setZoom(b.dataset.z, true); toast("글씨 크기를 바꿨습니다"); }
+  });
 
   // ── 깔기 ──────────────────────────────────────────────
   var btnIn = document.getElementById("btnInstall");
