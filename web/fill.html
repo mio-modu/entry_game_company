@@ -89,6 +89,25 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   padding: 10px 15px; font: inherit; font-size: 13.5px; font-weight: 700; white-space: nowrap;
 }
 .exambar button:disabled { background: #39303F; color: #7A6C82; }
+.streaks { display: flex; gap: 8px; margin: 10px 0 2px; }
+.streak {
+  flex: 1; background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 11px; padding: 10px 11px;
+}
+.streak .k { font-size: 11px; color: var(--fg-dim); }
+.streak .v { font-family: var(--font-display); font-size: 21px; font-weight: 700;
+  color: var(--gold); margin-top: 2px; }
+.streak .v small { font-family: var(--font-body); font-size: 12px; font-weight: 400;
+  color: var(--fg-dim); margin-left: 3px; }
+.streak.hot { border-color: var(--gold); }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal i {
+  aspect-ratio: 1; border-radius: 5px; background: var(--surface-2);
+  border: 1px solid transparent; display: block;
+}
+.cal i.on { background: var(--jade); }
+.cal i.today { border-color: var(--gold); }
+.cal i.none { background: transparent; }
 .attrow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
 .att {
   border: 1px solid var(--line); border-radius: 9px; padding: 7px 2px 6px;
@@ -988,10 +1007,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   <div class="panel" id="pToday">
     <h2>오늘</h2>
+    <div class="streaks" id="streaks"></div>
     <p class="subh">출석</p>
     <div class="attrow" id="attRow"></div>
     <p class="subh">오늘 할 일</p>
     <div id="questList"></div>
+    <p class="subh">이번 달</p>
+    <div class="cal" id="cal"></div>
+    <p class="muted" id="calNote" style="margin:7px 0 0"></p>
     <p class="subh">바꾸기</p>
     <div id="exchange"></div>
   </div>
@@ -1197,6 +1220,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
          + "-" + String(d.getDate()).padStart(2, "0");
   }
+  function keyOf(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
+         + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function yesterdayKey() {
+    var d = new Date(); d.setDate(d.getDate() - 1); return keyOf(d);
+  }
+
   function todaySeed() {
     var d = new Date();
     return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
@@ -1262,7 +1293,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
-   "pToday","attRow","questList","exchange",
+   "pToday","attRow","questList","exchange","streaks","cal","calNote",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
@@ -1779,26 +1810,43 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
   function dSet(k, v) { try { localStorage.setItem(dayKey(k), JSON.stringify(v)); } catch (e) {} }
   function attState() {
-    try { return JSON.parse(localStorage.getItem("nathero-att") || "null")
-      || { last: "", streak: 0 }; } catch (e) { return { last: "", streak: 0 }; }
+    try {
+      return JSON.parse(localStorage.getItem("nathero-att") || "null")
+        || { last: "", streak: 0, best: 0 };
+    } catch (e) { return { last: "", streak: 0, best: 0 }; }
+  }
+  // 연속으로 온 날수. 어제도 오늘도 아니면 끊긴 것이다.
+  //
+  // 전에는 끊겨도 아무 일이 없었다. 하루 빠져도 손해가 없으면 매일 올
+  // 이유가 없다. 끊기면 처음으로 돌아간다 — 그 한 줄이 "오늘도 들어가자"를
+  // 만든다. 다만 벌은 주지 않는다. 쌓인 것을 빼앗지는 않는다.
+  function attStreak() {
+    var a = attState();
+    if (!a.last) return 0;
+    if (a.last === todayKey() || a.last === yesterdayKey()) return a.streak;
+    return 0;
   }
   function attSave(v) { try { localStorage.setItem("nathero-att", JSON.stringify(v)); } catch (e) {} }
   function attDay() {
-    var a = attState();
-    return a.last === todayKey() ? ((a.streak - 1) % 7) : (a.streak % 7);
+    var st = attStreak(), a = attState();
+    return a.last === todayKey() ? ((st - 1) % 7) : (st % 7);
   }
   function attTaken() { return attState().last === todayKey(); }
 
   function takeAtt() {
     if (attTaken()) return;
-    var a = attState(), idx = a.streak % 7, g = ATT[idx], say = "";
+    var a = attState(), st = attStreak();
+    var broke = a.last && st === 0;            // 하루 이상 빠졌다
+    var idx = st % 7, g = ATT[idx], say = "";
     if (g.r === "냥") { var v = attGold(); gold += v; say = "냥 +" + v.toLocaleString(); }
     else if (g.r === "옥") { gem += g.n; say = "옥 +" + g.n; }
     else { bag.brush += g.n; say = "반딧불 +" + g.n; }
-    a.streak = idx + 1; a.last = todayKey(); attSave(a);
+    a.streak = st + 1;
+    a.best = Math.max(a.best || 0, a.streak);
+    a.last = todayKey(); attSave(a);
     saveS(); drawStatsOnly(); drawToday(); drawTray();
     if (window.SFX) SFX.up();
-    toast("출석 " + (idx + 1) + "일째 · " + say);
+    toast((broke ? "다시 첫날입니다 · " : a.streak + "일 연속 · ") + say);
   }
 
   // 할 일 셋. 날마다 바뀌지 않는다 — 바뀌면 외울 수가 없고,
@@ -1848,11 +1896,46 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   function drawToday() {
     if (!el.attRow) return;
-    var a = attState(), idx = a.streak % 7, taken = attTaken();
+
+    // 연속 — 매일 올 이유는 보상이 아니라 '끊기는 것이 아깝다'에서 온다
+    var aSt = attStreak(), dSt = dailyStreak(), best = attState().best || 0;
+    el.streaks.textContent = "";
+    [["출석", aSt, best], ["오늘의 낱말", dSt, 0]].forEach(function (x) {
+      var box = document.createElement("div");
+      box.className = "streak" + (x[1] >= 7 ? " hot" : "");
+      var k = document.createElement("div"); k.className = "k"; k.textContent = x[0] + " 연속";
+      var v = document.createElement("div"); v.className = "v";
+      v.innerHTML = x[1] + '<small>일</small>'
+        + (x[2] > x[1] ? '<small>&nbsp;· 최고 ' + x[2] + '일</small>' : "");
+      box.appendChild(k); box.appendChild(v);
+      el.streaks.appendChild(box);
+    });
+
+    // 이번 달 달력 — 오늘의 낱말을 한 날에 불이 들어온다
+    var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+    var first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+    el.cal.textContent = "";
+    for (var b0 = 0; b0 < first.getDay(); b0++) {
+      var sp = document.createElement("i"); sp.className = "none"; el.cal.appendChild(sp);
+    }
+    var done = 0;
+    for (var dd = 1; dd <= days; dd++) {
+      var cell = document.createElement("i");
+      var day = new Date(y, m, dd), on = dailyDoneOn(day);
+      if (on) done++;
+      cell.className = (on ? "on " : "") + (dd === now.getDate() ? "today" : "");
+      cell.title = (m + 1) + "월 " + dd + "일" + (on ? " · 했습니다" : "");
+      el.cal.appendChild(cell);
+    }
+    el.calNote.textContent = (m + 1) + "월에 " + done + "일 하셨습니다"
+      + (dSt > 1 ? " · 지금 " + dSt + "일 연속" : "");
+
+    // 끊겼으면 첫 칸으로 돌아가야 한다. 저장된 값이 아니라 '지금 연속'을 본다.
+    var idx = aSt % 7, taken = attTaken();
     el.attRow.textContent = "";
     ATT.forEach(function (g, i) {
       var box = document.createElement("div");
-      var done = taken ? i < ((a.streak - 1) % 7) + 1 : i < idx;
+      var done = taken ? i < ((aSt - 1) % 7) + 1 : i < idx;
       box.className = "att" + (done ? " got" : "")
         + (!taken && i === idx ? " now" : "") + (i === 6 ? " big" : "");
       var d = document.createElement("div"); d.className = "d"; d.textContent = (i + 1) + "일";
@@ -2246,6 +2329,26 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var DAILY_SEC = 90;
   var mode = "quest";
 
+  // 오늘의 낱말을 며칠 연속으로 했나. 날짜 기록을 거꾸로 걸어 센다.
+  //
+  // Wordle 이 판 것이 이것이다. 점수가 아니라 "끊기지 않은 날수".
+  // 숫자가 커질수록 하루 빠지기가 아까워진다.
+  function dailyStreak() {
+    var n = 0, d = new Date();
+    try {
+      if (!localStorage.getItem("nathero-daily-" + keyOf(d))) d.setDate(d.getDate() - 1);
+      for (var i = 0; i < 400; i++) {
+        if (!localStorage.getItem("nathero-daily-" + keyOf(d))) break;
+        n++; d.setDate(d.getDate() - 1);
+      }
+    } catch (e) {}
+    return n;
+  }
+  function dailyDoneOn(d) {
+    try { return !!localStorage.getItem("nathero-daily-" + keyOf(d)); }
+    catch (e) { return false; }
+  }
+
   function dailyRec() {
     try { return JSON.parse(localStorage.getItem("nathero-daily-" + todayKey()) || "null"); }
     catch (e) { return null; }
@@ -2335,7 +2438,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       + dailyRows().map(function (r) {
           return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
         }).join("\n")
-      + "\n\n채운 낱말 " + n + "/" + run.ans.length + " · " + run.score.toLocaleString() + "점\n\n"
+      + "\n\n채운 낱말 " + n + "/" + run.ans.length + " · " + run.score.toLocaleString() + "점"
+      + (dailyStreak() > 1 ? "  \u00b7  " + dailyStreak() + "일 연속" : "") + "\n\n"
       + "같이 풀어요 \u25b6 " + location.href.split("#")[0] + "#daily";
   }
 
@@ -3540,7 +3644,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       if (!qt2[q.id] && (qc[q.id] || 0) >= q.goal) qn++;
     });
     var waiting = (attTaken() ? 0 : 1) + qn;
-    el.tTodaySub.textContent = waiting ? "받을 것 " + waiting : "다 받음";
+    var aS = attStreak();
+    el.tTodaySub.textContent = waiting ? "받을 것 " + waiting
+      : aS > 1 ? aS + "일 연속" : "다 받음";
     el.tToday.classList.toggle("lit", waiting > 0);
     el.tTrain.classList.toggle("lit", can);
     var left = adsLeft();
