@@ -62,6 +62,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   body { zoom: normal; font-size: calc(15px * var(--z, 1.12)); }
 }
 .muted { color: var(--fg-dim); font-size: 12.5px; }
+.nb { white-space: nowrap; }
 .sizer { display: flex; gap: 7px; margin: 0 0 13px; }
 .sizer button {
   flex: 1; padding: 9px 0; border-radius: 10px; background: var(--surface-2);
@@ -333,6 +334,23 @@ body.quake { animation: shake .42s ease-out; }
   font-size: 12.5px; color: #E6D9A8; animation: say .35s ease-out;
 }
 .bonusbar b { color: var(--gold); font-weight: 700; }
+/* 시작 전의 자리. 전에는 단계를 넘기는 순간 시계가 돌아서, 수련을 하려면
+   시계를 보면서 해야 했다. 사람이 숨 돌릴 틈을 스스로 정하게 둔다. */
+.startbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(90deg, #12302B, #0E2420);
+  border: 1px solid #2C5E55; border-radius: 12px; padding: 10px 10px 10px 14px;
+  animation: say .35s ease-out;
+}
+.startbar b { display: block; font-size: 13.5px; color: #BFE6DA; font-weight: 700; }
+.startbar small { display: block; font-size: 11px; color: #7FAFA4; margin-top: 2px; }
+.startbar button {
+  flex: none; background: var(--jade); color: #06201B; border-radius: 10px;
+  padding: 11px 20px; font-size: 15px; font-weight: 700; white-space: nowrap;
+}
+/* 시작 전에는 글자판이 잠겨 있다. 눌러도 되는 줄 알고 누르면 어긋난다. */
+body.ready .tiles, body.ready .acts, body.ready #slot { opacity: .3; pointer-events: none; }
+body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라고 적혀 있었다 */
 .bonusbar button {
   flex: none; background: var(--gold); color: #1A1206; border-radius: 9px;
   padding: 9px 13px; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -771,6 +789,14 @@ body.quake { animation: shake .42s ease-out; }
     <div class="floaters" id="floaters"></div>
   </div>
 
+  <div class="startbar" id="startBar" hidden>
+    <div>
+      <b id="startHead">준비되면 시작하세요</b>
+      <small>시작하면 제한시간이 흐릅니다 · 지금은 수련할 수 있습니다</small>
+    </div>
+    <button id="btnStart">시작</button>
+  </div>
+
   <p class="guide" id="guide" hidden></p>
   <div class="grid">
     <div class="gridtop">
@@ -1092,6 +1118,7 @@ body.quake { animation: shake .42s ease-out; }
    "hpMax","floaters","gFound","gTotal","gNote","slots","slot","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","ho","guide","btnIntro",
    "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
+   "startBar","startHead","btnStart",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
    "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
@@ -1450,7 +1477,7 @@ body.quake { animation: shake .42s ease-out; }
     var b = stageInfo(stage);
     var p = makePuzzle(b.spec);
     var hp = Math.round(hpFor(p.ans, b.need) * b.hpMul);
-    run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "fight",
+    run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "ready",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
             payFill: 0, payWord: 0, payPerfect: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
@@ -1461,7 +1488,6 @@ body.quake { animation: shake .42s ease-out; }
     picked = [];
     el.bonusBar.hidden = true;
     el.portrait.classList.remove("down");
-    run.t0 = Date.now();
     LOG.n++;
     LOG.best = Math.max(LOG.best, b.no);
     logEv("S", b.no);
@@ -1483,7 +1509,26 @@ body.quake { animation: shake .42s ease-out; }
             + Math.round(CYC_HP * 100) + "% 오르고, 함에서 한 등급 위가 나옵니다");
     else if (stage % 10 === 0) toast(b.m + " — " + b.d);
     if (timerId) clearInterval(timerId);
+    // 시계는 아직 돌리지 않는다. 사람이 「시작」을 누를 때 돈다.
+    document.body.classList.add("ready");
+    el.startBar.hidden = false;
+    el.startHead.textContent = b.no === 1 ? "준비되면 시작하세요"
+      : "다음은 " + b.no + "단계 · " + b.m;
+    draw();
+    el.btnStart.focus();
+  }
+
+  // 여기서부터 시계가 돈다. 그 전까지는 수련이든 보물함이든 마음껏 봐도
+  // 손해가 없다 — 숨 돌릴 틈을 사람이 스스로 정한다.
+  function beginRun() {
+    if (!run || run.phase !== "ready") return;
+    run.phase = "fight";
+    run.t0 = Date.now();
+    document.body.classList.remove("ready");
+    el.startBar.hidden = true;
+    if (timerId) clearInterval(timerId);
     timerId = setInterval(onSecond, 1000);
+    if (window.SFX) SFX.up();
     draw();
   }
 
@@ -2060,7 +2105,8 @@ body.quake { animation: shake .42s ease-out; }
   }
 
   function tap(i) {
-    if (!run || picked.indexOf(i) >= 0 || picked.length >= 4) return;
+    if (!run || run.phase === "ready") return;
+    if (picked.indexOf(i) >= 0 || picked.length >= 4) return;
     picked.push(i);
     if (window.SFX) SFX.tap();
     draw();
@@ -2090,6 +2136,12 @@ body.quake { animation: shake .42s ease-out; }
   var SLOT_PAY = 15, WORD_PAY = 4, PERFECT_PAY = 80;
 
   function perfectClear() {
+    // 한 판에 한 번뿐이다.
+    //
+    // 빈칸을 다 채우고 나서 victory 가 뜨기까지 0.7초가 비는데, 그 사이에
+    // 낱말을 더 내면 remaining() 이 여전히 비어 있어 여기로 또 들어왔다.
+    // 80냥이 여러 번 붙고 victory 도 그만큼 예약돼 결과 카드가 겹쳤다.
+    if (run.perfect) return;
     run.perfect++;
     gold += PERFECT_PAY; run.extra += PERFECT_PAY; run.payPerfect += PERFECT_PAY;
     if (window.SFX) SFX.clear();
@@ -2099,6 +2151,7 @@ body.quake { animation: shake .42s ease-out; }
   }
 
   function attack() {
+    if (!run || run.phase === "ready" || run.perfect) return;
     if (!run || el.btnGo.disabled) return;
     var w = word();
     var isSlot = run.ans.indexOf(w) >= 0 && !run.got[w];
@@ -2839,7 +2892,7 @@ body.quake { animation: shake .42s ease-out; }
     var cap = upCap();
     el.lv.textContent = "수련 " + trainLv() + "단";
     el.trainSub.textContent = "검 " + up.atk + " · 등 " + up.time + " · 북 " + up.combo
-      + "  (각 " + cap + "단계까지)";
+      + "  (각 " + cap + "단까지)";
     el.ups.textContent = "";
     UPGRADES.forEach(function (u) {
       var lvl = up[u.id], cost = Math.round(u.base * Math.pow(u.r, lvl));
@@ -2852,7 +2905,9 @@ body.quake { animation: shake .42s ease-out; }
       var row = document.createElement("div"); row.className = "up";
       var left = document.createElement("div");
       var t = document.createElement("div"); t.className = "t";
-      t.textContent = u.t + " (" + u.w + ") · " + lvl + " / " + cap + "단계";
+      // "2단계"의 '계'만 다음 줄로 떨어져 보기 흉했다. 숫자 묶음은 안 쪼갠다.
+      t.innerHTML = u.t + " (" + u.w + ") "
+        + '<span class="nb">· ' + lvl + " / " + cap + "단</span>";
       // 이름표를 제목 줄에 같이 두면 '칠성검'이 좁은 화면에서 쪼개진다.
       // 제목 한 줄, 이름표 한 줄로 나눈다.
       var th = document.createElement("img");
@@ -3020,6 +3075,9 @@ body.quake { animation: shake .42s ease-out; }
         + "아래 <b>수련</b>에서 검·등·북을 올려 보세요";
       card.appendChild(fw);
     }
+    // 단계를 넘기기 전이 수련하기 제일 좋은 때다. 방금 받은 냥이 손에 있고,
+    // 다음 판은 「시작」을 누를 때까지 기다려 준다.
+    var row = document.createElement("div"); row.className = "trow";
     var b1 = document.createElement("button"); b1.className = "btn";
     b1.textContent = won ? "다음 단계로" : "다시 도전";
     b1.addEventListener("click", function () {
@@ -3027,7 +3085,16 @@ body.quake { animation: shake .42s ease-out; }
       el.portrait.classList.remove("down");
       start();
     });
-    card.appendChild(b1);
+    var b2 = document.createElement("button"); b2.className = "btn ghost";
+    b2.innerHTML = "수련하기<small>냥 " + gold.toLocaleString() + "</small>";
+    b2.addEventListener("click", function () {
+      ov.remove();
+      el.portrait.classList.remove("down");
+      start();
+      openPanel(el.pTrain);
+    });
+    row.appendChild(b2); row.appendChild(b1);
+    card.appendChild(row);
     ov.appendChild(card); document.body.appendChild(ov); b1.focus();
   }
 
@@ -3127,6 +3194,8 @@ body.quake { animation: shake .42s ease-out; }
     if (timerId) { clearInterval(timerId); timerId = null; }
     var ov = document.querySelector(".ov"); if (ov) ov.remove();
     document.body.classList.remove("raging");
+    document.body.classList.remove("ready");   // 산 오르기에서만 쓰는 잠금
+    el.startBar.hidden = true;
     el.portrait.classList.remove("down");
     el.bonusBar.hidden = true;
 
@@ -3182,6 +3251,7 @@ body.quake { animation: shake .42s ease-out; }
     var nw = chainOpening(); run.used[nw] = true;
     kSay(nw, "foe", "넘김"); kResume(last(nw));
   });
+  el.btnStart.addEventListener("click", beginRun);
   el.btnGo.addEventListener("click", attack);
   el.btnEnd.addEventListener("click", function () {
     if (!run || run.phase !== "bonus") return;
