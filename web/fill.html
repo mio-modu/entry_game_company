@@ -1720,11 +1720,33 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     { n: "글의 주인",         need: 8, sec: 46, t: 8, lo: 4, hi: 4 }
   ];
   function danName() { return DAN[Math.min(dan, DAN.length - 1)].n; }
+  // 하루에 볼 수 있는 횟수. 단이 오를수록 조금씩 늘어난다 — 위로 갈수록
+  // 어려우니 기회도 같이 늘어야 공평하다.
+  //
+  // 이 횟수는 돈으로도 광고로도 못 산다. 살 수 있게 두는 순간 호는
+  // "실력"이 아니라 "시도 횟수"가 되고, 몇 번이고 돌리면 운 좋은 글자판이
+  // 언젠가 나온다. 그러면 호가 값을 잃고, 돈으로 못 산다는 사실 하나로
+  // 지탱되던 이 자리가 통째로 무너진다.
+  function examCap() { return 2 + Math.floor(dan / 2); }
+  function examKey() { return "nathero-exam-" + todayKey(); }
+  function examUsed() {
+    try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
+    catch (e) { return 0; }
+  }
+  function examBump() {
+    try { localStorage.setItem(examKey(), String(examUsed() + 1)); } catch (e) {}
+  }
+  function examLeft() { return Math.max(0, examCap() - examUsed()); }
   function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
 
   function startExam() {
     var d = nextDan();
     if (!d) { toast("더 오를 단이 없습니다 · " + danName()); return; }
+    if (!examLeft()) {
+      toast("오늘 시험은 " + examCap() + "번까지입니다 · 내일 다시 보실 수 있습니다");
+      return;
+    }
+    examBump();
     var spec = { t: d.t, lo: d.lo, hi: d.hi, w: d.need, k: d.need };
     var p = makePuzzle(spec);
     var cells = 0;
@@ -1795,8 +1817,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     }
 
     var row = document.createElement("div"); row.className = "trow";
+    var lf = examLeft();
+    var note = document.createElement("p"); note.className = "lead foot";
+    note.innerHTML = nextDan()
+      ? "오늘 남은 시험 <b>" + lf + "번</b> · 횟수는 돈으로 살 수 없습니다"
+      : "아홉 단을 모두 지나셨습니다";
+    card.appendChild(note);
+
     var again = document.createElement("button"); again.className = "btn ghost";
-    again.textContent = pass && !nextDan() ? "" : (pass ? "바로 다음 단" : "다시 보기");
+    again.textContent = !nextDan() ? "" : !lf ? "" : (pass ? "바로 다음 단" : "다시 보기");
     if (again.textContent) {
       again.addEventListener("click", function () { ov.remove(); startExam(); });
       row.appendChild(again);
@@ -3383,11 +3412,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (!el.examBar) return;
     var d = nextDan();
     el.examHead.textContent = dan ? dan + "단 · " + danName() : "승급 시험";
+    var lf = examLeft();
     el.examSub.textContent = d
       ? (dan + 1) + "단 — 빈칸 " + d.need + "칸을 " + d.sec + "초 안에 · 맨몸"
+        + "  ·  오늘 " + lf + " / " + examCap() + "번"
       : "더 오를 단이 없습니다";
-    el.btnExam.disabled = !d;
-    el.btnExam.textContent = d ? (dan ? (dan + 1) + "단 보기" : "시험 보기") : "끝";
+    el.btnExam.disabled = !d || !lf;
+    el.btnExam.textContent = !d ? "끝"
+      : !lf ? "내일 다시"
+      : (dan ? (dan + 1) + "단 보기" : "시험 보기");
   }
 
   function drawShop() {
