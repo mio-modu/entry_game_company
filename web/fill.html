@@ -63,6 +63,36 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 }
 .muted { color: var(--fg-dim); font-size: 12.5px; }
 .nb { white-space: nowrap; }
+.gemline { margin-top: 10px; padding: 10px 12px; border-radius: 11px;
+  background: #13241F; border: 1px solid #2C5E55; color: #BFE6DA; font-size: 13px; }
+.gemline b { color: var(--jade); font-size: 15px; }
+.gemline span { display: block; margin-top: 3px; font-size: 11px; color: #7FAFA4; }
+.lesson {
+  margin-top: 13px; padding: 12px 14px; border-radius: 12px;
+  background: var(--surface-2); border: 1px solid var(--line); text-align: left;
+}
+.lesson .k { display: block; font-family: var(--font-mono); font-size: 10.5px;
+  letter-spacing: .08em; color: var(--gold); margin-bottom: 4px; }
+.lesson b { display: block; font-family: var(--font-display); font-size: 19px;
+  color: var(--fg); margin-bottom: 3px; }
+.lesson .m { display: block; font-size: 12px; line-height: 1.6; color: var(--fg-dim); }
+.shoprow { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.shoprow:first-child { border-top: 0; }
+.shoprow .st { font-size: 13.5px; font-weight: 600; }
+.shoprow .st .have { font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--jade); border: 1px solid var(--jade); border-radius: 20px; padding: 1px 6px; }
+.shoprow .sd { font-size: 11.5px; color: var(--fg-dim); margin-top: 2px; }
+.shoprow button { flex: none; background: var(--surface-2); color: var(--gold);
+  border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px;
+  font: inherit; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.shoprow button:disabled { color: var(--fg-faint); border-color: #2A2F42; }
+.honebtn { display: inline-block; margin-top: 5px; font: inherit; font-size: 11px;
+  background: transparent; color: var(--fg-dim); border: 1px solid var(--line);
+  border-radius: 20px; padding: 3px 9px; }
+.honebtn.on { color: var(--gold); border-color: var(--gold); }
+.forgebtn { margin-right: 5px; color: var(--jade); border-color: #2C5E55; }
+.forgebtn:disabled { color: var(--fg-faint); border-color: #2A2F42; }
 /* 옥을 쓰고 2.6초 만에 사라지면 쓴 사람만 손해다. 쓴 것은 판이 끝날
    때까지 남는다. 글씨를 느리게 읽는 사람이 이 게임의 손님이다. */
 .hints { display: flex; flex-direction: column; gap: 7px; margin-top: 9px;
@@ -384,6 +414,10 @@ body.quake { animation: shake .42s ease-out; }
 /* 시작 전에는 글자판이 잠겨 있다. 눌러도 되는 줄 알고 누르면 어긋난다. */
 body.ready .tiles, body.ready .acts, body.ready #slot { opacity: .3; pointer-events: none; }
 body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라고 적혀 있었다 */
+/* 시작 전에 글자판이 보이면 공짜로 미리 읽는 셈이다. 생각할 틈이 아니라
+   그냥 시간이 더 생긴 것. 누르기 전에는 가려 둔다. */
+body.ready .grid, body.ready .tiles, body.ready #slot,
+body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 .bonusbar button {
   flex: none; background: var(--gold); color: #1A1206; border-radius: 9px;
   padding: 9px 13px; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -868,6 +902,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   </div>
   <div class="bonusbar" id="bonusBar" hidden>
     <span>쓰러뜨렸습니다 · 남은 시간에 <b id="bLeft">1</b>개 더 채우실 수 있습니다</span>
+    <button id="btnOil" hidden>기름 +15초</button>
     <button id="btnEnd">여기서 마무리</button>
   </div>
   <div class="bonus" id="bonus"></div>
@@ -905,6 +940,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       <p>광고로 그만큼을 채우려면 <b>서른 편</b>이 넘습니다.</p>
       <p class="pivot">그래서 광고는 <b>다른 것</b>을 줍니다.</p>
       <p><b>두 편</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>
+      <p class="pivot"><b>세 편</b>마다 <b>옥 한 알</b>.
+         옥은 힌트에만 쓰고 <b>냥으로는 살 수 없습니다.</b></p>
       <p><b>열 편</b>이면 보물함 하나. 여기엔 장비도 들어 있습니다.</p>
       <p>다만 등급은 <b>지금 오른 산보다 한 칸 아래</b>까지입니다.
          광고만 봐서는 산을 오른 사람을 <b>끝내 따라잡지 못합니다.</b></p>
@@ -915,12 +952,14 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   <div class="panel" id="pTrain">
     <h2>수련 <small id="trainSub"></small></h2>
     <div id="ups"></div>
+    <p class="subh">장터</p>
+    <div id="shop"></div>
     <p class="cite">세 가지를 <b>고르게</b> 올려야 단수가 오릅니다. 한 축만 밀면 그대로입니다.
       단수가 높을수록 받는 냥이 늘어납니다.</p>
   </div>
 
   <div class="panel tlog" id="pLog">
-    <h2>시험판 기록</h2>
+    <h2>시험판 기록 <small id="buildTag"></small></h2>
     <p id="logSum">아직 기록이 없습니다.</p>
     <div class="trow">
       <button class="btn" id="btnLog">기록 복사</button>
@@ -1157,9 +1196,9 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
    "tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
-   "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","hpTail",
-   "logSum","btnLog","btnLogClear","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "trainSub","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
+   "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
+   "trainSub","shop","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -1173,6 +1212,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   var ATK_STEP = 1.04464, TIME_STEP = 1, COMBO_STEP = 0.0066667, COMBO_CAP = 12;
   // 금빛 글자를 끼워 넣었을 때의 배수. 바닥 계산에도 같은 값이 들어간다.
   var WEAK_MUL = 1.5;
+  // 수호신 하나에 옥 둘. 열 단계마다 오므로 힌트를 아껴 쓰게 된다.
+  var BOSS_GEM = 2, PERFECT_GEM = 1, AD_GEM_EVERY = 3;
   var CAP_PER_CYCLE = 27;
   // 붓·먹·인장은 필기구지 적을 베는 도구가 아니다. 낱말로 싸운다는 설정은
   // 그대로 두되, 손에 쥐는 것은 실제로 싸우는 물건이어야 한다.
@@ -1242,6 +1283,14 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   var forge = { atk: 0, time: 0, combo: 0 };
 
   function forgeMul(id) { return 1 + forge[id] * FORGE_STEP; }
+  // 겹침을 냥으로도 한 점씩 산다.
+  //
+  // 수련은 산을 넘어야 칸이 열리는데 냥은 그 사이에도 쌓인다. 겹침은
+  // 스무 점에서 막히므로 아무리 부어도 힘이 깨지지 않는다 — 그래서
+  // 남아도는 냥을 받아 줄 그릇으로 맞다. 한 축에 1만 4천, 셋이면 4만쯤.
+  function forgeCost(id) {
+    return Math.round(200 * Math.pow(1.12, forge[id]) * (1 + cycle() * 0.5));
+  }
   function gearVal(id) { return GEAR[id].val[gear[id]] * forgeMul(id); }
   function gearName(id) { return GEAR[id].names[gear[id]]; }
 
@@ -1294,6 +1343,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
+  var BUILD = "2026-11-03-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -1541,7 +1591,13 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     return hp;
   }
 
-  function start() {
+  // auto 면 띠 없이 바로 들어간다.
+  //
+  // 「시작」 띠를 모든 단계에 두니 시작 전에 글자판을 공짜로 들여다보게
+  // 됐다. 그건 생각할 틈이 아니라 그냥 시간이 더 생긴 것이다.
+  // 그래서 띠는 앱을 처음 열 때만 두고, 단계 사이는 바로 넘어간다 —
+  // 수련은 결과표에서 하면 된다.
+  function start(auto) {
     // 이기는 길은 기세 하나다.
     //
     // 전에 둘로 나눴다가 서로 어긋났다 — 화면은 "빈칸을 다 채우면 끝"이라
@@ -1555,7 +1611,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     var b = stageInfo(stage);
     var p = makePuzzle(b.spec);
     var hp = Math.round(hpFor(p.ans, b.need, hasMod(b, "weak") ? WEAK_MUL : 1) * b.hpMul);
-    run = { b: b, hp: hp, max: hp, left: b.t, combo: 0, phase: "ready",
+    if (boost.hp) hp = Math.round(hp * (1 - boost.hp));
+    run = { b: b, hp: hp, max: hp, left: b.t + (boost.sec || 0), combo: 0, phase: "ready",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
             payFill: 0, payWord: 0, payPerfect: 0,
             tiles: p.tiles, ans: p.ans, got: Object.create(null),
@@ -1589,10 +1646,15 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     else if (stage % 10 === 0) toast(b.m + " — " + b.d);
     if (timerId) clearInterval(timerId);
     // 시계는 아직 돌리지 않는다. 사람이 「시작」을 누를 때 돈다.
+    if (auto) { draw(); beginRun(); return; }
     document.body.classList.add("ready");
     el.startBar.hidden = false;
-    el.startHead.textContent = b.no === 1 ? "준비되면 시작하세요"
-      : "다음은 " + b.no + "단계 · " + b.m;
+    var bst = [];
+    if (boost.hp) bst.push("기세 -" + Math.round(boost.hp * 100) + "%");
+    if (boost.sec) bst.push("시간 +" + boost.sec + "초");
+    el.startHead.textContent = bst.length
+      ? "도움을 받았습니다 · " + bst.join(" · ")
+      : (b.no === 1 ? "준비되면 시작하세요" : "다음은 " + b.no + "단계 · " + b.m);
     draw();
     el.btnStart.focus();
   }
@@ -1601,6 +1663,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 손해가 없다 — 숨 돌릴 틈을 사람이 스스로 정한다.
   function beginRun() {
     if (!run || run.phase !== "ready") return;
+    boost.hp = 0; boost.sec = 0;      // 한 판에만 쓰인다
     run.phase = "fight";
     run.t0 = Date.now();
     document.body.classList.remove("ready");
@@ -2036,6 +2099,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     el.hpNow.textContent = Math.max(0, run.hp);
     if (run.phase === "bonus") {
       el.bLeft.textContent = remaining().length;
+      el.btnOil.hidden = (bag.ink || 0) < 1;
+      el.btnOil.textContent = "기름 +15초 (" + (bag.ink || 0) + ")";
       el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다 \u00b7 남은 시간 "
         + Math.max(0, run.left) + "냥";
       run.sealed = -1; run.weak = -1;
@@ -2501,6 +2566,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 물건을 나눈다.
   //
   //   두 편마다   보급품 — 냥·옥·소모품. 장비는 없다. 연출도 없다.
+  //   세 편마다   옥 한 알. 옥은 수호신과 광고(나중엔 결제)에서만 나온다.
   //   열 편에     보물함 — 장비가 나온다. 하루 한 번.
   //
   // 장비는 열 편을 봐야 나오고, 그래도 열 판보다는 싸다. 대신 등급
@@ -2514,6 +2580,12 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   }
   function adSave(v) { try { localStorage.setItem(adKey(), JSON.stringify(v)); } catch (e) {} }
   function adsLeft() { return Math.max(0, AD_DAY - adState().n); }
+  // 진 자리에서 본 광고도 사다리에 한 칸 얹힌다. 안 그러면 "광고를 봤는데
+  // 아무 데도 안 쌓인다"가 되고, 그러면 두 번째부터 안 본다.
+  function bumpAd() {
+    if (!adsLeft()) return;
+    var st = adState(); st.n++; adSave(st); drawAd(); logEv("T", "adlose" + st.n);
+  }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
   // '지금 이 회차에서 올라 있는 산'이다. 회차가 바뀌면 다시 북한산부터다 —
   // 2회차 북한산에서 광고 함이 신화를 뱉으면 2회차를 오를 이유가 없어진다.
@@ -2531,6 +2603,20 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 격파 보상은 20단계 450, 100단계 600쯤으로 꽤 평평하다. 바닥도 그
   // 결을 따라가야 "열 판 깬 값"으로 읽힌다. 가파르게 잡으면 후반에
   // 한 판 값의 세 배가 되어 이번에는 단계를 깨는 일이 시시해진다.
+  // 소모품 장터.
+  //
+  // 기름과 숫돌은 함에서 나오기만 하고 쓰는 자리가 아예 없었다. 함이
+  // "마무리 시간 +15초"라고 적어 놓고 아무 일도 안 했다. 먼저 살리고,
+  // 그 다음 냥으로도 살 수 있게 한다 — 수련만으로는 냥이 남아돈다.
+  var SHOP = [
+    { id: "brush", t: "반딧불",     d: "빈칸 한 자리를 한 걸음 더 밝힌다", base: 380, per: 12 },
+    { id: "ink",   t: "기름 한 병", d: "쓰러뜨린 뒤 마무리 시간 +15초",   base: 560, per: 18 },
+    { id: "charm", t: "숫돌",       d: "수련 한 번의 성공률 +20%p",       base: 880, per: 28 }
+  ];
+  function shopCost(it) {
+    return Math.round((it.base + stage * it.per) * (1 + cycle() * 0.6));
+  }
+
   function chestFloor(mul) {
     return Math.round((200 + stage * 6) * (1 + cycle() * 0.6) * (mul == null ? 1 : mul));
   }
@@ -3040,7 +3126,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     el.adDots.innerHTML = dots;
     el.adWhat.textContent = !left ? "내일 다시 열 편"
       : n === AD_DAY - 1 ? "한 편만 더 보시면 보물함이 열립니다"
-      : "두 편마다 보급품 · 열 편이면 보물함 (" + TIER[cap] + "까지)";
+      : "두 편마다 보급품 · 세 편마다 옥 · 열 편이면 보물함 (" + TIER[cap] + "까지)";
     el.btnAd.disabled = !left;
     el.btnAd.textContent = left ? "광고 보기" : "내일";
   }
@@ -3079,7 +3165,8 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       tags.appendChild(g);
       if (forge[u.id]) {
         var fz = document.createElement("span"); fz.className = "forge";
-        fz.textContent = "겹침 " + forge[u.id];
+        fz.textContent = "겹침 " + forge[u.id] + "/" + FORGE_MAX
+          + " (+" + (forge[u.id] * FORGE_STEP * 100).toFixed(1) + "%)";
         tags.appendChild(fz);
       }
       var d = document.createElement("div"); d.className = "d"; d.textContent = u.desc();
@@ -3095,17 +3182,51 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       var b = document.createElement("button");
       b.textContent = maxed ? (byStage ? "더 올라야" : "완성") : "냥 " + cost;
       b.disabled = maxed || gold < cost;
+      // 겹침 — 산을 안 넘어도 올릴 수 있는 쪽. 스무 점에서 막힌다.
+      if (forge[u.id] < FORGE_MAX) {
+        var fcost = forgeCost(u.id);
+        var fb = document.createElement("button");
+        fb.className = "honebtn forgebtn";
+        fb.textContent = "겹쳐 다듬기 +1 · 냥 " + fcost.toLocaleString();
+        fb.disabled = gold < fcost;
+        fb.addEventListener("click", function () {
+          if (gold < fcost || forge[u.id] >= FORGE_MAX) return;
+          gold -= fcost; forge[u.id]++;
+          if (window.SFX) SFX.up();
+          logEv("F", u.id.charAt(0));
+          toast(u.t + " 겹침 " + forge[u.id] + "/" + FORGE_MAX
+                + " · +" + (forge[u.id] * FORGE_STEP * 100).toFixed(1) + "%");
+          saveS(); drawTrain(); drawStatsOnly();
+        });
+        left.appendChild(fb);
+      }
+
+      // 숫돌은 성공률이 모자랄 때만 값이 있다. 그때만 묻는다.
+      var useHone = false;
+      if (!maxed && pr < 1 && (bag.charm || 0) > 0) {
+        var hb = document.createElement("button");
+        hb.className = "honebtn";
+        hb.textContent = "숫돌 쓰기 +20%p (" + bag.charm + "개)";
+        hb.addEventListener("click", function () {
+          useHone = !useHone;
+          hb.classList.toggle("on", useHone);
+          r2.textContent = "성공률 " + Math.round(Math.min(1, pr + (useHone ? 0.2 : 0)) * 100) + "%";
+        });
+        left.appendChild(hb);
+      }
       b.addEventListener("click", function () {
         if (maxed || gold < cost) return;
         gold -= cost;
-        if (Math.random() < pr) {
+        var odds = pr;
+        if (useHone && (bag.charm || 0) > 0) { bag.charm--; odds = Math.min(1, pr + 0.2); }
+        if (Math.random() < odds) {
           up[u.id] = lvl + 1; fails[u.id] = 0;
           if (window.SFX) SFX.up();
           toast(u.t + " " + (lvl + 1) + "단계 — 성공");
         } else {
           fails[u.id] = f + 1;
           if (window.SFX) SFX.down();
-          toast("강화 실패 — 단계는 그대로입니다 · 다음 성공률 "
+          toast("수련 실패 — 단계는 그대로입니다 · 다음 성공률 "
                 + Math.round(successRate(lvl, f + 1) * 100) + "%");
         }
         logEv("U", u.id.charAt(0));
@@ -3114,6 +3235,34 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       row.appendChild(left); row.appendChild(b);
       el.ups.appendChild(row);
     });
+    drawShop();
+  }
+
+  function drawShop() {
+    if (!el.shop) return;
+    el.shop.textContent = "";
+    SHOP.forEach(function (it) {
+      var cost = shopCost(it), have = bag[it.id] || 0;
+      var row = document.createElement("div"); row.className = "shoprow";
+      var L = document.createElement("div");
+      var t = document.createElement("div"); t.className = "st";
+      t.innerHTML = it.t + (have ? ' <span class="have">' + have + '개</span>' : "");
+      var d = document.createElement("div"); d.className = "sd"; d.textContent = it.d;
+      L.appendChild(t); L.appendChild(d);
+      var b = document.createElement("button");
+      b.textContent = "냥 " + cost.toLocaleString();
+      b.disabled = gold < cost;
+      b.addEventListener("click", function () {
+        if (gold < cost) return;
+        gold -= cost; bag[it.id] = have + 1;
+        if (window.SFX) SFX.up();
+        logEv("B", it.id.charAt(0));
+        toast(it.t + "을(를) 샀습니다 · " + (have + 1) + "개");
+        saveS(); drawShop(); drawStatsOnly();
+      });
+      row.appendChild(L); row.appendChild(b);
+      el.shop.appendChild(row);
+    });
   }
 
   // 이기는 길이 네 갈래다 — 마지막 빈칸으로 바로 눕히기, 덤 시간에 다 채우기,
@@ -3121,6 +3270,15 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 셋으로 이긴 사람은 상자를 구경도 못 한다. 그래서 전부 여기로 모은다.
   // 결과표를 아직 못 본 판. 덮개가 다른 이유로 치워져도 셈은 치러야 한다.
   var pendingWin = null;
+  // 진 자리에서 고르는 도움. 다음 판 한 번에만 쓰인다.
+  //
+  // 무한도전이라 "다시 보기"로 목숨을 사게 할 수는 없다. 그래서 광고는
+  // 다시 하게 해 주는 것이 아니라 '조금 수월하게' 해 주는 쪽으로 둔다 —
+  // 막혀서 답답한 그 순간이 광고를 볼 마음이 드는 유일한 자리다.
+  var boost = { hp: 0, sec: 0 };
+  function retryCost() {
+    return Math.round((260 + stage * 22) * (1 + cycle() * 0.6));
+  }
 
   function victory(r) {
     // 한 판은 한 번만 끝난다. 「여기서 마무리」와 시계 0과 완전 격파가
@@ -3164,6 +3322,19 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     var timePay = won ? Math.max(0, r.leftAtEnd || 0) : 0;
     // 첫 승리에 한 번. 강화를 두 단계씩 바로 해 볼 수 있는 양이어야
     // '강화라는 게 있구나'를 글이 아니라 손으로 배운다.
+    // 옥은 두 곳에서만 나온다 — 수호신, 그리고 광고(나중엔 결제).
+    // 냥으로는 못 산다. 냥으로 살 수 있게 두는 순간 옥은 값을 잃고,
+    // 힌트는 공짜가 되고, 과금이 설 자리도 같이 사라진다.
+    var bossGem = 0;
+    if (won && r.b.boss) bossGem += BOSS_GEM;
+    // 완전 격파에도 옥을 준다.
+    //
+    // 사람이 바라는 것은 이기는 것이 아니라 '다 아는 것'이다. 빈칸을 다
+    // 채우고 싶은 그 마음이 옥을 쓰게 만들고, 옥을 쓰면 다 채워지고,
+    // 다 채우면 옥이 다시 들어온다. 잘하는 사람은 돌고, 막힌 사람은 산다 —
+    // 그 자리가 과금이 설 유일하게 떳떳한 자리다.
+    if (won && r.perfect) bossGem += PERFECT_GEM;
+    if (bossGem) gem += bossGem;
     var firstWin = 0;
     if (won && !tut.done) {
       firstWin = 1000;
@@ -3222,7 +3393,41 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       sb.textContent = rows.reduce(function (n, x) { return n + x[1]; }, 0).toLocaleString() + "냥";
       sum.appendChild(sa); sum.appendChild(sb); tbl.appendChild(sum);
       card.appendChild(tbl);
+      // 옥은 냥과 셈이 다르다. 합계에 섞지 않고 따로 적는다.
+      if (bossGem) {
+        var gm = document.createElement("p"); gm.className = "lead gemline";
+        var why = [];
+        if (r.b.boss) why.push("수호신");
+        if (r.perfect) why.push("완전 격파");
+        gm.innerHTML = why.join(" · ") + ' <b>옥 +' + bossGem + '</b>'
+          + '<span>옥은 힌트에만 쓰입니다 · 냥으로는 살 수 없습니다</span>';
+        card.appendChild(gm);
+      }
     }
+    // 이겼어도 안 채운 빈칸이 남았으면 뜻과 함께 알려 준다.
+    //
+    // 끝난 뒤에 아는 것은 이번 판에 아무 도움이 안 된다. 그래서 "알았으면
+    // 완판이었는데"가 남고, 그 미련이 다음 판에 옥을 쓰게 만든다.
+    // 답답함은 풀어 주고 아쉬움만 남기는 쪽이 다시 오게 한다.
+    if (won && !r.perfect) {
+      var left2 = r.ans.filter(function (w) { return !r.got[w]; });
+      if (left2.length) {
+        var mh = document.createElement("p"); mh.className = "subh";
+        mh.textContent = "못 채운 빈칸";
+        card.appendChild(mh);
+        var ml = document.createElement("div"); ml.className = "lines";
+        left2.slice(0, 4).forEach(function (w) {
+          var li = document.createElement("p");
+          li.innerHTML = "<b>" + w + "</b>" + (MEAN[w] ? " · " + MEAN[w] : "");
+          ml.appendChild(li);
+        });
+        card.appendChild(ml);
+        var mn = document.createElement("p"); mn.className = "lead foot";
+        mn.innerHTML = "다 채웠으면 <b>완전 격파 · 옥 +" + PERFECT_GEM + "</b> 이었습니다";
+        card.appendChild(mn);
+      }
+    }
+
     if (!won) {
       var miss = document.createElement("p"); miss.className = "lead";
       miss.textContent = "못 채운 낱말"; card.appendChild(miss);
@@ -3251,21 +3456,51 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     }
     // 단계를 넘기기 전이 수련하기 제일 좋은 때다. 방금 받은 냥이 손에 있고,
     // 다음 판은 「시작」을 누를 때까지 기다려 준다.
+    // 졌을 때만, 다음 한 판을 수월하게 해 주는 길을 연다.
+    if (!won) {
+      var hint = document.createElement("p"); hint.className = "lead foot";
+      hint.innerHTML = "다음 한 판만 <b>도움</b>을 받으실 수 있습니다";
+      card.appendChild(hint);
+      var brow = document.createElement("div"); brow.className = "trow";
+      var rc = retryCost();
+      var bg = document.createElement("button"); bg.className = "btn ghost";
+      bg.innerHTML = "기세 -20%<small>냥 " + rc.toLocaleString() + "</small>";
+      bg.disabled = gold < rc;
+      bg.addEventListener("click", function () {
+        if (gold < rc) return;
+        gold -= rc; boost.hp = 0.20; saveS(); drawStatsOnly();
+        bg.disabled = true; ba.disabled = true;
+        toast("다음 한 판은 수호신의 기세가 20% 낮습니다");
+      });
+      var ba = document.createElement("button"); ba.className = "btn ghost";
+      ba.innerHTML = "시간 +20초<small>광고 한 편</small>";
+      ba.addEventListener("click", function () {
+        boost.sec = 20;
+        bumpAd();                       // 광고 사다리에도 한 칸 얹는다
+        bg.disabled = true; ba.disabled = true;
+        toast("다음 한 판은 제한시간이 20초 깁니다");
+      });
+      brow.appendChild(bg); brow.appendChild(ba);
+      card.appendChild(brow);
+    }
+
     var row = document.createElement("div"); row.className = "trow";
     var b1 = document.createElement("button"); b1.className = "btn";
     b1.textContent = won ? "다음 단계로" : "다시 도전";
     b1.addEventListener("click", function () {
       ov.remove();
       el.portrait.classList.remove("down");
-      start();
+      start(true);                       // 바로 들어간다
     });
-    var b2 = document.createElement("button"); b2.className = "btn ghost";
-    b2.innerHTML = "수련하기<small>냥 " + gold.toLocaleString() + "</small>";
+    var b2 = document.createElement("button"); b2.className = "btn";
+    b2.innerHTML = "수련하기<small id=\"resGold\">냥 " + gold.toLocaleString() + "</small>";
     b2.addEventListener("click", function () {
-      ov.remove();
-      el.portrait.classList.remove("down");
-      start();
-      openPanel(el.pTrain);
+      // 결과표를 닫지 않는다. 수련을 닫으면 여기로 돌아온다.
+      drawTrain();
+      openPanel(el.pTrain, function () {
+        var g = document.getElementById("resGold");
+        if (g) g.textContent = "냥 " + gold.toLocaleString();
+      });
     });
     row.appendChild(b2); row.appendChild(b1);
     card.appendChild(row);
@@ -3324,6 +3559,20 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
         var x = document.createElement("span"); x.textContent = w; ws.appendChild(x);
       });
       card.appendChild(ws);
+    }
+
+    // 오늘의 한 낱말. 점수만 남기면 내일 다시 올 이유가 없다 —
+    // 배워 간 것이 하나 있으면 그게 이유가 된다. 날짜로 고르므로
+    // 모두에게 같은 낱말이 뜨고, 카톡에서 같은 말을 하게 된다.
+    var lesson = run.ans.filter(function (w) { return MEAN[w]; });
+    if (lesson.length) {
+      var pick = withSeed(todaySeed() + 7, function () {
+        return lesson[Math.floor(Math.random() * lesson.length)];
+      });
+      var lw = document.createElement("div"); lw.className = "lesson";
+      lw.innerHTML = '<span class="k">오늘의 낱말</span>'
+        + '<b>' + pick + '</b><span class="m">' + MEAN[pick] + '</span>';
+      card.appendChild(lw);
     }
 
     var det = document.createElement("details"); det.className = "shbox";
@@ -3429,6 +3678,15 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     var nw = chainOpening(); run.used[nw] = true;
     kSay(nw, "foe", "넘김"); kResume(last(nw));
   });
+  // 기름 한 병 — 쓰러뜨린 뒤 마무리 시간을 늘린다. 함에 적힌 대로.
+  el.btnOil.addEventListener("click", function () {
+    if (!run || run.phase !== "bonus" || (bag.ink || 0) < 1) return;
+    bag.ink--; run.left += 15;
+    if (window.SFX) SFX.up();
+    saveS(); drawStatsOnly(); draw();
+    toast("기름 한 병 · 마무리 시간 +15초");
+  });
+
   el.btnStart.addEventListener("click", beginRun);
   el.btnGo.addEventListener("click", attack);
   el.btnEnd.addEventListener("click", function () {
@@ -3539,6 +3797,12 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
       openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_BOSS, 0.8);
       return;
     }
+    if (st.n % AD_GEM_EVERY === 0) {             // 세 편 — 옥 한 알
+      gem++; saveS(); drawStatsOnly();
+      if (window.SFX) SFX.up();
+      toast("광고 " + st.n + " / " + AD_DAY + " · 옥 한 알을 받았습니다");
+      return;
+    }
     if (st.n % AD_SMALL === 0) {                 // 두 편 — 보급품
       // 연출은 함에만 쓴다. 보급품까지 함을 열면 함이 흔해진다.
       var g = chestFloor(0.25), sc = 100 / CHEST_SUM, roll = Math.random() * 100, acc = 0, got = CHEST[0];
@@ -3558,7 +3822,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
 
   // 서랍에서 패널을 꺼내 띄우고, 닫으면 제자리로 돌려놓는다.
   // 통째로 옮기므로 걸어 둔 손잡이와 el.* 참조가 그대로 산다.
-  function openPanel(node) {
+  function openPanel(node, onShut) {
     var mark = document.createComment("stash");
     node.parentNode.insertBefore(mark, node);
     var ov = document.createElement("div"); ov.className = "ov";
@@ -3568,6 +3832,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     shut.className = "btn shut"; shut.textContent = "닫기";
     function close() {
       mark.parentNode.insertBefore(node, mark); mark.remove(); ov.remove();
+      if (onShut) onShut();
     }
     shut.addEventListener("click", close);
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
@@ -3579,6 +3844,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   el.tRule.addEventListener("click", function () { openPanel(el.pRule); });
   el.tLog.addEventListener("click", function () { drawLog(); openPanel(el.pLog); });
 
+  if (el.buildTag) el.buildTag.textContent = "판 " + BUILD;
   loadS();
   loadTut();
   logLoad();
@@ -3639,8 +3905,20 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
 // 한 번 받아 두면 집 밖에서도 열린다. file:// 과 남의 자리에서는 조용히 넘긴다.
 if ("serviceWorker" in navigator &&
     (location.protocol === "https:" || location.hostname === "localhost")) {
+  // 고친 것이 폰에 안 닿으면 고친 보람이 없다. 새 판이 올라오면
+  // 스스로 갈아타고 한 번만 새로 그린다.
+  var swSwapped = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (swSwapped) return;
+    swSwapped = true;
+    location.reload();
+  });
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("sw.js")["catch"](function () {});
+    navigator.serviceWorker.register("sw.js").then(function (reg) {
+      reg.update();
+      // 오래 켜 둔 채로 두는 사람도 있다. 한 시간마다 한 번 들여다본다.
+      setInterval(function () { reg.update(); }, 3600000);
+    })["catch"](function () {});
   });
 }
 </script>
