@@ -2352,6 +2352,7 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   }
 
   function finish(won) {
+    if (!run || run.ended) return;
     if (timerId) { clearInterval(timerId); timerId = null; }
     var r = run; run = null;
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
@@ -2998,7 +2999,16 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
   // 이기는 길이 네 갈래다 — 마지막 빈칸으로 바로 눕히기, 덤 시간에 다 채우기,
   // 「여기서 마무리」, 덤 시간 종료. 보물함을 한 갈래에만 붙여 두면 나머지
   // 셋으로 이긴 사람은 상자를 구경도 못 한다. 그래서 전부 여기로 모은다.
+  // 결과표를 아직 못 본 판. 덮개가 다른 이유로 치워져도 셈은 치러야 한다.
+  var pendingWin = null;
+
   function victory(r) {
+    // 한 판은 한 번만 끝난다. 「여기서 마무리」와 시계 0과 완전 격파가
+    // 거의 같은 순간에 겹칠 수 있는데, 그때 보물함과 결과표가 두 번 뜨면
+    // 단계도 두 칸 오른다. 들어오는 길이 넷이라 여기서 한 번만 받는다.
+    if (!r || r.ended) return;
+    r.ended = 1;
+    pendingWin = r;
     if (timerId) { clearInterval(timerId); timerId = null; }
     r.leftAtEnd = Math.max(0, r.left);
     run = null;
@@ -3011,7 +3021,10 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     else result(r, true);
   }
 
-  function result(r, won) {
+  function result(r, won, silent) {
+    if (!r || r.carded) return;
+    r.carded = 1;
+    pendingWin = null;
     if (timerId) { clearInterval(timerId); timerId = null; }
     var took = r.t0 ? Math.round((Date.now() - r.t0) / 1000) : 0;
     LOG.secs.push(took);
@@ -3044,6 +3057,11 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     if (won) stage += 1;
     saveS();
     drawStatsOnly();   // 냥만 새로 그리면 첫걸음 선물의 옥이 화면에서 안 보인다
+
+    // 보물함이나 결과표가 떠 있는데 다른 모드로 넘어가면 덮개가 치워진다.
+    // 그때 결과표를 그리지 않더라도 냥과 단계는 이미 위에서 치렀으므로,
+    // 같은 단계를 다시 깨고 보물함을 또 받는 일이 생기지 않는다.
+    if (silent) return;
 
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
@@ -3228,7 +3246,11 @@ body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라�
     el.mDaily.classList.toggle("on", m === "daily");
     el.mChain.classList.toggle("on", m === "chain");
     if (timerId) { clearInterval(timerId); timerId = null; }
-    var ov = document.querySelector(".ov"); if (ov) ov.remove();
+    // 결과표를 못 본 판이 있으면 먼저 셈을 치른다. 안 그러면 깬 단계가
+    // 그대로 남아 같은 수호신을 또 만나고, 보물함도 또 나온다.
+    if (pendingWin) result(pendingWin, true, true);
+    var ovs = document.querySelectorAll(".ov");
+    for (var oi = 0; oi < ovs.length; oi++) ovs[oi].remove();
     document.body.classList.remove("raging");
     document.body.classList.remove("ready");   // 산 오르기에서만 쓰는 잠금
     el.startBar.hidden = true;
