@@ -48,6 +48,10 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* 누를 자리에서는 브라우저가 망설이지 않게 한다. 이 한 줄이 없으면
+   손가락이 닿아도 "넘기려는 건가 두 번 두드리려는 건가"를 먼저 가린다. */
+button, .tile, .mode, .tbtn { touch-action: manipulation; user-select: none;
+  -webkit-user-select: none; }
 /* display를 정한 클래스는 hidden 속성을 이겨 버린다. .bonusbar가 flex라
    새 판마다 "쓰러뜨렸습니다" 띠가 떠 있었다. 한 군데서 막는다. */
 [hidden] { display: none !important; }
@@ -416,7 +420,13 @@ body.quake { animation: shake .42s ease-out; }
   font-family: var(--font-display); font-size: clamp(16px, 4.6vw, 21px); font-weight: 700;
   background: var(--surface-2); color: var(--fg); border: 1px solid var(--line);
   border-radius: 10px; transition: transform .08s ease, opacity .15s ease; }
-.tile:active { transform: scale(.92); }
+.tile { will-change: transform; }
+/* 눌린 티가 작으면 안 눌린 줄 안다. 더 깊게 눌리고, 테두리도 함께 선다. */
+.tile:active:not(:disabled) {
+  transform: scale(.88);
+  background: #3A4257; border-color: var(--gold);
+  transition-duration: .04s;
+}
 .tile.used { opacity: .22; }
 
 /* 산마다 다른 규칙. 글자판 크기만 바뀌고 손이 하는 일은 같으면 금방 질린다.
@@ -1231,7 +1241,12 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   <div class="panel" id="pSet">
     <h2>설정</h2>
-    <p class="muted" style="margin-bottom:6px">글씨 크기</p>
+    <p class="muted" style="margin-bottom:6px">글자를 누를 때</p>
+    <div class="sizer" id="buzzer">
+      <button data-b="1">짧게 떨림</button>
+      <button data-b="0">떨림 없이</button>
+    </div>
+    <p class="muted" style="margin:11px 0 6px">글씨 크기</p>
     <div class="sizer" id="sizer">
       <button data-z="1">보통</button>
       <button data-z="1.12">크게</button>
@@ -1547,7 +1562,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
    "saveBar","saveSub","saveGo","saveNo","tSet","tSetSub","pSet","btnLogOpen","btnRuleOpen",
-   "boardActs","kPassSub","holds","statLine",
+   "boardActs","kPassSub","holds","statLine","buzzer",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange","streaks","cal","calNote",
@@ -1718,7 +1733,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-l";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -3428,20 +3443,50 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     });
   }
 
-  function drawTiles() {
-    var tn = run.tiles.length;
-    el.tiles.style.setProperty("--tn", tn > 8 ? Math.ceil(tn / 2) : tn);
-    el.tiles.textContent = "";
-    run.tiles.forEach(function (ch, i) {
-      var b = document.createElement("button");
-      b.className = "tile" + (picked.indexOf(i) >= 0 ? " used" : "")
-        + (i === run.weak ? " weak" : "") + (i === run.sealed ? " sealed" : "");
-      b.textContent = ch;
-      b.disabled = picked.indexOf(i) >= 0 || i === run.sealed;
-      if (i === run.sealed) b.title = "수호신이 눌러 둔 글자입니다";
-      b.addEventListener("click", function () { tap(i); });
-      el.tiles.appendChild(b);
+  // 글자판은 지웠다 다시 만들지 않는다.
+  //
+  // 누를 때마다 textContent=""로 전부 날리고 새로 만들고 있었다. 그러면
+  // 방금 손가락이 닿은 바로 그 단추가 그 순간 사라진다 — 눌린 티(:active)도,
+  // 줄어드는 움직임도 같이 사라져서 "제대로 눌러야 눌리는" 느낌이 난다.
+  // 실제로는 눌렸는데 눌린 자국이 안 보였던 것이다.
+  //
+  // 글자가 그대로면 단추도 그대로 두고 꼴만 고친다. 판이 바뀔 때만 새로 짓는다.
+  function tileNode(ch, i) {
+    var b = document.createElement("button");
+    b.className = "tile";
+    b.textContent = ch;
+    // 손가락이 닿는 순간 친다. click 은 떼야 오고, 그 사이 브라우저가
+    // "이게 넘기기인가 두 번 두드리기인가"를 가리느라 한 박자 늦는다.
+    b.addEventListener("pointerdown", function (e) {
+      if (b.disabled) return;
+      e.preventDefault();          // 뒤따라올 click 을 눌러 둔다
+      b.__hit = 1;
+      buzz();
+      tap(i);
     });
+    // 자판으로 누르는 경우 — pointerdown 이 안 온다
+    b.addEventListener("click", function () {
+      if (b.__hit) { b.__hit = 0; return; }
+      tap(i);
+    });
+    return b;
+  }
+  function drawTiles() {
+    var tn = run.tiles.length, sig = run.tiles.join("");
+    el.tiles.style.setProperty("--tn", tn > 8 ? Math.ceil(tn / 2) : tn);
+    if (el.tiles.dataset.sig !== sig || el.tiles.children.length !== tn) {
+      el.tiles.textContent = "";
+      run.tiles.forEach(function (ch, i) { el.tiles.appendChild(tileNode(ch, i)); });
+      el.tiles.dataset.sig = sig;
+    }
+    for (var i = 0; i < tn; i++) {
+      var b = el.tiles.children[i], on = picked.indexOf(i) >= 0;
+      b.classList.toggle("used", on);
+      b.classList.toggle("weak", i === run.weak);
+      b.classList.toggle("sealed", i === run.sealed);
+      b.disabled = on || i === run.sealed;
+      b.title = i === run.sealed ? "수호신이 눌러 둔 글자입니다" : "";
+    }
   }
 
   function word() {
@@ -3521,6 +3566,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
                  * (0.08 + gearVal("combo") + up.combo * COMBO_STEP));
     if (weakHit()) d *= WEAK_MUL;          // 금빛 글자를 끼워 넣으면 크게 들어간다
     return Math.round(d);
+  }
+
+  // 아주 짧게 떨리는 것 하나로 "눌렸다"가 손끝에 온다. 화면만 보고
+  // 판단하지 않아도 되니 눈이 글자판에 머문다. 싫어하는 분이 있어
+  // 설정에서 끌 수 있게 둔다.
+  var BUZZ_KEY = "nm.buzz";
+  var buzzOn = true;
+  try { buzzOn = localStorage.getItem(BUZZ_KEY) !== "0"; } catch (e) {}
+  function buzz(ms) {
+    if (!buzzOn || !navigator.vibrate) return;
+    try { navigator.vibrate(ms || 8); } catch (e) {}
   }
 
   function tap(i) {
@@ -5821,6 +5877,23 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   // ── 글씨 크기 ─────────────────────────────────────────
   // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
+  (function () {
+    function paint() {
+      [].forEach.call(el.buzzer.children, function (b) {
+        b.classList.toggle("on", (b.dataset.b === "1") === buzzOn);
+      });
+    }
+    el.buzzer.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-b]");
+      if (!b) return;
+      buzzOn = b.dataset.b === "1";
+      try { localStorage.setItem(BUZZ_KEY, buzzOn ? "1" : "0"); } catch (x) {}
+      paint(); buzz(14);
+      toast(buzzOn ? "누를 때 짧게 떨립니다" : "떨림을 껐습니다");
+    });
+    paint();
+  })();
+
   var sizer = document.getElementById("sizer");
   var wrapEl = document.querySelector(".wrap");
 
