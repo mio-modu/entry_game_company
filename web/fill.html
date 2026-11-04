@@ -106,13 +106,23 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .streak .v small { font-family: var(--font-body); font-size: 12px; font-weight: 400;
   color: var(--fg-dim); margin-left: 3px; }
 .streak.hot { border-color: var(--gold); }
+/* 달력에 날짜가 없으면 네모가 몇 개인지만 보인다 — 언제 왔는지가 안 읽힌다. */
+.calhead { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  margin-bottom: 4px; }
+.calhead span { text-align: center; font-family: var(--font-mono); font-size: 10px;
+  color: var(--fg-faint); }
+.calhead span.sun { color: #C96A5E; }
+.calhead span.sat { color: #6E8FC9; }
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .cal i {
   aspect-ratio: 1; border-radius: 5px; background: var(--surface-2);
-  border: 1px solid transparent; display: block;
+  border: 1px solid transparent; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 11px; font-style: normal;
+  color: var(--fg-faint);
 }
-.cal i.on { background: var(--jade); }
-.cal i.today { border-color: var(--gold); }
+.cal i.on { background: var(--jade); color: #06201B; font-weight: 700; }
+.cal i.today { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.cal i.on.today { color: #06201B; }
 .cal i.none { background: transparent; }
 .attrow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
 .att {
@@ -1296,6 +1306,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="subh">오늘 할 일</p>
     <div id="questList"></div>
     <p class="subh">이번 달</p>
+    <div class="calhead" id="calHead"></div>
     <div class="cal" id="cal"></div>
     <p class="muted" id="calNote" style="margin:7px 0 0"></p>
     <p class="subh">바꾸기</p>
@@ -1702,7 +1713,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnToShop","btnToMine","btnMineTrain","btnMineRule",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub",
-   "pToday","attRow","questList","exchange","streaks","cal","calNote",
+   "pToday","attRow","questList","exchange","streaks","cal","calHead","calNote",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
@@ -1878,7 +1889,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-w";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-x";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2460,6 +2471,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 이번 달 달력 — 오늘의 낱말을 한 날에 불이 들어온다
     var now = new Date(), y = now.getFullYear(), m = now.getMonth();
     var first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+    if (el.calHead && !el.calHead.children.length) {
+      ["일", "월", "화", "수", "목", "금", "토"].forEach(function (w, wi) {
+        var sp = document.createElement("span");
+        sp.textContent = w;
+        if (wi === 0) sp.className = "sun";
+        if (wi === 6) sp.className = "sat";
+        el.calHead.appendChild(sp);
+      });
+    }
     el.cal.textContent = "";
     for (var b0 = 0; b0 < first.getDay(); b0++) {
       var sp = document.createElement("i"); sp.className = "none"; el.cal.appendChild(sp);
@@ -2470,6 +2490,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var day = new Date(y, m, dd), on = dailyDoneOn(day);
       if (on) done++;
       cell.className = (on ? "on " : "") + (dd === now.getDate() ? "today" : "");
+      cell.textContent = dd;
       cell.title = (m + 1) + "월 " + dd + "일" + (on ? " · 했습니다" : "");
       el.cal.appendChild(cell);
     }
@@ -2515,7 +2536,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       L.appendChild(qt); L.appendChild(qp);
       var b = document.createElement("button");
       b.className = "qb" + (done && !got ? " on" : "");
-      b.textContent = got ? "받음" : done ? "받기" : "하는 중";
+      // 「하는 중」은 혼잣말 같다. 「진행 중 · 받기 · 완료」가 누구나 아는 말이다.
+      b.textContent = got ? "완료" : done ? "받기" : "진행 중";
       b.disabled = got || !done;
       b.addEventListener("click", function () { takeQuest(q); });
       row.appendChild(L); row.appendChild(b);
