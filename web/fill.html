@@ -1369,6 +1369,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button data-b="1">짧게 떨림</button>
       <button data-b="0">떨림 없이</button>
     </div>
+    <p class="cite" id="buzzNote" style="margin-top:6px"></p>
     <p class="muted" style="margin:11px 0 6px">글씨 크기</p>
     <div class="sizer" id="sizer">
       <button data-z="1">보통</button>
@@ -1708,7 +1709,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "codeAct2","btnCodeFile","btnCodeShare",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
    "saveBar","saveSub","saveGo","saveNo","tSet","tSetSub","pSet","btnLogOpen","btnRuleOpen",
-   "boardActs","kPassSub","holds","statLine","buzzer","btnDiag","diagBox",
+   "boardActs","kPassSub","holds","statLine","buzzer","buzzNote","btnDiag","diagBox",
    "tMine","tMineSub","pMine","meHead","statGrid","gearList",
    "btnToShop","btnToMine","btnMineTrain","btnMineRule",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
@@ -1889,7 +1890,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-x";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-y";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3951,12 +3952,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 아주 짧게 떨리는 것 하나로 "눌렸다"가 손끝에 온다. 화면만 보고
   // 판단하지 않아도 되니 눈이 글자판에 머문다. 싫어하는 분이 있어
   // 설정에서 끌 수 있게 둔다.
+  //
+  // 8ms 로 두었더니 아무도 못 느꼈다. 안드로이드의 떨림 장치는 아주 짧은
+  // 명령을 그냥 삼킨다 — 모터가 돌기도 전에 끝나 버린다. 삼성 기기가
+  // 특히 그렇다. 느껴지는 바닥은 20ms 언저리다.
   var BUZZ_KEY = "nm.buzz";
   var buzzOn = true;
   try { buzzOn = localStorage.getItem(BUZZ_KEY) !== "0"; } catch (e) {}
+  function canBuzz() { return !!(navigator.vibrate || navigator.mozVibrate); }
   function buzz(ms) {
-    if (!buzzOn || !navigator.vibrate) return;
-    try { navigator.vibrate(ms || 8); } catch (e) {}
+    if (!buzzOn) return false;
+    var f = navigator.vibrate || navigator.mozVibrate;
+    if (!f) return false;
+    try { return f.call(navigator, ms || 20) !== false; } catch (e) { return false; }
   }
 
   function tap(i) {
@@ -6519,14 +6527,27 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       [].forEach.call(el.buzzer.children, function (b) {
         b.classList.toggle("on", (b.dataset.b === "1") === buzzOn);
       });
+      if (!el.buzzNote) return;
+      el.buzzNote.innerHTML = !canBuzz()
+        ? "이 기기나 브라우저는 <b>떨림을 지원하지 않습니다.</b>"
+        : buzzOn
+          ? "안 느껴지시면 폰의 <b>소리·진동 → 터치 피드백</b>이 켜져 있는지 보십시오."
+          : "";
     }
     el.buzzer.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-b]");
       if (!b) return;
       buzzOn = b.dataset.b === "1";
       try { localStorage.setItem(BUZZ_KEY, buzzOn ? "1" : "0"); } catch (x) {}
-      paint(); buzz(14);
-      toast(buzzOn ? "누를 때 짧게 떨립니다" : "떨림을 껐습니다");
+      paint();
+      if (!buzzOn) { toast("떨림을 껐습니다"); return; }
+      // 켜는 순간 한 번 떨어 준다. 안 떨리면 그 자리에서 까닭을 말한다 —
+      // 설정만 켜 두고 아무 일도 안 일어나면 고장으로 읽힌다.
+      var ok = buzz(40);
+      toast(!canBuzz()
+        ? "이 기기에서는 떨림을 쓸 수 없습니다"
+        : ok ? "누를 때 짧게 떨립니다 · 방금 느끼셨나요?"
+             : "떨림이 막혀 있습니다 · 폰의 소리·진동 설정을 보십시오");
     });
     paint();
   })();
