@@ -1320,16 +1320,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
     <p class="subh">끝말잇기</p>
     <div class="lines">
-      <p>목숨은 <b>하루 세 개</b>입니다. 시간이 다하면 하나를 잃습니다.</p>
+      <p>하루 <b>세 판</b>입니다. 그리고 갈수록 어려워집니다 —
+         한 턴에 주어지는 시간이 <b>13초 · 11초 · 9초</b>로 줄어듭니다.</p>
+      <p>한 판 안에서 목숨은 <b>셋</b>입니다. 시간이 다하면 하나를 잃습니다.</p>
       <p>막히면 <b>넘기기</b>입니다 — <b>목숨은 잃지 않고</b>, 수호신이
          기세를 8%만 되찾습니다. 그리고 다른 글자로 다시 시작합니다.</p>
       <p class="pivot">이을 낱말이 <b>사전에 아예 없는 글자</b>를 받으실 때가 있습니다.
          그때는 화면이 먼저 알려 드리고, 넘기셔도 <b>아무 손해가 없습니다.</b></p>
-      <p>옥 하나로 <b>힌트</b>를 보실 수 있습니다 — 뜻풀이 한 줄입니다.</p>
-      <p>수호신 <b>셋</b>을 물리치면 <b>승급 시험 표 한 장</b>.
+      <p>옥 하나로 <b>힌트</b> — 뜻풀이 한 줄입니다.</p>
+      <p>판에 지면 그 판은 거기서 끝입니다. <b>옥 하나</b>를 들이면
+         <b>그 판을 다시</b> 칩니다 — 하루 세 번까지.</p>
+      <p>세 판을 다 물리치면 <b>승급 시험 표 한 장</b>.
          오늘 시험 한 판을 <b>옥 없이</b> 보십니다. 하루 한 장입니다.</p>
-      <p>목숨을 다 쓰시면 내일까지 기다리거나, <b>옥 다섯으로 하나 더</b>
-         받으실 수 있습니다 — 이것도 하루 한 번입니다.</p>
     </div>
 
     <p class="subh">산마다 다른 것</p>
@@ -1716,7 +1718,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-l";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -2143,9 +2145,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var QUESTS = [
     { id: "win",   t: "단계 셋을 깨기",      goal: 3,  r: "냥" },
     { id: "perf",  t: "완전 격파 한 번",     goal: 1,  r: "옥", n: 2 },
+    // 끝말잇기는 세 판이 다 걸린 자리라, 한 판만 이겨도 그날 몫은 있어야
+    // 손이 간다. 갚는 것은 냥이다 — 옥을 여기서 또 풀면 모자란 느낌이
+    // 끝내 안 생긴다.
+    { id: "chain", t: "끝말잇기 한 판 이기기", goal: 1, r: "냥" },
     { id: "bonus", t: "보너스 낱말 열 개",   goal: 10, r: "냥" }
   ];
-  function qCount() { return dGet("q", { win: 0, perf: 0, bonus: 0 }); }
+  function qCount() { return dGet("q", { win: 0, perf: 0, chain: 0, bonus: 0 }); }
   function qBump(k, n) {
     var c = qCount(); c[k] = (c[k] || 0) + (n || 1); dSet("q", c);
   }
@@ -2946,35 +2952,59 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 하루 두 판이라는 벽은 그대로다. 표는 "한 판 더"가 아니라 "그 한 판의
   // 값을 치러 주는 것"이다. 돈으로도 못 넘던 벽을 실력으로도 못 넘는다.
-  var CHAIN_LIVES = 3;          // 하루에 주어지는 목숨
-  var CHAIN_BUY = 5;            // 옥으로 하나 더 — 하루 한 번
+  // 하루 세 판. 갈수록 어려워진다 — 어려워진다는 것은 생각할 틈이 준다는 뜻이다.
+  //
+  // 전에는 세 판이 똑같았다. 똑같으면 셋째 판이 그저 셋째일 뿐이라
+  // "여기만 넘기면" 하는 마음이 안 생긴다. 한 턴에 주어지는 시간을
+  // 13초에서 11초, 9초로 조이면 같은 사전으로도 판이 달라진다.
+  //
+  // 판에 지면 그 판은 거기서 끝이다. 옥 하나를 들이면 그 판을 다시 친다 —
+  // 큰돈이 아니라 "한 번만 더"가 되는 값이라야 손이 나간다.
+  //
+  // 세 판을 다 물리치면 「표」 한 장. 그 표로 오늘 승급 시험 한 판을
+  // 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진 것을
+  // 실력으로 되찾는 길이다. 하루 두 판이라는 벽은 그대로다 —
+  // 표는 "한 판 더"가 아니라 "그 한 판의 값을 치러 주는 것"이다.
+  var CHAIN_SEC = [13, 11, 9];  // 판마다 한 턴에 주어지는 시간
+  var CHAIN_LIVES = 3;          // 한 판 안에서의 목숨
+  var CHAIN_RETRY_GEM = 1;      // 진 판을 다시 치는 값
+  var CHAIN_RETRY_DAY = 3;      // 하루에 다시 칠 수 있는 횟수
   var CHAIN_WIN_FOR_TICKET = 3; // 표 한 장에 드는 수호신 수
-  function kLivesKey()  { return "nathero-kl-" + todayKey(); }
-  function kBoughtKey() { return "nathero-kb-" + todayKey(); }
   function kWinsKey()   { return "nathero-kw-" + todayKey(); }
+  function kDeadKey()   { return "nathero-kd-" + todayKey(); }
+  function kRetryKey()  { return "nathero-kr-" + todayKey(); }
   function kTicketKey() { return "nathero-kt-" + todayKey(); }
   function kGet(k, d) {
     try { var v = localStorage.getItem(k); return v == null ? d : (parseInt(v, 10) || 0); }
     catch (e) { return d; }
   }
   function kSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
-  function kLives()  { return kGet(kLivesKey(), CHAIN_LIVES); }
-  function kBought() { return kGet(kBoughtKey(), 0); }
   function kWins()   { return kGet(kWinsKey(), 0); }
+  function kDead()   { return kGet(kDeadKey(), 0); }
+  function kRetry()  { return kGet(kRetryKey(), 0); }
   function kTicket() { return kGet(kTicketKey(), 0); }
-  function kSpendLife() { kSet(kLivesKey(), Math.max(0, kLives() - 1)); }
+  function kRound()  { return Math.min(CHAIN_SEC.length, kWins() + 1); }   // 오늘 몇 판째인가
+  function kSec()    { return CHAIN_SEC[Math.min(CHAIN_SEC.length - 1, kWins())]; }
+  function kDone()   { return kWins() >= CHAIN_WIN_FOR_TICKET; }
+  function kCanRetry() { return kDead() && kRetry() < CHAIN_RETRY_DAY; }
 
   function startChain() {
-    if (!kLives()) {
-      toast("오늘 끝말잇기 목숨을 다 쓰셨습니다 · 내일 다시");
-      setMode("quest");
-      return;
+    if (kDone()) {
+      toast("오늘 세 판을 다 치르셨습니다 · 내일 다시");
+      setMode("quest"); return;
+    }
+    if (kDead()) {
+      toast(kCanRetry()
+        ? kRound() + "판에서 지셨습니다 · 옥 " + CHAIN_RETRY_GEM + "을 들이면 다시 칩니다"
+        : "오늘 끝말잇기는 여기까지입니다 · 내일 다시");
+      setMode("quest"); return;
     }
     buildChain();
     var M = MOUNTAINS[Math.floor(stage / 10) % 10];
     var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60)));
     run = { chain: true, b: { n: M.n + " 수호신", art: M.a, m: M.m, boss: false, no: 0 },
-            hp: hp, max: hp, left: 13, sec: 13, lives: kLives(), combo: 0, used: Object.create(null),
+            hp: hp, max: hp, left: kSec(), sec: kSec(), round: kRound(),
+            lives: CHAIN_LIVES, combo: 0, used: Object.create(null),
             words: [], mine: 0, phase: "fight", t0: Date.now(),
             ans: [], got: Object.create(null), tiles: [] };
     picked = [];
@@ -3148,7 +3178,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     run.left--;
     if (run.left <= 0) {
       run.left = 0;
-      run.lives--; run.combo = 0; kSpendLife();
+      run.lives--; run.combo = 0;
       run.hp = Math.min(run.max, run.hp + Math.round(run.max * 0.12));
       if (window.SFX) SFX.roar();
       kPaint();
@@ -3167,19 +3197,22 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
     var reward = won ? Math.round(60 + r.max * 0.12 * (1 + trainLv() * 0.05)) : 0;
     gold += reward;
-    var wins = kWins(), got = 0;
+    var got = 0;
     if (won) {
-      wins += 1; kSet(kWinsKey(), wins);
-      // 표는 하루 한 장. 셋을 물리칠 때마다가 아니라, 처음 셋에 한 번.
-      if (wins >= CHAIN_WIN_FOR_TICKET && !kTicket()) { kSet(kTicketKey(), 1); got = 1; }
+      kSet(kWinsKey(), kWins() + 1);
+      qBump("chain");                       // 일일 할 일 한 칸
+      if (kWins() >= CHAIN_WIN_FOR_TICKET && !kTicket()) { kSet(kTicketKey(), 1); got = 1; }
+    } else {
+      kSet(kDeadKey(), 1);                  // 이 판은 여기서 멈춘다
     }
-    saveS(); drawStatsOnly(); drawTray();
+    saveS(); drawStatsOnly(); drawTray(); drawToday();
 
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
     var h = document.createElement("h2");
     h.className = won ? "win" : "lose";
-    h.textContent = won ? eul(r.b.n) + " 물리쳤습니다" : "쓰러졌습니다";
+    h.textContent = (r.round ? r.round + "판 · " : "")
+      + (won ? eul(r.b.n) + " 물리쳤습니다" : "쓰러졌습니다");
     card.appendChild(h);
     var big = document.createElement("div"); big.className = "big";
     big.textContent = r.mine + "낱말"; card.appendChild(big);
@@ -3197,37 +3230,36 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (got) {
       tk.innerHTML = "<b>승급 시험 표 한 장</b>"
         + "<span>오늘 승급 시험 한 판을 옥 없이 보십니다</span>";
-    } else if (kTicket()) {
-      tk.innerHTML = "오늘 <b>표 한 장</b>을 이미 받으셨습니다"
-        + "<span>수련에서 쓰실 수 있습니다</span>";
     } else {
       var leftW = CHAIN_WIN_FOR_TICKET - kWins();
-      tk.innerHTML = "오늘 물리친 수호신 <b>" + kWins() + " / " + CHAIN_WIN_FOR_TICKET + "</b>"
-        + "<span>" + (leftW > 0 ? leftW + "을 더 물리치면 승급 시험 한 판이 공짜가 됩니다"
-                                : "표를 받으셨습니다") + "</span>";
+      tk.innerHTML = "오늘 <b>" + kWins() + " / " + CHAIN_WIN_FOR_TICKET + "</b>판"
+        + "<span>" + (leftW > 0
+            ? "세 판을 다 물리치면 승급 시험 한 판이 공짜가 됩니다"
+              + (leftW < CHAIN_WIN_FOR_TICKET
+                 ? " · 다음은 " + (kWins() + 1) + "판 " + CHAIN_SEC[kWins()] + "초" : "")
+            : "표를 받으셨습니다") + "</span>";
     }
     card.appendChild(tk);
-    var lv = document.createElement("p"); lv.className = "lead foot";
-    lv.innerHTML = kLives() ? "오늘 남은 목숨 <b>" + kLives() + "</b>"
-      : "오늘 목숨을 다 쓰셨습니다 · <b>내일 다시</b>"
-        + (kBought() ? "" : " · 옥 " + CHAIN_BUY + "로 하나 더");
-    card.appendChild(lv);
     var ws = document.createElement("div"); ws.className = "words";
     r.words.slice(-14).forEach(function (w) {
       var x = document.createElement("span"); x.textContent = w; ws.appendChild(x);
     });
     card.appendChild(ws);
     var b1 = document.createElement("button"); b1.className = "btn go";
-    var canBuy = !kLives() && !kBought();
-    b1.textContent = kLives() ? "다시 도전"
-      : canBuy ? "옥 " + CHAIN_BUY + " · 목숨 하나 더" : "내일 다시";
-    b1.disabled = !kLives() && (!canBuy || gem < CHAIN_BUY);
+    var retry = kCanRetry(), poor = gem < CHAIN_RETRY_GEM;
+    b1.innerHTML = kDone() ? "오늘 끝"
+      : !kDead() ? (kWins() + 1) + "판으로<small>" + CHAIN_SEC[kWins()] + "초</small>"
+      : retry ? "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
+                + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>"
+      : "내일 다시";
+    b1.disabled = kDone() || (kDead() && (!retry || poor));
     b1.addEventListener("click", function () {
-      if (!kLives()) {
-        if (!canBuy || gem < CHAIN_BUY) return;
-        gem -= CHAIN_BUY; kSet(kBoughtKey(), 1); kSet(kLivesKey(), 1);
-        saveS(); drawStatsOnly(); spent(0, CHAIN_BUY);
-        toast("옥 " + CHAIN_BUY + "을 들여 목숨 하나를 더 받았습니다");
+      if (kDead()) {
+        if (!retry || gem < CHAIN_RETRY_GEM) return;
+        gem -= CHAIN_RETRY_GEM;
+        kSet(kRetryKey(), kRetry() + 1); kSet(kDeadKey(), 0);
+        saveS(); drawStatsOnly(); spent(0, CHAIN_RETRY_GEM);
+        toast("옥 " + CHAIN_RETRY_GEM + "을 들여 " + kRound() + "판을 다시 칩니다");
       }
       ov.remove(); startChain();
     });
