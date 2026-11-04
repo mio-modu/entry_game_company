@@ -1374,9 +1374,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <h2>설정</h2>
     <p class="muted" style="margin-bottom:6px">글자를 누를 때</p>
     <div class="sizer" id="buzzer">
-      <button data-b="1">짧게 떨림</button>
-      <button data-b="0">떨림 없이</button>
+      <button data-b="1">누를 때 진동</button>
+      <button data-b="0">진동 없이</button>
     </div>
+    <button class="btn ghost" id="btnBuzzTest" style="margin-top:6px">진동 시험</button>
     <p class="cite" id="buzzNote" style="margin-top:6px"></p>
     <p class="muted" style="margin:11px 0 6px">글씨 크기</p>
     <div class="sizer" id="sizer">
@@ -1384,6 +1385,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button data-z="1.12">크게</button>
       <button data-z="1.26">더 크게</button>
     </div>
+    <p class="cite" style="margin-top:6px">크게 고르시면 한 화면을 넘칠 수 있습니다 —
+      그때는 <b>쓸어올려</b> 보십시오.</p>
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
       <button class="btn ghost" id="btnOpening">여는 영상 다시 보기</button>
@@ -1727,7 +1730,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "trainSub","shop","examBar","examHead","examSub","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -1901,7 +1904,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -4052,7 +4055,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 8ms 로 두었더니 아무도 못 느꼈다. 안드로이드의 떨림 장치는 아주 짧은
   // 명령을 그냥 삼킨다 — 모터가 돌기도 전에 끝나 버린다. 삼성 기기가
-  // 특히 그렇다. 느껴지는 바닥은 20ms 언저리다.
+  // 특히 그렇다. 느껴지는 바닥은 20ms 언저리다. 20도 못 느끼신다기에
+  // 26으로 올린다 — 더 올리면 글자를 누를 때마다 웅웅거려 거슬린다.
+  //
+  // vibrate()는 떨지 않아도 true를 준다. 폰이 무음이거나 터치 진동이
+  // 꺼져 있으면 아무 일 없이 true만 돌아온다. 그래서 "켰는데 왜 안 떨리나"를
+  // 코드로는 끝내 알 수 없다 — 사람이 손으로 확인하는 수밖에 없다.
+  // 그 확인을 쉽게 하라고 시험 단추를 둔다. 두 번 길게 떨어서,
+  // 이것도 안 느껴지면 폰 쪽 설정이라는 것이 분명해지게 한다.
   var BUZZ_KEY = "nm.buzz";
   var buzzOn = true;
   try { buzzOn = localStorage.getItem(BUZZ_KEY) !== "0"; } catch (e) {}
@@ -4061,7 +4071,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (!buzzOn) return false;
     var f = navigator.vibrate || navigator.mozVibrate;
     if (!f) return false;
-    try { return f.call(navigator, ms || 20) !== false; } catch (e) { return false; }
+    try { return f.call(navigator, ms || 26) !== false; } catch (e) { return false; }
+  }
+
+  // 설정이 꺼져 있어도 시험은 떨린다. 켜고 끄는 것과 "이 폰이 떨 줄 아는가"는
+  // 다른 물음이고, 사람이 확인하고 싶은 것은 뒤쪽이다.
+  function buzzTest() {
+    var f = navigator.vibrate || navigator.mozVibrate;
+    if (!f) return false;
+    try { return f.call(navigator, [0, 70, 60, 70]) !== false; } catch (e) { return false; }
   }
 
   function tap(i) {
@@ -6665,10 +6683,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       });
       if (!el.buzzNote) return;
       el.buzzNote.innerHTML = !canBuzz()
-        ? "이 기기나 브라우저는 <b>떨림을 지원하지 않습니다.</b>"
-        : buzzOn
-          ? "안 느껴지시면 폰의 <b>소리·진동 → 터치 피드백</b>이 켜져 있는지 보십시오."
-          : "";
+        ? "이 기기나 브라우저는 <b>진동을 지원하지 않습니다.</b>"
+        : "<b>진동 시험</b>을 눌러 보십시오. 두 번 떨립니다.<br>"
+          + "안 느껴지시면 폰 쪽이 막고 있는 것입니다 —<br>"
+          + "① 폰이 <b>무음</b>이면 터치 진동도 함께 꺼집니다<br>"
+          + "② <b>설정 → 소리 및 진동 → 시스템 소리/진동 제어</b>에서 "
+          + "<b>터치 상호작용</b>을 켜 주십시오<br>"
+          + "③ <b>진동 세기</b>가 0으로 내려가 있지는 않은지 보십시오";
     }
     el.buzzer.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-b]");
@@ -6676,14 +6697,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       buzzOn = b.dataset.b === "1";
       try { localStorage.setItem(BUZZ_KEY, buzzOn ? "1" : "0"); } catch (x) {}
       paint();
-      if (!buzzOn) { toast("떨림을 껐습니다"); return; }
+      if (!buzzOn) { toast("진동을 껐습니다"); return; }
       // 켜는 순간 한 번 떨어 준다. 안 떨리면 그 자리에서 까닭을 말한다 —
       // 설정만 켜 두고 아무 일도 안 일어나면 고장으로 읽힌다.
-      var ok = buzz(40);
+      buzz(40);
       toast(!canBuzz()
-        ? "이 기기에서는 떨림을 쓸 수 없습니다"
-        : ok ? "누를 때 짧게 떨립니다 · 방금 느끼셨나요?"
-             : "떨림이 막혀 있습니다 · 폰의 소리·진동 설정을 보십시오");
+        ? "이 기기에서는 진동을 쓸 수 없습니다"
+        : "누를 때 짧게 떨립니다 · 안 느껴지시면 아래 「진동 시험」을");
+    });
+    if (el.btnBuzzTest) el.btnBuzzTest.addEventListener("click", function () {
+      var ok = buzzTest();
+      toast(!ok ? "이 기기에서는 진동을 쓸 수 없습니다"
+                : "두 번 떨었습니다 · 안 느껴지셨으면 아래 ①②③을 보십시오");
     });
     paint();
   })();
@@ -6703,7 +6728,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var Z_MIN = 0.86;      // 본문 13px — 이 아래로는 어떤 화면에서도 내리지 않는다
   var fitting = false, fitWait = 0;
 
-  function fitFloor() { return Math.min(1, Z_MIN / zBase); }
+  // 화면 맞춤이 사람이 고른 크기를 통째로 먹고 있었다.
+  //
+  // 바닥이 Z_MIN/zBase 였다. 보통을 고르면 0.86까지, 더 크게를 고르면
+  // 0.68까지 되밀 수 있다는 뜻이다. 그런데 폰에서는 거의 늘 넘치므로
+  // 맞춤은 늘 바닥 근처까지 내려갔고, 마지막에 남는 크기는 "화면 높이
+  // 나누기 판 높이"일 뿐 고른 값과는 상관이 없었다. 보통·크게·더 크게가
+  // 셋 다 똑같이 보인 까닭이다 — 단추는 눌리는데 아무 일도 안 일어났다.
+  //
+  // 되밀 수 있는 폭을 12%로 묶는다. 그러면 세 칸의 범위가 겹치지 않는다.
+  //   보통   0.88 ~ 1.00
+  //   크게   0.99 ~ 1.12
+  //   더 크게 1.11 ~ 1.26
+  // 그 아래로는 줄이지 않고 화면을 넘기게 둔다. 크게를 고른 사람은
+  // "한 화면에 다 보이는 것"보다 "읽히는 것"을 고른 것이다.
+  function fitFloor() { return Math.min(1, Math.max(Z_MIN, zBase * 0.88) / zBase); }
   function applyZ() {
     document.documentElement.style.setProperty("--z", (zBase * zFit).toFixed(4));
   }
