@@ -25,8 +25,8 @@
 <!-- 휴대전화에 깔리게 한다. 링크로만 두면 열 때마다 주소를 찾아야 하고
      지하철에서는 사전 3.6MB를 다시 받느라 안 열린다. -->
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon/v2/apple-touch-icon.png">
-<link rel="icon" href="icon/v2/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icon/v3/apple-touch-icon.png">
+<link rel="icon" href="icon/v3/icon-192.png" sizes="192x192">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="낱말산">
@@ -513,6 +513,52 @@ body.quake { animation: shake .42s ease-out; }
 .intro .skip {
   background: none; border: 0; color: var(--fg-faint); font-size: 12.5px;
   margin-top: 10px; cursor: pointer; font-family: inherit; text-decoration: underline;
+}
+
+/* 오프닝 — 처음 켠 사람만 한 번 본다. 수호신이 흩어지고 이름이 선다.
+   영상이 안 틀리거나 늦으면 기다리지 않고 넘긴다. 첫 화면이 영상에
+   인질로 잡히면, 못 보는 사람은 앱이 멈춘 줄 안다. */
+.opening {
+  position: fixed; inset: 0; z-index: 70; background: #11131A;
+  display: flex; align-items: center; justify-content: center;
+}
+.opening video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.opening .oskip {
+  position: absolute; right: 16px; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
+  color: var(--fg); font-family: inherit; font-size: 13px; letter-spacing: .5px;
+  padding: 9px 16px; border-radius: 999px; cursor: pointer;
+}
+
+/* 첫 걸음 — 아이콘에서 글자판으로 넘어오는 자리.
+   아이콘이 크림빛인데 앱은 검다. 그 사이에 같은 크림 한 장을 두면
+   켜는 동안 눈이 떨어지지 않는다. 한 번 누르면 다시는 서지 않는다. */
+.gate {
+  position: fixed; inset: 0; z-index: 60; background: #FDF1DE;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 28px; text-align: center;
+}
+.gate .gmark {
+  width: 136px; height: 136px; border-radius: 31px; overflow: hidden;
+  box-shadow: 0 18px 38px rgba(104, 80, 44, .20);
+}
+.gate .gmark img { width: 100%; height: 100%; display: block; }
+.gate h1 {
+  margin-top: 22px; font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(30px, 9vw, 40px); letter-spacing: 7px; color: #2B3A52;
+}
+.gate .gsub { margin-top: 9px; font-size: 14px; letter-spacing: 1.5px; color: #8A7558; }
+.gate .gacts {
+  margin-top: 36px; width: 100%; max-width: 320px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.gate .gacts .btn { width: 100%; }
+.gate .gstart {
+  background: #2B3A52; border-color: #2B3A52; color: #FDF1DE;
+  font-size: 17px; padding: 15px;
+}
+.gate .gnote {
+  margin-top: 18px; max-width: 310px; font-size: 12.5px; line-height: 1.75; color: #9B866A;
 }
 .rulenote {
   margin-top: 7px; font-size: 11.5px; line-height: 1.6; color: var(--fg-dim);
@@ -1317,6 +1363,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     </div>
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
+      <button class="btn ghost" id="btnOpening">여는 영상 다시 보기</button>
     </div>
 
     <p class="subh">기록 지키기</p>
@@ -1642,7 +1689,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
-   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
+   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro","btnOpening",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "codeAct2","btnCodeFile","btnCodeShare",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
@@ -1667,10 +1714,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 전에는 등 한 칸이 +3초였고 1구간 상한이 두 칸이라, 열한 단계를 올라와도
   // 살 것이 여섯 번뿐이었다. 그 사이 냥은 삼천 넘게 쌓이고 쓸 데가 없었다.
   // 칸을 셋으로 쪼개 +1초씩 여섯 칸으로 만든다. 끝에서 닿는 힘은 그대로고
-  // (등 +27초, 검 x3.25, 북 +18%), 사는 횟수만 세 배가 된다.
-  var ATK_STEP = 1.04464, TIME_STEP = 1, COMBO_STEP = 0.0066667, COMBO_CAP = 12;
+  // (등 +27초, 검 x3.25, 북 +12%), 사는 횟수만 세 배가 된다.
+  //
+  // 북(연속)이 가장 과했다. 끝까지 올리면 한 칸에 0.08 + 0.145(최고 등급) +
+  // 0.18(27단) = 0.405 가 되어, 연속 열둘이면 여섯 배 가까이 들어갔다.
+  // 한 번 잘 이어 붙이면 그 한 방이 판을 끝내 버린다 — 그러면 나머지
+  // 낱말이 할 일이 없어진다. 27단에서 +18%이던 것을 +12%로 낮춘다.
+  var ATK_STEP = 1.04464, TIME_STEP = 1, COMBO_STEP = 0.0044, COMBO_CAP = 12;
   // 금빛 글자를 끼워 넣었을 때의 배수. 바닥 계산에도 같은 값이 들어간다.
-  var WEAK_MUL = 1.5;
+  //
+  // 1.5배는 셌다. 금빛 한 자리가 판의 절반을 가져가면, 어떤 낱말을
+  // 아느냐보다 금빛을 끼웠느냐가 더 중요해진다. 거들되 가로채지는 않게.
+  var WEAK_MUL = 1.3;
   // 수호신 하나에 옥 둘. 열 단계마다 오므로 힌트를 아껴 쓰게 된다.
   // 옥 하나가 받는 값이 자리마다 어긋나 있었다.
   //
@@ -1820,7 +1875,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-v";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-w";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -1935,7 +1990,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         up.combo = (up.combo || 0) * 3;
       }
       fails = fold(fails, v.fails);
-      if (v.gear) gear = v.gear;
+      // gear 만 통째로 바꿔 끼우고 있었다. 저장본에 gear 가 {} 이거나 칸
+      // 하나가 비면 GEAR[id].val[undefined] 가 되어 빈칸 피해가 통째로
+      // NaN 이 된다 — 기세도 NaN, 화면도 NaN. 다른 칸들처럼 포갠다.
+      gear = fold(gear, v.gear);
       if (v.steps) steps = v.steps;
       forge = fold(forge, v.forge);
     } catch (e) {}
@@ -3306,7 +3364,12 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     }
     buildChain();
     var M = MOUNTAINS[Math.floor(stage / 10) % 10];
-    var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60)));
+    // 기세가 오른 산만 따라가고 공격력은 쳐다보지 않았다. 그래서 검과
+    // 북을 올린 사람에게는 끝말잇기 수호신이 서너 낱말에 눕는다 —
+    // 산에서 고쳐 둔 구멍이 여기 그대로 남아 있었다.
+    // 산과 같은 식으로, 오른 만큼 다 따라오지는 않게 0.78 제곱만큼 올린다.
+    var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60))
+      * Math.pow(gearVal("atk") * Math.pow(ATK_STEP, up.atk), 0.78));
     run = { chain: true, b: { n: M.n + " 수호신", art: M.a, m: M.m, boss: false, no: 0 },
             hp: hp, max: hp, left: kSec(), sec: kSec(), round: kRound(),
             lives: CHAIN_LIVES, combo: 0, used: Object.create(null),
@@ -4735,6 +4798,87 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       + '<text x="100" y="102" fill="#969BB3" font-size="11.5" text-anchor="middle" font-family="Gowun Batang,serif">미끄러진 자리에 길이 납니다</text></svg>'
   };
 
+  // 오프닝. 처음 켠 사람만 한 번 본다.
+  // 자동 재생을 막는 브라우저가 있고, 데이터가 느린 자리도 있다.
+  // 그래서 어떤 경우에도 넘어가도록 빠져나갈 길을 셋 두었다.
+  function showOpening(src, after) {
+    var done = false;
+    function go() {
+      if (done) return; done = true;
+      try { v.pause(); } catch (e) {}
+      try { ov.remove(); } catch (e) {}
+      after();
+    }
+    var ov = document.createElement("div"); ov.className = "opening";
+    var v = document.createElement("video");
+    v.src = src;
+    v.poster = "art/opening-poster.jpg";
+    v.preload = "auto";
+    v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute("muted", ""); v.setAttribute("autoplay", "");
+    v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
+    v.addEventListener("ended", go);
+    v.addEventListener("error", go);
+    var skip = document.createElement("button"); skip.className = "oskip";
+    skip.textContent = "건너뛰기";
+    // 구석의 단추만 눌리면 급한 사람이 그걸 찾느라 더 붙잡힌다.
+    // 화면 아무 데나 누르면 넘어간다.
+    ov.addEventListener("click", go);
+    ov.appendChild(v); ov.appendChild(skip);
+    document.body.appendChild(ov);
+
+    var started = false;
+    v.addEventListener("playing", function () { started = true; });
+    setTimeout(function () { if (!started) go(); }, 2200);   // 안 틀리면 포기
+    setTimeout(go, 8000);                                     // 어떤 일이 있어도
+    var pr = v.play();
+    if (pr && pr["catch"]) pr["catch"](function () { go(); }); // 자동재생 막힘
+  }
+
+  // 타이틀. 켤 때마다 선다 — 아이콘과 글자판을 잇는 자리이기도 하고,
+  // 매일 오는 사람에게 "어디까지 왔는지" 한 줄로 보여 주는 자리이기도 하다.
+  // 매번 보일 것이라면 볼 값어치가 있어야 하므로 단(段)을 같이 적는다.
+  function showGate(after) {
+    var first = !tut.started;
+    var g = document.createElement("div"); g.className = "gate";
+    var mark = document.createElement("div"); mark.className = "gmark";
+    var img = document.createElement("img");
+    img.src = "icon/v3/icon-192.png"; img.alt = ""; mark.appendChild(img);
+    var h = document.createElement("h1"); h.textContent = "낱말산";
+    var sub = document.createElement("p"); sub.className = "gsub";
+    sub.textContent = first ? "낱말로 수호신을 쓰러뜨린다"
+                            : "수련 " + trainLv() + "단";
+    var acts = document.createElement("div"); acts.className = "gacts";
+    var go = document.createElement("button"); go.className = "btn gstart";
+    go.textContent = first ? "시작하기" : "이어서 하기";
+    acts.appendChild(go);
+
+    // 이미 이어 둔 분에게 또 권하지 않는다.
+    var ka = null;
+    if (!hadSession()) {
+      ka = document.createElement("button"); ka.className = "btn kakao";
+      ka.textContent = first ? "카카오로 잇고 시작하기" : "카카오로 잇기";
+      acts.appendChild(ka);
+    }
+    g.appendChild(mark); g.appendChild(h); g.appendChild(sub); g.appendChild(acts);
+
+    if (first) {
+      var note = document.createElement("p"); note.className = "gnote";
+      note.textContent = "로그인은 안 하셔도 됩니다 \u2014 폰을 바꿔도 기록이 "
+        + "따라오게 할 때만 씁니다. 나중에 설정에서 하셔도 됩니다.";
+      g.appendChild(note);
+    }
+
+    function began() { if (!tut.started) { tut.started = 1; saveTut(); } }
+    go.addEventListener("click", function () { began(); g.remove(); if (after) after(); });
+    if (ka) ka.addEventListener("click", function () {
+      // 돌아오면 페이지가 새로 뜨고, 타이틀은 그때 다시 선다.
+      began(); cloudLogin("kakao");
+    });
+    document.body.appendChild(g);
+    go.focus();
+  }
+
   function showIntro(fromMenu) {
     var i = 0;
     var ov = document.createElement("div"); ov.className = "ov";
@@ -5716,6 +5860,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
+  if (el.btnOpening) el.btnOpening.addEventListener("click", function () {
+    showOpening("art/opening.mp4", function () {});
+  });
 
   // ── 기록 지키기 (카카오 · 구글) ───────────────────────────────
   //
@@ -6329,7 +6476,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   drawLog();
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
   setMode((location.hash || "").toLowerCase().indexOf("daily") >= 0 ? "daily" : "quest");
-  if (!tut.seen) setTimeout(function () { showIntro(false); }, 400);
+  // 켤 때마다 타이틀이 선다. 처음 켠 사람 앞에만 오프닝이 한 번 더 앞선다.
+  function afterGate() {
+    if (!tut.seen) setTimeout(function () { showIntro(false); }, 260);
+  }
+  // 처음 깐 사람은 4.4초 전체를, 그 뒤로는 1.9초짜리를 본다.
+  // 매번 보이되 매번 기다리게 하지는 않는다 — 둘은 같은 말이 아니다.
+  var first = !tut.opened;
+  if (first) { tut.opened = 1; saveTut(); }
+  showOpening(first ? "art/opening.mp4" : "art/opening-short.mp4",
+              function () { showGate(afterGate); });
 
   // ── 글씨 크기 ─────────────────────────────────────────
   // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
