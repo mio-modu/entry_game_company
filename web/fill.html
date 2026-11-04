@@ -1364,6 +1364,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button class="btn" id="btnCodeCopy">코드 복사</button>
       <button class="btn go" id="btnCodeLoad">이 코드로 되살리기</button>
     </div>
+    <div class="trow" id="codeAct2" hidden>
+      <button class="btn" id="btnCodeFile">파일로 내려받기</button>
+      <button class="btn ghost" id="btnCodeShare">다른 앱으로 보내기</button>
+    </div>
     <p class="cite" id="codeNote" hidden></p>
     <p class="subh">만든 이에게</p>
     <div class="trow">
@@ -1627,6 +1631,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
+   "codeAct2","btnCodeFile","btnCodeShare",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
    "saveBar","saveSub","saveGo","saveNo","tSet","tSetSub","pSet","btnLogOpen","btnRuleOpen",
    "boardActs","kPassSub","holds","statLine","buzzer","btnDiag","diagBox",
@@ -1802,8 +1807,85 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-s";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-t";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
+
+  // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
+  //
+  // 로그인한 분은 서버가 받쳐 준다. 그런데 로그인하지 않은 분은 기록이
+  // localStorage 한 군데에만 있고, 그 한 군데가 날아가면 끝이다.
+  //
+  // 같은 주소 안에서라도 창고를 둘로 쓴다. localStorage 가 비워지는
+  // 길과 IndexedDB 가 비워지는 길이 늘 같지는 않다 — 저장 공간이
+  // 모자라 브라우저가 치울 때가 특히 그렇다. 둘 중 하나만 살아남아도
+  // 돌려놓을 수 있다.
+  //
+  // 주소 자체가 바뀌면 이걸로도 못 막는다. 그건 사람이 지닌 기록 코드와
+  // 로그인만이 넘어갈 수 있다. 다만 그런 일은 드물고, 흔한 쪽은 막는다.
+  var IDB_DB = "natmalsan", IDB_ST = "keep";
+  function idbOpen() {
+    return new Promise(function (ok, no) {
+      if (!window.indexedDB) return no();
+      var rq = indexedDB.open(IDB_DB, 1);
+      rq.onupgradeneeded = function () {
+        try { rq.result.createObjectStore(IDB_ST); } catch (e) {}
+      };
+      rq.onsuccess = function () { ok(rq.result); };
+      rq.onerror = function () { no(); };
+    });
+  }
+  function idbPut(v) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (ok, no) {
+        var t = db.transaction(IDB_ST, "readwrite");
+        t.objectStore(IDB_ST).put(v, "save");
+        t.oncomplete = function () { ok(); }; t.onerror = no;
+      });
+    })["catch"](function () {});
+  }
+  function idbGet() {
+    return idbOpen().then(function (db) {
+      return new Promise(function (ok) {
+        var t = db.transaction(IDB_ST, "readonly");
+        var rq = t.objectStore(IDB_ST).get("save");
+        rq.onsuccess = function () { ok(rq.result || null); };
+        rq.onerror = function () { ok(null); };
+      });
+    })["catch"](function () { return null; });
+  }
+  var idbWait = 0;
+  function idbLater() {
+    if (idbWait) clearTimeout(idbWait);
+    idbWait = setTimeout(function () {
+      idbWait = 0;
+      try { idbPut(localStorage.getItem(SKEY) || ""); } catch (e) {}
+    }, 1500);
+  }
+
+  // 한 군데가 비었는데 다른 데 남아 있으면 돌려놓는다.
+  function keepCheck() {
+    var here = "";
+    try { here = localStorage.getItem(SKEY) || ""; } catch (e) {}
+    idbGet().then(function (there) {
+      if (!there) { if (here) idbLater(); return; }
+      if (here) return;                       // 둘 다 있으면 할 일 없다
+      // 이쪽이 비었다 — 저쪽 것으로 되살린다
+      var sv = null;
+      try { sv = JSON.parse(there); } catch (e) {}
+      if (!sv || !sv.stage) return;           // 되살릴 만한 것이 아니다
+      try { localStorage.setItem(SKEY, there); } catch (e) { return; }
+      toast("기록이 비어 있어 되살렸습니다 · " + ((sv.stage || 0) + 1) + "단계");
+      setTimeout(function () { location.reload(); }, 1200);
+    });
+  }
+
+  // 브라우저가 자리가 모자랄 때 치우지 못하게 못박아 둔다.
+  // 깔아 쓰는 앱에는 대개 그냥 내준다.
+  function keepPersist() {
+    try {
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    } catch (e) {}
+  }
   function saveS() {
     try {
       localStorage.setItem(SKEY, JSON.stringify(
@@ -1812,6 +1894,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
           noAds: noAds, firstBuy: firstBuy, gran: 3 }));
     } catch (e) {}
     cloudLater();          // 이어 두셨으면 한 숨 뒤에 서버로도 간다
+    idbLater();            // 그리고 이 기기 안에서도 한 벌 더
   }
   function loadS() {
     try {
@@ -6018,17 +6101,41 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     ov.appendChild(card); document.body.appendChild(ov); no.focus();
   });
 
+  // 파일로 내려 두면 앱을 지우든 주소가 바뀌든 남는다. 로그인하지 않은
+  // 분에게는 이것이 가장 든든한 길이다 — 기기 안의 창고가 아니라
+  // 사람이 지닌 것이 되기 때문이다.
+  el.btnCodeFile.addEventListener("click", function () {
+    var v = el.codeBox.value;
+    if (!v) { toast("먼저 코드를 만드십시오"); return; }
+    try {
+      var blob = new Blob([v], { type: "text/plain" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "natmalsan-" + todayKey() + ".txt";
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 400);
+      toast("내려받았습니다 · 지우지 마십시오");
+    } catch (e) { toast("내려받지 못했습니다 · 코드를 복사해 두십시오"); }
+  });
+  el.btnCodeShare.addEventListener("click", function () {
+    var v = el.codeBox.value;
+    if (!v) { toast("먼저 코드를 만드십시오"); return; }
+    if (navigator.share) {
+      navigator.share({ title: "낱말산 기록 코드", text: v })["catch"](function () {});
+    } else { el.btnCodeCopy.click(); }
+  });
+
   el.btnCodeMake.addEventListener("click", function () {
     var code = makeCode();
-    el.codeBox.hidden = false; el.codeAct.hidden = false;
+    el.codeBox.hidden = false; el.codeAct.hidden = false; el.codeAct2.hidden = false;
     el.codeBox.value = code;
     el.codeBox.focus(); el.codeBox.select();
-    showCodeNote("이 글을 <b>통째로</b> 메모장이나 자기 메일에 붙여 두십시오. "
-      + "새 폰에서 이 줄을 넣으면 그대로 돌아옵니다. "
+    showCodeNote("<b>파일로 내려받기</b>가 가장 든든합니다 — 앱을 지우거나 "
+      + "주소가 바뀌어도 파일은 남습니다. 메모장이나 자기 메일에 붙여 두셔도 됩니다. "
       + "<b>남에게 주지 마십시오</b> — 받은 사람도 같은 기록이 됩니다.");
   });
   el.btnCodeUse.addEventListener("click", function () {
-    el.codeBox.hidden = false; el.codeAct.hidden = false;
+    el.codeBox.hidden = false; el.codeAct.hidden = false; el.codeAct2.hidden = true;
     el.codeBox.value = ""; el.codeBox.focus();
     showCodeNote("메모해 두신 기록 코드를 붙여 넣고 <b>되살리기</b>를 누르십시오.");
   });
@@ -6136,6 +6243,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   if (el.buildTag) el.buildTag.textContent = "판 " + BUILD;
   loadS();
+  keepPersist();
+  keepCheck();
   loadTut();
   restorePurchases();
   cloudBoot();
