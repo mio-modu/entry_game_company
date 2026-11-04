@@ -1605,7 +1605,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -2405,7 +2405,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return out.join(" · ");
   }
   function danName() { return DAN[Math.min(dan, DAN.length - 1)].n; }
-  // 하루에 한 번.
+  // 하루에 한 번. 다만 첫 세 단만 두 번.
   //
   // 전에는 단에 따라 두 번에서 일곱 번까지 늘려 두었다. 기회가 많으면
   // 떨어져도 바로 다시 보면 그만이라, 한 번 한 번이 가벼워진다.
@@ -2414,11 +2414,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 한 번으로 줄이면 반대가 된다 — 들어가기 전에 숨을 고르고, 떨어지면
   // 분하고, 내일이 기다려진다. 그 셋이 이 게임이 가진 가장 센 것이다.
   //
-  // 이 한 번은 돈으로도 광고로도 못 산다. 살 수 있게 두는 순간 호는
+  // 그런데 그 조임을 첫날부터 걸면, 시험이 무엇인지 알기도 전에 막힌다.
+  // 들어온 날 한 번 떨어지고 "내일 오세요"를 들으면 대개 안 온다.
+  // 그래서 맨 아래 세 단만 하루 두 번이다. 초석·반석·금석은 글자판 생김새가
+  // 똑같고(2자 셋 · 3자 하나) 빨라지기만 하는 구간이라, 여기가 배우는
+  // 자리다. 생김새가 바뀌는 거암부터 하루 한 번으로 조인다.
+  //
+  // 이 무료 횟수는 돈으로도 광고로도 못 산다. 살 수 있게 두는 순간 호는
   // "실력"이 아니라 "시도 횟수"가 되고, 몇 번이고 돌리면 운 좋은 글자판이
   // 언젠가 나온다. 그러면 호가 값을 잃고, 돈으로 못 산다는 사실 하나로
   // 지탱되던 이 자리가 통째로 무너진다.
-  function examCap() { return 1; }
+  var EXAM_EASY_DAN = 3;        // 이 단까지는 하루 두 번
+  function examCap() { return dan < EXAM_EASY_DAN ? 2 : 1; }
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
     try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
@@ -2491,7 +2498,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (!examLeft()) {
       toast(examExtraUsed()
         ? "오늘 시험은 여기까지입니다 · 내일 다시 보실 수 있습니다"
-        : "오늘 한 번은 쓰셨습니다 · 옥 " + examExtraCost() + "을 들이면 한 번 더");
+        : "오늘 몫을 다 쓰셨습니다 · 옥 " + examExtraCost() + "을 들이면 한 번 더");
       return;
     }
     examBump();
@@ -4310,6 +4317,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
         + "  ·  " + (lf ? "오늘 " + lf + "번 남음"
                         : examExtraUsed() ? "내일 다시" : "오늘 몫을 썼습니다")
+        + (dan < EXAM_EASY_DAN ? " (초반 두 번)" : "")
       : "더 오를 단이 없습니다";
     el.btnExam.disabled = !d || !lf;
     el.btnExam.textContent = !d ? "끝"
