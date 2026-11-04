@@ -619,6 +619,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   resize: vertical; word-break: break-all;
 }
 .codebox:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* 카카오는 제 색이 정해져 있다. 남의 상표색은 함부로 바꾸지 않는다. */
+.btn.kakao { background: #FEE500; color: #191600; border-color: #E3CE00; }
+.btn.danger { color: var(--danger); }
+.acct {
+  margin-top: 9px; padding: 11px 13px; border-radius: 11px;
+  background: #13241F; border: 1px solid #2C5E55; color: #BFE6DA; font-size: 13px;
+}
+.acct b { display: block; font-size: 14px; color: var(--jade); margin-bottom: 2px; }
+.acct span { display: block; font-size: 11.5px; color: #7FAFA4; margin-top: 3px;
+  font-family: var(--font-mono); overflow-wrap: anywhere; }
 
 /* 길어진 패널이 화면을 넘으면 가운데 맞춤이 위아래를 잘라 먹는다.
    넘칠 때는 잘라 먹지 않고 굴러가도록 safe center 로 둔다. */
@@ -1146,13 +1156,35 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
     </div>
 
-    <p class="subh">기록 옮기기</p>
+    <p class="subh">기록 지키기</p>
+    <div id="cloudBox">
+      <div class="lines" id="cloudOut">
+        <p>기록은 <b>이 기기 안에만</b> 있습니다. 폰을 바꾸거나 앱을 지우면
+           <b>단계도 산 옥도 따라오지 않습니다.</b></p>
+        <p>한 번 이어 두시면 그 뒤로는 <b>저절로 지켜집니다.</b>
+           로그인은 <b>해도 되고 안 해도 됩니다</b> — 안 하셔도 게임은 그대로 다 됩니다.</p>
+      </div>
+      <div class="trow" id="cloudBtns">
+        <button class="btn kakao" id="btnKakao">카카오로 잇기</button>
+        <button class="btn" id="btnGoogle">구글로 잇기</button>
+      </div>
+      <div class="acct" id="cloudWho" hidden></div>
+      <div class="trow" id="cloudIn" hidden>
+        <button class="btn" id="btnPush">지금 올리기</button>
+        <button class="btn ghost" id="btnPull">서버 것 받기</button>
+      </div>
+      <div class="trow" id="cloudIn2" hidden>
+        <button class="btn ghost" id="btnOut">로그아웃</button>
+        <button class="btn ghost danger" id="btnKill">계정 지우기</button>
+      </div>
+      <p class="cite" id="cloudNote"></p>
+    </div>
+
+    <p class="subh">기록 코드 — 로그인 없이 옮기기</p>
     <div class="lines">
-      <p>이 게임은 <b>계정도 로그인도 없습니다.</b> 그래서 기록은
-         <b>이 기기 안에만</b> 있습니다 — 이름도 전화번호도 묻지 않는 대신,
-         폰을 바꾸면 따라오지 않습니다.</p>
-      <p>옮기시려면 <b>기록 코드</b>를 만들어 메모장이나 메일에 붙여 두십시오.
-         새 폰에서 그 코드를 넣으면 <b>단계·냥·옥·호가 그대로</b> 돌아옵니다.</p>
+      <p>로그인이 내키지 않으시면 이 길도 있습니다. 기록을 <b>글 한 줄</b>로
+         만들어 메모장에 두었다가, 새 폰에서 그 줄을 넣으시면 그대로 돌아옵니다.</p>
+      <p>이 줄은 <b>화면에서만 만들어집니다</b> — 어디로도 보내지 않습니다.</p>
     </div>
     <div class="trow" style="margin-top:9px">
       <button class="btn" id="btnCodeMake">기록 코드 만들기</button>
@@ -1206,6 +1238,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   </div>
 </div>
 
+<!-- 기록 지키기 연결 값. 비어 있으면 그 기능만 꺼지고 나머지는 그대로다. -->
+<script src="cloud-config.js"></script>
 <script src="words.js"></script>
 <script src="defs.js"></script>
 <script src="sfx.js"></script>
@@ -1400,6 +1434,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
    "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
+   "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
+   "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange","streaks","cal","calNote",
    "startBar","startHead","startSub","btnStart","hpLine",
@@ -1569,7 +1605,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-03-e";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -1578,6 +1614,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
           gear: gear, steps: steps, forge: forge, dan: dan,
           noAds: noAds, firstBuy: firstBuy, gran: 3 }));
     } catch (e) {}
+    cloudLater();          // 이어 두셨으면 한 숨 뒤에 서버로도 간다
   }
   function loadS() {
     try {
@@ -4879,6 +4916,217 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
 
+  // ── 기록 지키기 (카카오 · 구글) ───────────────────────────────
+  //
+  // 로그인은 결제 때문이 아니다. 결제는 Play 가 알아서 맡는다.
+  // 로그인은 오직 「폰을 바꿔도 기록이 따라오게」 하기 위한 것이고,
+  // 그래서 끝까지 선택으로 둔다 — 안 해도 게임은 전부 돌아간다.
+  // 그 덕에 Play 「앱에 제한된 부분이 있나요」는 여전히 「아니요」다.
+  //
+  // 로그인하기 전에는 서버에 한 글자도 보내지 않는다. 익명 세션조차 만들지
+  // 않는다. 안 만들면 지울 것도, 새어 나갈 것도, 설명할 것도 없다.
+  //
+  // 비밀번호는 우리가 받지 않는다. 카카오와 구글이 받고, 우리는 「이 사람이
+  // 맞다」는 표만 건네받는다. 서버에 두는 것은 그 표에 딸린 기록 한 덩이뿐이다.
+  var SB = null, sbWait = null, me = null;
+  function cloudOn() {
+    return !!(window.NM_CLOUD && NM_CLOUD.url && NM_CLOUD.key);
+  }
+  // 로그인한 적이 있으면 supabase-js 가 이 꼴의 열쇠를 남겨 둔다.
+  // 그 흔적이 있을 때만 137KB 를 받아 온다 — 안 쓰는 사람에게 받게 할 까닭이 없다.
+  function hadSession() {
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf("sb-") === 0 && k.indexOf("-auth-token") > 0) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  function loadSB() {
+    if (sbWait) return sbWait;
+    sbWait = new Promise(function (ok, no) {
+      if (window.supabase) return ok(window.supabase);
+      var t = document.createElement("script");
+      t.src = "vendor/supabase-2.58.0.js";
+      t.onload = function () { window.supabase ? ok(window.supabase) : no(0); };
+      t.onerror = function () { no(0); };
+      document.head.appendChild(t);
+    });
+    return sbWait;
+  }
+  function sb() {
+    return loadSB().then(function (lib) {
+      if (!SB) SB = lib.createClient(NM_CLOUD.url, NM_CLOUD.key, {
+        auth: {
+          persistSession: true, autoRefreshToken: true,
+          detectSessionInUrl: true, flowType: "pkce"
+        }
+      });
+      return SB;
+    });
+  }
+
+  // 돌아온 주소에 붙은 부스러기(?code=…)를 지운다. 남겨 두면 새로고침마다
+  // 같은 코드를 또 바꾸려 들고, 두 번째부터는 반드시 실패한다.
+  function tidyUrl() {
+    if (!/[?#].*(code=|access_token=|error=)/.test(location.href)) return;
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  }
+
+  function cloudLogin(provider) {
+    if (!cloudOn()) { toast("아직 준비 중입니다"); return; }
+    el.cloudNote.textContent = "창을 여는 중입니다…";
+    sb().then(function (c) {
+      var opt = { redirectTo: location.origin + location.pathname };
+      // 카카오는 supabase-js 의 scopes 옵션이 제 기본값 뒤에 덧붙기만 해서
+      // 듣지 않는다. 날것의 scope 를 직접 넘겨야 원하는 조합이 그대로 간다.
+      if (provider === "kakao") opt.queryParams = { scope: "account_email profile_nickname" };
+      return c.auth.signInWithOAuth({ provider: provider, options: opt });
+    }).then(function (r) {
+      if (!r || r.error) {
+        el.cloudNote.textContent = "열지 못했습니다 — " + ((r && r.error && r.error.message) || "잠시 뒤 다시");
+        return;
+      }
+      // supabase-js 가 제 손으로 옮겨 주기도 하지만, 그 전에 await 가 여러 번
+      // 끼면 브라우저가 「누른 손짓은 이미 썼다」고 보고 조용히 무시한다.
+      // 받은 주소로 한 번 더, 분명하게 옮긴다.
+      if (r.data && r.data.url) location.href = r.data.url;
+    })["catch"](function () {
+      el.cloudNote.textContent = "열지 못했습니다 — 인터넷을 확인해 주십시오";
+    });
+  }
+
+  function cloudRow() {
+    var raw = localStorage.getItem(SKEY) || "{}";
+    var sv = {}; try { sv = JSON.parse(raw) || {}; } catch (e) {}
+    return { data: JSON.parse(raw), stage: sv.stage || 0 };
+  }
+  function cloudPush(say) {
+    if (!me) return Promise.resolve();
+    var row = cloudRow();
+    return sb().then(function (c) {
+      return c.from("saves").upsert({
+        user_id: me.id, data: row.data, stage: row.stage
+      }, { onConflict: "user_id" });
+    }).then(function (r) {
+      if (r && r.error) { if (say) el.cloudNote.textContent = "올리지 못했습니다 — " + r.error.message; return; }
+      if (say) { el.cloudNote.textContent = "올렸습니다 · " + (row.stage + 1) + "단계"; toast("기록을 올렸습니다"); }
+    })["catch"](function () {
+      if (say) el.cloudNote.textContent = "올리지 못했습니다 — 인터넷을 확인해 주십시오";
+    });
+  }
+  function cloudFetch() {
+    if (!me) return Promise.resolve(null);
+    return sb().then(function (c) {
+      return c.from("saves").select("data,stage,updated_at").eq("user_id", me.id).maybeSingle();
+    }).then(function (r) { return (r && !r.error && r.data) ? r.data : null; })
+    ["catch"](function () { return null; });
+  }
+  function cloudApply(row) {
+    try { localStorage.setItem(SKEY, JSON.stringify(row.data)); } catch (e) {}
+    location.reload();
+  }
+
+  // 올릴까 받을까.
+  //
+  // 자동으로 고르면 반드시 누군가는 잃는다. 그래서 양쪽이 다르면 묻는다 —
+  // 다만 서버가 빈손이거나 이쪽이 분명히 앞서 있으면 묻지 않고 올린다.
+  function cloudSync() {
+    if (!me) return;
+    cloudFetch().then(function (row) {
+      var here = cloudRow();
+      if (!row) { cloudPush(0); el.cloudNote.textContent = "이 폰의 기록을 서버에 올려 두었습니다"; return; }
+      if (row.stage === here.stage) { cloudPush(0); return; }
+      askSync(row, here);
+    });
+  }
+  function askSync(row, here) {
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.textContent = "어느 쪽을 쓸까요";
+    var lead = document.createElement("p"); lead.className = "lead";
+    lead.innerHTML = "두 기록이 다릅니다. <b>고르지 않은 쪽은 사라집니다.</b>";
+    var tbl = document.createElement("div"); tbl.className = "paylist";
+    function line(k, v) {
+      var r = document.createElement("div"); r.className = "payrow";
+      var a = document.createElement("span"); a.textContent = k;
+      var b = document.createElement("b"); b.textContent = v;
+      r.appendChild(a); r.appendChild(b); tbl.appendChild(r);
+    }
+    var sv = row.data || {};
+    line("이 폰", (here.stage + 1) + "단계");
+    line("서버", (row.stage + 1) + "단계 · 옥 " + (sv.gem == null ? 5 : sv.gem));
+    var brow = document.createElement("div"); brow.className = "trow";
+    var keep = document.createElement("button"); keep.className = "btn ghost";
+    keep.innerHTML = "이 폰 것으로<small>서버를 덮어씁니다</small>";
+    keep.addEventListener("click", function () {
+      ov.remove(); cloudPush(1);
+    });
+    var take = document.createElement("button"); take.className = "btn go";
+    take.innerHTML = "서버 것으로<small>이 폰을 덮어씁니다</small>";
+    take.addEventListener("click", function () { cloudApply(row); });
+    brow.appendChild(keep); brow.appendChild(take);
+    card.appendChild(h); card.appendChild(lead); card.appendChild(tbl); card.appendChild(brow);
+    ov.appendChild(card); document.body.appendChild(ov);
+    (row.stage > here.stage ? take : keep).focus();
+  }
+
+  function drawCloud() {
+    if (!el.cloudBox) return;
+    // 아직 안 켠 판에서는 머리글째 안 보인다. 한쪽으로만 밀어 두면
+    // 나중에 켜도 머리글이 숨은 채로 남는다 — 늘 양쪽을 다 적는다.
+    var on = cloudOn();
+    el.cloudBox.hidden = !on;
+    var h2 = el.cloudBox.previousElementSibling;
+    if (h2 && h2.className === "subh") h2.hidden = !on;
+    if (!on) return;
+    var inOut = !!me;
+    el.cloudOut.hidden = inOut; el.cloudBtns.hidden = inOut;
+    el.cloudWho.hidden = !inOut; el.cloudIn.hidden = !inOut; el.cloudIn2.hidden = !inOut;
+    if (inOut) {
+      el.cloudWho.innerHTML = "<b>이어져 있습니다</b>"
+        + (me.by === "kakao" ? "카카오" : "구글") + "로 이었습니다 · 저장할 때마다 저절로 올라갑니다"
+        + (me.mail ? "<span>" + me.mail + "</span>" : "");
+    }
+  }
+
+  // 저장할 때마다 보내면 낱말 하나에 한 번씩 올라간다. 한 숨 모아서 보낸다.
+  var pushWait = 0;
+  function cloudLater() {
+    if (!me) return;
+    if (pushWait) clearTimeout(pushWait);
+    pushWait = setTimeout(function () { pushWait = 0; cloudPush(0); }, 6000);
+  }
+  // 앱을 덮거나 끄는 순간이 가장 많이 잃는 자리다. 기다리지 않고 보낸다.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden" && me && pushWait) {
+      clearTimeout(pushWait); pushWait = 0; cloudPush(0);
+    }
+  });
+
+  function cloudBoot() {
+    tidyUrl();
+    if (!cloudOn()) { drawCloud(); return; }
+    var back = /[?#].*(code=|access_token=)/.test(location.href);
+    if (!back && !hadSession()) { drawCloud(); return; }
+    sb().then(function (c) { return c.auth.getUser(); }).then(function (r) {
+      var u = r && r.data && r.data.user;
+      if (!u) { drawCloud(); return; }
+      // 카카오는 이메일을 주고도 Supabase 가 계정 칸을 비워 두는 일이 있다.
+      // 비어 있으면 연결된 신원 쪽에 남은 것을 대신 쓴다.
+      var mail = u.email || "";
+      if (!mail && u.identities) {
+        for (var i = 0; i < u.identities.length; i++) {
+          var e2 = u.identities[i].identity_data && u.identities[i].identity_data.email;
+          if (e2) { mail = e2; break; }
+        }
+      }
+      me = { id: u.id, mail: mail, by: (u.app_metadata && u.app_metadata.provider) || "google" };
+      tidyUrl(); drawCloud(); cloudSync();
+    })["catch"](function () { drawCloud(); });
+  }
+
   // ── 기록 옮기기 ───────────────────────────────────────────────
   //
   // 결제에는 로그인이 필요 없다. Play 가 신원도 결제도 맡으므로 우리는
@@ -4934,6 +5182,59 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.codeNote.innerHTML = msg;
     el.codeNote.style.color = bad ? "var(--danger)" : "";
   }
+  el.btnKakao.addEventListener("click", function () { cloudLogin("kakao"); });
+  el.btnGoogle.addEventListener("click", function () { cloudLogin("google"); });
+  el.btnPush.addEventListener("click", function () { cloudPush(1); });
+  el.btnPull.addEventListener("click", function () {
+    el.cloudNote.textContent = "서버를 보는 중입니다…";
+    cloudFetch().then(function (row) {
+      if (!row) { el.cloudNote.textContent = "서버에 올려 둔 기록이 없습니다"; return; }
+      askSync(row, cloudRow());
+    });
+  });
+  el.btnOut.addEventListener("click", function () {
+    sb().then(function (c) { return c.auth.signOut(); }).then(function () {
+      me = null; drawCloud();
+      el.cloudNote.textContent = "로그아웃했습니다 · 이 폰의 기록은 그대로 있습니다";
+      toast("로그아웃했습니다");
+    })["catch"](function () {});
+  });
+  // 구글 플레이는 계정을 만드는 앱에 「앱 안에서 지우는 길」을 요구한다.
+  // 지우면 서버의 기록과 계정이 함께 사라진다 — 되돌릴 수 없으므로 두 번 묻는다.
+  el.btnKill.addEventListener("click", function () {
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.className = "lose";
+    h.textContent = "계정을 지울까요";
+    var p1 = document.createElement("p"); p1.className = "lead";
+    p1.innerHTML = "서버에 올려 둔 기록과 계정이 <b>함께 사라집니다.</b> 되돌릴 수 없습니다.";
+    var p2 = document.createElement("p"); p2.className = "lead foot";
+    p2.innerHTML = "이 폰 안의 기록은 <b>그대로 남습니다.</b> 계속 하실 수 있고, "
+      + "나중에 다시 이으셔도 됩니다.";
+    var row = document.createElement("div"); row.className = "trow";
+    var no = document.createElement("button"); no.className = "btn ghost";
+    no.textContent = "그만두기";
+    no.addEventListener("click", function () { ov.remove(); });
+    var yes = document.createElement("button"); yes.className = "btn go";
+    yes.textContent = "지우기";
+    yes.addEventListener("click", function () {
+      yes.disabled = true; yes.textContent = "지우는 중…";
+      sb().then(function (c) { return c.rpc("delete_me"); }).then(function (r) {
+        if (r && r.error) { ov.remove(); el.cloudNote.textContent = "지우지 못했습니다 — " + r.error.message; return; }
+        return sb().then(function (c) { return c.auth.signOut(); }).then(function () {
+          ov.remove(); me = null; drawCloud();
+          el.cloudNote.textContent = "계정을 지웠습니다 · 이 폰의 기록은 그대로입니다";
+          toast("계정을 지웠습니다");
+        });
+      })["catch"](function () {
+        ov.remove(); el.cloudNote.textContent = "지우지 못했습니다 — 인터넷을 확인해 주십시오";
+      });
+    });
+    row.appendChild(no); row.appendChild(yes);
+    card.appendChild(h); card.appendChild(p1); card.appendChild(p2); card.appendChild(row);
+    ov.appendChild(card); document.body.appendChild(ov); no.focus();
+  });
+
   el.btnCodeMake.addEventListener("click", function () {
     var code = makeCode();
     el.codeBox.hidden = false; el.codeAct.hidden = false;
@@ -5031,6 +5332,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   loadS();
   loadTut();
   restorePurchases();
+  cloudBoot();
   logLoad();
   drawLog();
   // 링크 끝이 #daily 면 오늘의 낱말로 바로 들어간다 (공유 글의 링크가 그렇다)
