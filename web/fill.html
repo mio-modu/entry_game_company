@@ -1745,7 +1745,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-n";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-o";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -5441,12 +5441,22 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 다만 실패를 조용히 지우면 안 된다. 카카오 창을 다 거치고 돌아왔는데
   // 아무 일도 안 일어나면, 사람은 자기가 뭘 잘못한 줄 안다.
   // 주소에 실려 온 까닭을 한 번은 보여 준다.
-  var backErr = "";
-  function tidyUrl() {
+  //
+  // 순서가 생명이다. supabase-js 는 만들어질 때 주소에서 ?code= 를 읽어
+  // 세션으로 바꾼다. 그 전에 주소를 지우면 바꿀 것이 사라진다.
+  // 그래서 읽기(readBack)와 지우기(tidyUrl)를 갈라 두고, 지우기는
+  // 세션을 받아 본 뒤에만 부른다.
+  var backErr = "", backHad = false;
+  function readBack() {
     var h = location.href;
-    if (!/[?#].*(code=|access_token=|error=)/.test(h)) return;
+    backHad = /[?#].*(code=|access_token=|error=)/.test(h);
+    if (!backHad) return false;
     var m = h.match(/error_description=([^&#]*)/) || h.match(/error=([^&#]*)/);
     if (m) { try { backErr = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { backErr = m[1]; } }
+    return true;
+  }
+  function tidyUrl() {
+    if (!/[?#].*(code=|access_token=|error=)/.test(location.href)) return;
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }
 
@@ -5617,12 +5627,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   });
 
   function cloudBoot() {
-    tidyUrl();
-    if (!cloudOn()) { drawCloud(); return; }
-    var back = /[?#].*(code=|access_token=)/.test(location.href);
+    // 지우기 전에 읽는다. 이 한 줄의 순서가 뒤바뀌어 있어서, 첫 로그인은
+    // 어떤 설정으로도 성공할 수 없었다 — 돌아온 ?code= 를 먼저 지워 버리니
+    // back 이 거짓이 되고, supabase-js 를 아예 받아 오지도 않았다.
+    var back = readBack();
+    if (!cloudOn()) { tidyUrl(); drawCloud(); return; }
     if (!back && !hadSession()) { drawCloud(); return; }
     sb().then(function (c) { return c.auth.getUser(); }).then(function (r) {
       var u = r && r.data && r.data.user;
+      tidyUrl();                       // 바꿀 것을 다 바꾼 뒤에 지운다
       if (!u) {
         drawCloud();
         if (back) {
@@ -5651,8 +5664,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
                 || md.preferred_username || md.user_name || "";
       me = { id: u.id, who: who,
              by: (u.app_metadata && u.app_metadata.provider) || "google" };
-      tidyUrl(); drawCloud(); cloudSync();
-    })["catch"](function () { drawCloud(); });
+      drawCloud(); cloudSync();
+      if (back) toast("이어졌습니다 · 이제 저절로 지켜집니다");
+    })["catch"](function (e) {
+      tidyUrl(); drawCloud();
+      if (back) {
+        el.cloudNote.style.color = "var(--danger)";
+        el.cloudNote.textContent = "잇지 못했습니다 — " + ((e && e.message) || "다시 해 보십시오");
+      }
+    });
   }
 
   // 연결 살펴보기.
