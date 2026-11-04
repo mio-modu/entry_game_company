@@ -299,6 +299,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 .modes .mode.on { background: #2E2412; color: var(--gold); border-color: #4A3E18; }
 .modes .mode:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* 끝말잇기에 다시 칠 수 있는 판이 남아 있을 때. 눌러야 할 것이 있는 자리는
+   말없이 표시해 둔다 — 토스트는 지나가 버리고, 지나가면 못 본 것과 같다. */
+.modes .mode.wait { border-color: #4A3E18; }
+.modes .mode.wait::after {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  margin-left: 5px; vertical-align: 1px; border-radius: 50%;
+  background: var(--gold);
+}
 .dline { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-dim); letter-spacing: .05em; }
 .dline b { color: var(--gold); font-size: 14px; }
 .seal {
@@ -1893,7 +1901,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-z";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3388,17 +3396,90 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function kDone()   { return kWins() >= CHAIN_WIN_FOR_TICKET; }
   function kCanRetry() { return kDead() && kRetry() < CHAIN_RETRY_DAY; }
 
+  // 다시 칠 수 있다고 말만 하고 단추는 안 주던 자리.
+  //
+  // 진 판을 옥으로 다시 치는 단추는 결과 카드에만 있었다. 카드를 닫고
+  // 나면 끝말잇기를 눌러도 "옥 1을 들이면 다시 칩니다"라는 토스트 한 줄이
+  // 뜨고 산 오르기로 되돌아갔다 — 그 말이 가리키는 단추가 어디에도 없었다.
+  // 돈을 쓰겠다는 사람 앞에서 문을 닫은 셈이다.
+  //
+  // 말한 자리에 단추를 둔다. 옥이 모자라면 장터로 바로 보낸다. 표를 받은
+  // 사람에게는 그 표를 쓸 자리까지 가리킨다 — 받아만 두고 못 쓰면 없는 것과 같다.
+  function chainGate() {
+    var done = kDone(), retry = kCanRetry(), poor = gem < CHAIN_RETRY_GEM;
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+
+    var h = document.createElement("h2");
+    h.className = done ? "win" : "lose";
+    h.textContent = done ? "오늘 세 판을 다 치르셨습니다"
+                         : kRound() + "판에서 지셨습니다";
+    card.appendChild(h);
+
+    var big = document.createElement("div"); big.className = "big";
+    big.textContent = kWins() + " / " + CHAIN_WIN_FOR_TICKET + "판";
+    card.appendChild(big);
+
+    var tk = document.createElement("p"); tk.className = "lead gemline";
+    if (kTicket()) {
+      tk.innerHTML = "<b>승급 시험 표 한 장</b>"
+        + "<span>오늘 승급 시험 한 판을 옥 없이 보십니다</span>";
+    } else if (done) {
+      tk.innerHTML = "오늘 몫은 여기까지입니다"
+        + "<span>내일 다시 세 판이 열립니다</span>";
+    } else {
+      tk.innerHTML = "세 판을 다 물리치면 <b>승급 시험 한 판이 공짜</b>"
+        + "<span>" + (retry
+            ? "다시 치면 " + kRound() + "판부터입니다 · 이긴 판은 그대로 남습니다"
+            : "오늘 다시 칠 수 있는 횟수를 다 쓰셨습니다") + "</span>";
+    }
+    card.appendChild(tk);
+
+    var b1 = document.createElement("button"); b1.className = "btn go";
+    b1.innerHTML = done
+      ? (kTicket() ? "승급 시험 보러 가기<small>표 한 장 · 옥 없이 봅니다</small>"
+                   : "내일 다시")
+      : !retry ? "내일 다시"
+      : poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM + "이 듭니다 · 지닌 옥 "
+               + gem + "</small>"
+      : "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
+        + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>";
+    b1.disabled = done ? !kTicket() : !retry;
+    b1.addEventListener("click", function () {
+      if (done) {                       // 표를 쓰러 간다
+        ov.remove();
+        if (mode !== "quest") setMode("quest");
+        setTimeout(function () {
+          if (el.examBar && !el.examBar.hidden) {
+            el.examBar.scrollIntoView({ block: "center" });
+          }
+        }, 60);
+        return;
+      }
+      if (!retry) return;
+      if (gem < CHAIN_RETRY_GEM) { ov.remove(); return goShop(); }
+      gem -= CHAIN_RETRY_GEM;
+      kSet(kRetryKey(), kRetry() + 1); kSet(kDeadKey(), 0);
+      saveS(); drawStatsOnly(); spent(0, CHAIN_RETRY_GEM);
+      toast("옥 " + CHAIN_RETRY_GEM + "을 들여 " + kRound() + "판을 다시 칩니다");
+      ov.remove();
+      if (mode === "chain") startChain(); else setMode("chain");
+    });
+    card.appendChild(b1);
+
+    var b2 = document.createElement("button"); b2.className = "btn";
+    b2.textContent = "산 오르기로";
+    b2.addEventListener("click", function () {
+      ov.remove();
+      if (mode !== "quest") setMode("quest");
+    });
+    card.appendChild(b2);
+
+    ov.appendChild(card); document.body.appendChild(ov); b1.focus();
+  }
+
   function startChain() {
-    if (kDone()) {
-      toast("오늘 세 판을 다 치르셨습니다 · 내일 다시");
-      setMode("quest"); return;
-    }
-    if (kDead()) {
-      toast(kCanRetry()
-        ? kRound() + "판에서 지셨습니다 · 옥 " + CHAIN_RETRY_GEM + "을 들이면 다시 칩니다"
-        : "오늘 끝말잇기는 여기까지입니다 · 내일 다시");
-      setMode("quest"); return;
-    }
+    if (kDone() || kDead()) { chainGate(); return; }
     buildChain();
     var M = MOUNTAINS[Math.floor(stage / 10) % 10];
     // 기세가 오른 산만 따라가고 공격력은 쳐다보지 않았다. 그래서 검과
@@ -4732,6 +4813,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.tTodaySub.textContent = waiting ? "받을 것 " + waiting
       : aS > 1 ? aS + "일 연속" : "다 받음";
     el.tToday.classList.toggle("lit", waiting > 0);
+    // 진 판이 남아 있으면 끝말잇기 칸에 점을 찍는다
+    if (el.mChain) el.mChain.classList.toggle("wait", kDead() && kCanRetry());
     el.tTrain.classList.toggle("lit", can);
     var left = adsLeft();
     el.tChestSub.textContent = left ? (AD_DAY - left) + " / " + AD_DAY + "편" : "내일";
@@ -5733,7 +5816,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // ── 조작 ────────────────────────────────────────────────────────────
   el.mQuest.addEventListener("click", function () { if (mode !== "quest") setMode("quest"); });
   el.mDaily.addEventListener("click", function () { if (mode !== "daily") setMode("daily"); });
-  el.mChain.addEventListener("click", function () { if (mode !== "chain") setMode("chain"); });
+  el.mChain.addEventListener("click", function () {
+    if (mode === "chain") return;
+    // 오늘 몫이 끝났거나 진 판이 남았으면 글자판을 갈아엎지 않는다.
+    // 모드를 바꿔 버리면 뒤에서 끝말잇기 화면이 한 번 번쩍이고 지나간다.
+    if (kDone() || kDead()) { chainGate(); return; }
+    setMode("chain");
+  });
 
   el.kWord.addEventListener("input", kCheck);
   el.kWord.addEventListener("keydown", function (e) {
