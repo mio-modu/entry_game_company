@@ -523,6 +523,9 @@ body.quake { animation: shake .42s ease-out; }
   display: flex; align-items: center; justify-content: center;
 }
 .opening video { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* 폰은 세로라 채워도 거의 안 잘린다. 넓은 화면에서 채우면 양옆이
+   크게 잘려 나가 무슨 장면인지 알 수 없게 된다 — 거기서는 전부 보인다. */
+@media (min-aspect-ratio: 3/4) { .opening video { object-fit: contain; } }
 .opening .oskip {
   position: absolute; right: 16px; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
   background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
@@ -4812,7 +4815,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var ov = document.createElement("div"); ov.className = "opening";
     var v = document.createElement("video");
     v.src = src;
-    v.poster = "art/opening-poster.jpg";
+    v.poster = "media/opening-poster.jpg";
     v.preload = "auto";
     v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true;
     v.setAttribute("muted", ""); v.setAttribute("autoplay", "");
@@ -5861,7 +5864,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
   if (el.btnOpening) el.btnOpening.addEventListener("click", function () {
-    showOpening("art/opening.mp4", function () {});
+    showOpening("media/opening.mp4", function () {});
   });
 
   // ── 기록 지키기 (카카오 · 구글) ───────────────────────────────
@@ -6484,7 +6487,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 매번 보이되 매번 기다리게 하지는 않는다 — 둘은 같은 말이 아니다.
   var first = !tut.opened;
   if (first) { tut.opened = 1; saveTut(); }
-  showOpening(first ? "art/opening.mp4" : "art/opening-short.mp4",
+  showOpening(first ? "media/opening.mp4" : "media/opening-short.mp4",
               function () { showGate(afterGate); });
 
   // ── 글씨 크기 ─────────────────────────────────────────
