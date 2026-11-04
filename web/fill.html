@@ -181,6 +181,22 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   font-size: 10px; font-weight: 700; white-space: nowrap;
   background: var(--jade); color: #06201B; border-radius: 20px; padding: 2px 8px;
 }
+/* 지닌 것. 소모품이 장터 줄 귀퉁이에 "1개"로만 적혀 있어서, 내가 무엇을
+   몇 개 쥐고 있는지 한 번에 볼 자리가 없었다. */
+.holds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.hold {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 11px; padding: 9px 4px 8px;
+}
+.hold .pic { width: 38px; height: 38px; border-radius: 8px; overflow: hidden;
+  border: 1.5px solid var(--gb, #8A7250); background: #F3EFE4; }
+.hold .pic svg { width: 100%; height: 100%; display: block; }
+.hold .nm { font-size: 11px; color: var(--fg-dim); }
+.hold .n { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--fg); }
+.hold.zero { opacity: .45; }
+.hold.zero .n { color: var(--fg-faint); }
+
 .honebtn { display: inline-block; margin-top: 5px; font: inherit; font-size: 11px;
   background: transparent; color: var(--fg-dim); border: 1px solid var(--line);
   border-radius: 20px; padding: 3px 9px; }
@@ -279,8 +295,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 .brand small { font-family: var(--font-body); font-size: 11px; color: var(--fg-faint);
   letter-spacing: .1em; margin-left: 7px; }
-.purse { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-dim); }
-.purse b { color: var(--gold); }
+.purse { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg-dim);
+  display: flex; align-items: center; gap: 11px; }
+.purse .co { display: inline-flex; align-items: center; gap: 4px; }
+.purse b { color: var(--gold); font-size: 14px; }
+.purse .co:last-child b { color: var(--jade); }
+/* 그림은 글자보다 조금 크게. 같은 크기면 글자에 묻힌다. */
+.cc { width: 17px; height: 17px; flex: none; display: block; }
 
 .arena { position: relative; background: var(--surface); border: 1px solid var(--line);
   border-radius: 14px; padding: 11px; display: flex; flex-direction: column; gap: 8px; }
@@ -958,6 +979,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   color: var(--fg-dim); position: relative;
 }
 .card.sheet .pursebar b { font-size: 16px; color: var(--gold); font-weight: 700; }
+.card.sheet .pursebar .pg, .card.sheet .pursebar .pm {
+  display: inline-flex; align-items: center; gap: 6px; }
+.cb { width: 21px; height: 21px; flex: none; display: block; }
 .card.sheet .pursebar .pm b { color: var(--jade); }
 .pursebar .pg.down b, .pursebar .pm.down b { color: var(--danger); }
 /* 깎인 만큼이 숫자에서 떨어져 나와 아래로 흘러내린다 */
@@ -973,16 +997,61 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   100% { opacity: 0; transform: translateY(19px); }
 }
 
+/* 기록 지키기 띠. 광고가 아니라 안내라서, 눈에는 띄되 소리치지 않는다. */
+.savebar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(90deg, #13241F, #0E1C19);
+  border: 1px solid #2C5E55; border-radius: 12px; padding: 10px 10px 10px 14px;
+  animation: say .35s ease-out;
+}
+.savebar { padding: 7px 8px 7px 13px; }
+.savebar .st { min-width: 0; }
+.savebar b { font-size: 13px; color: #BFE6DA; }
+.savebar small { font-size: 11px; color: #7FAFA4; margin-left: 6px; }
+.savebar .sb { display: flex; align-items: center; gap: 6px; flex: none; }
+.savebar button {
+  background: var(--jade); color: #06201B; border-radius: 10px;
+  padding: 9px 15px; font: inherit; font-size: 13.5px; font-weight: 700; white-space: nowrap;
+}
+.savebar button.later {
+  background: transparent; color: #6E9A92; font-size: 11.5px; font-weight: 400; padding: 9px 4px;
+}
+
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 40;
   background: #2A2F42; border: 1px solid var(--line); border-radius: 22px;
   padding: 9px 17px; font-size: 13px; max-width: 90vw; text-align: center; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 
+<!-- 냥과 옥.
+     글자로 "냥 4,766 · 옥 5"라고 적어 두니 숫자인지 이름인지 한눈에 안 들어온다.
+     그림이면 글을 안 읽어도 "돈"과 "구슬"로 읽힌다. 다만 16픽셀에서도
+     살아야 하므로, 함에서 나오는 자세한 그림을 쓰지 않고 여기서 따로
+     아주 단순하게 친다 — 엽전은 네모 구멍 뚫린 둥근 쇠, 옥은 비취 구슬. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-nyang" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10.5" fill="#B8914A"/>
+    <circle cx="12" cy="12" r="10.5" fill="none" stroke="#6B5434" stroke-width="2"/>
+    <circle cx="12" cy="12" r="6.6" fill="none" stroke="#8A6B3E" stroke-width="1.4"/>
+    <rect x="9" y="9" width="6" height="6" rx="1" fill="#2B2219"/>
+    <path d="M6.2 6.6a9 9 0 0 1 4.6-2.7" fill="none" stroke="#EBCB72"
+          stroke-width="2" stroke-linecap="round" opacity=".85"/>
+  </symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10.5" fill="#4A9E8F"/>
+    <circle cx="12" cy="12" r="10.5" fill="none" stroke="#1D4433" stroke-width="2"/>
+    <ellipse cx="8.6" cy="8.2" rx="3.4" ry="2.2" fill="#FFFFFF" opacity=".6"
+             transform="rotate(-32 8.6 8.2)"/>
+  </symbol>
+</defs></svg>
+
 <div class="wrap">
   <div class="hud">
     <div class="brand">낱말산 <span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
-    <div class="purse">냥 <b id="gold">0</b> · 옥 <b id="gem">0</b></div>
+    <div class="purse">
+      <span class="co"><svg class="cc"><use href="#i-nyang"/></svg><b id="gold">0</b></span>
+      <span class="co"><svg class="cc"><use href="#i-ok"/></svg><b id="gem">0</b></span>
+    </div>
   </div>
   <div class="modes">
     <button class="mode on" id="mQuest">산 오르기</button>
@@ -1037,7 +1106,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="note" id="kNote"></p>
     <div class="acts">
       <button class="btn" id="kHint">힌트<small>옥 1개</small></button>
-      <button class="btn" id="kPass">넘기기<small>기세 회복</small></button>
+      <button class="btn" id="kPass">넘기기<small id="kPassSub">기세 +8%</small></button>
     </div>
   </div>
 
@@ -1046,7 +1115,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   <!-- 규칙은 수호신 이름 옆 꼬리표에만 적혀 있었다. 정작 금빛 글자가
        뜬 자리 옆에는 아무 말이 없어서, 저게 뭔지 알 길이 없었다. -->
   <p class="rulenote" id="ruleNote" hidden></p>
-  <div class="acts">
+  <div class="acts" id="boardActs">
     <button class="btn" id="btnClear">지우기<small>한 글자씩</small></button>
     <button class="btn" id="btnHint">힌트<small>옥 1개</small></button>
     <button class="btn go" id="btnGo" disabled><span id="goLabel">공격</span><small id="goSub">낱말을 만드세요</small></button>
@@ -1063,6 +1132,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
        게임 한 화면 뒤로 두 화면 반이 더 있었다. 필요할 때만 연다. -->
   <!-- 크롬 메뉴를 뒤져 '앱 설치'를 찾아 들어가는 사람은 드물다.
        깔 수 있을 때만 올라오고, 깔고 나면 사라진다. -->
+  <!-- 「규칙」 안에만 두었더니 아무도 못 찾았다. 잃을 것이 생긴 뒤에
+       한 번, 판 위에 올려 말을 건다. 닫으면 닷새 동안 조용하다. -->
+  <div class="savebar" id="saveBar" hidden>
+    <div class="st"><b>기록을 지켜 두세요</b><small id="saveSub">폰을 바꾸면 사라집니다</small></div>
+    <div class="sb">
+      <button id="saveGo">잇기</button>
+      <button class="later" id="saveNo">나중에</button>
+    </div>
+  </div>
+
   <button class="install" id="btnInstall" hidden>
     <b>휴대전화에 깔기</b><small id="installSub">집 밖에서도 데이터 없이 열립니다</small>
   </button>
@@ -1072,7 +1151,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <button class="tbtn" id="tTrain"><b>수련</b><small id="tTrainSub">0단</small></button>
     <button class="tbtn" id="tChest"><b>보물함</b><small id="tChestSub">—</small></button>
     <button class="tbtn" id="tRule"><b>규칙</b><small>어떻게 하나</small></button>
-    <button class="tbtn" id="tLog"><b>기록</b><small>시험판</small></button>
+    <button class="tbtn" id="tSet"><b>설정</b><small id="tSetSub">글씨 · 기록</small></button>
   </div>
 </div>
 
@@ -1129,6 +1208,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button id="btnExamX" hidden>옥 3 · 한 번 더</button>
       <button id="btnExam">시험 보기</button>
     </div>
+    <p class="subh">지닌 것</p>
+    <div class="holds" id="holds"></div>
+    <p class="cite" id="statLine"></p>
     <div id="ups"></div>
     <p class="subh">장터</p>
     <div id="shop"></div>
@@ -1147,8 +1229,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <b>「기록 복사」를 누르셨을 때만</b> 글로 만들어 드립니다.</p>
   </div>
 
-  <div class="panel" id="pRule">
-    <h2>규칙</h2>
+  <div class="panel" id="pSet">
+    <h2>설정</h2>
     <p class="muted" style="margin-bottom:6px">글씨 크기</p>
     <div class="sizer" id="sizer">
       <button data-z="1">보통</button>
@@ -1201,6 +1283,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button class="btn go" id="btnCodeLoad">이 코드로 되살리기</button>
     </div>
     <p class="cite" id="codeNote" hidden></p>
+    <p class="subh">만든 이에게</p>
+    <div class="trow">
+      <button class="btn ghost" id="btnLogOpen">시험판 기록 보기</button>
+      <button class="btn ghost" id="btnRuleOpen">규칙 다시 보기</button>
+    </div>
+  </div>
+
+  <div class="panel" id="pRule">
+    <h2>규칙</h2>
     <p class="subh">이기는 법</p>
     <div class="lines">
       <p>수호신의 <b>기세를 0으로</b> 만들면 쓰러집니다.</p>
@@ -1213,8 +1304,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <p>기세를 깎는 것은 <b>빈칸뿐</b>입니다. 긴 낱말일수록 깊게 들어갑니다.</p>
       <p>빈칸을 채우면 언제든 <b>글자당 15냥</b>.</p>
       <p>빈칸에 없는 낱말도 사전에 있으면 <b>보너스 낱말</b>입니다 — 글자당 4냥.</p>
-      <p class="pivot">보너스는 기세를 못 깎지만 <b>다음 한 방을 더 크게</b> 만듭니다.
+      <p class="pivot">보너스는 기세를 못 깎는 대신 <b>세 글자 이상이면 시간 +3초</b>.
          아는 낱말이 헛되지 않습니다.</p>
+      <p><b>연속</b>은 빈칸을 채울 때만 오릅니다 — 연달아 채울수록 깊게 들어갑니다.</p>
       <p><b>남은 시간도 1초에 1냥</b>입니다.
          다만 빈칸 하나를 채우는 편이 대개 더 큽니다.</p>
     </div>
@@ -1224,6 +1316,20 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <p>수호신이 쓰러져도 <b>남은 시간은 그대로 흐릅니다.</b></p>
       <p>그 시간에 더 채우면 냥이 늘고, 다 채우면 <b>완전 격파</b>입니다.</p>
       <p>생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내도 됩니다.</p>
+    </div>
+
+    <p class="subh">끝말잇기</p>
+    <div class="lines">
+      <p>목숨은 <b>하루 세 개</b>입니다. 시간이 다하면 하나를 잃습니다.</p>
+      <p>막히면 <b>넘기기</b>입니다 — <b>목숨은 잃지 않고</b>, 수호신이
+         기세를 8%만 되찾습니다. 그리고 다른 글자로 다시 시작합니다.</p>
+      <p class="pivot">이을 낱말이 <b>사전에 아예 없는 글자</b>를 받으실 때가 있습니다.
+         그때는 화면이 먼저 알려 드리고, 넘기셔도 <b>아무 손해가 없습니다.</b></p>
+      <p>옥 하나로 <b>힌트</b>를 보실 수 있습니다 — 뜻풀이 한 줄입니다.</p>
+      <p>수호신 <b>셋</b>을 물리치면 <b>승급 시험 표 한 장</b>.
+         오늘 시험 한 판을 <b>옥 없이</b> 보십니다. 하루 한 장입니다.</p>
+      <p>목숨을 다 쓰시면 내일까지 기다리거나, <b>옥 다섯으로 하나 더</b>
+         받으실 수 있습니다 — 이것도 하루 한 번입니다.</p>
     </div>
 
     <p class="subh">산마다 다른 것</p>
@@ -1438,6 +1544,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
+   "saveBar","saveSub","saveGo","saveNo","tSet","tSetSub","pSet","btnLogOpen","btnRuleOpen",
+   "boardActs","kPassSub","holds","statLine",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange","streaks","cal","calNote",
@@ -1494,7 +1602,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       desc: function () {
         return "제한시간 +" + Math.round(up.time * TIME_STEP + gearVal("time")) + "초";
       } },
-    { id: "combo", t: "북",   w: "연속 배수", base: 150, r: 1.0685,
+    { id: "combo", t: "북",   w: "빈칸 연속 배수", base: 150, r: 1.0685,
       desc: function () { return "연속마다 +"
         + Math.round((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100) + "%"; } }
   ];
@@ -1608,7 +1716,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-g";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -1875,6 +1983,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 가장 긴 것부터, 금빛까지 얹어서 센다.
     var best = ans.slice().sort(function (a, b) { return b.length - a.length; });
     var lo = floorNeed(need), acc = 0, bo = boost || 1;
+    // 연속은 이제 빈칸을 채운 수와 같으므로, j번째가 그대로 그 사람의
+    // 연속이다. 셈과 실제가 어긋날 자리가 없다.
     for (var j = 0; j < lo - 1 && j < best.length; j++) {
       acc += Math.round(dmgOf(best[j].length, j) * bo);
     }
@@ -1959,6 +2069,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     run.t0 = Date.now();
     document.body.classList.remove("ready");
     el.startBar.hidden = true;
+    drawSaveBar();                 // 띠가 비켜섰으니 이제 설 수 있다
     if (timerId) clearInterval(timerId);
     timerId = setInterval(onSecond, 1000);
     if (window.SFX) SFX.up();
@@ -2062,14 +2173,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 한 판에 1,000냥쯤 번다. 두 판이면 옥 한 알이 말이 된다.
   // 하루 세 알까지 — 끝까지 올라간 사람의 남는 냥(1만 7천)이
   // 여기로 빠져나가되, 힌트가 공짜가 될 만큼 싸지는 않다.
+  // 냥을 옥으로 바꾸는 값은 그날 몇 번째냐에 따라 곱절씩 오른다.
+  //
+  // 고정 2,200에 하루 세 번이면 6,600냥으로 옥 셋이다. 그런데 한 판이
+  // 500냥쯤이니 열세 판이면 다 채운다 — 산을 오르는 것만으로 옥이
+  // 날마다 셋씩 들어오는 셈이라, 옥이 끝내 모자라지지 않는다.
+  //
+  // 첫 알은 그대로 두고 둘째·셋째를 곱절로 한다. 셋을 다 바꾸려면
+  // 15,400냥, 서른 판 가까이다. 급하면 첫 알만 바꾸고 말게 된다.
   var EX_GOLD = 2200, EX_DAY = 3;
+  function exCost() { return EX_GOLD * Math.pow(2, dGet("ex", 0)); }
   function exLeft() { return Math.max(0, EX_DAY - dGet("ex", 0)); }
   function takeExchange() {
-    if (!exLeft() || gold < EX_GOLD) return;
-    gold -= EX_GOLD; gem += 1; dSet("ex", dGet("ex", 0) + 1);
-    saveS(); drawStatsOnly(); drawToday(); spent(EX_GOLD, 0);
+    var c = exCost();
+    if (!exLeft() || gold < c) return;
+    gold -= c; gem += 1; dSet("ex", dGet("ex", 0) + 1);
+    saveS(); drawStatsOnly(); drawToday(); spent(c, 0);
     if (window.SFX) SFX.up();
-    toast("냥 " + EX_GOLD.toLocaleString() + "을 옥 한 알로 바꿨습니다");
+    toast("냥 " + c.toLocaleString() + "을 옥 한 알로 바꿨습니다");
   }
 
   function drawToday() {
@@ -2159,11 +2280,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var XL = document.createElement("div");
     var xt = document.createElement("div"); xt.className = "st"; xt.textContent = "옥 한 알";
     var xd = document.createElement("div"); xd.className = "sd";
-    xd.textContent = "냥 " + EX_GOLD.toLocaleString() + " · 오늘 " + exLeft() + " / " + EX_DAY + "번";
+    xd.textContent = exLeft()
+      ? "옥 한 알 · 오늘 " + exLeft() + " / " + EX_DAY + "번 · 바꿀수록 값이 오릅니다"
+      : "오늘 몫을 다 바꾸셨습니다 · 내일 다시";
     XL.appendChild(xt); XL.appendChild(xd);
     var xb = document.createElement("button");
-    xb.textContent = exLeft() ? "냥 " + EX_GOLD.toLocaleString() : "내일 다시";
-    xb.disabled = !exLeft() || gold < EX_GOLD;
+    xb.textContent = exLeft() ? "냥 " + exCost().toLocaleString() : "내일 다시";
+    xb.disabled = !exLeft() || gold < exCost();
     xb.addEventListener("click", takeExchange);
     xr.appendChild(XL); xr.appendChild(xb);
     el.exchange.appendChild(xr);
@@ -2491,10 +2614,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var base = 6 + Math.floor(dan * 0.6);
     return n <= 0 ? base : Math.round(base * 1.5);
   }
-  // 지금 치르려면 옥이 몇 알 드는가. 공짜 몫이 남았으면 0.
+  // 지금 치르려면 옥이 몇 알 드는가. 공짜 몫이 남았거나 끝말잇기로
+  // 얻은 표가 있으면 0.
   function examNowCost() {
     var used = examUsed();
-    return used < examFree() ? 0 : examCostAt(used - examFree());
+    if (used < examFree()) return 0;
+    if (kTicket() === 1) return 0;          // 표 한 장이 이 판의 값을 치른다
+    return examCostAt(used - examFree());
   }
   function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
 
@@ -2544,6 +2670,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         return;
       }
       gem -= cost; saveS(); drawStatsOnly(); spent(0, cost);
+    } else if (examUsed() >= examFree() && kTicket() === 1) {
+      kSet(kTicketKey(), 2);                // 썼다 — 하루 한 장뿐이다
+      toast("끝말잇기로 얻은 표로 봅니다");
     }
     examBump();
     var p = makeExam(d);
@@ -2806,12 +2935,46 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
   function last(w) { return w.charAt(w.length - 1); }
 
+  // ── 끝말잇기의 값 ─────────────────────────────────────────────
+  //
+  // 끝말잇기만으로는 할 까닭이 없었다. 이겨도 냥 몇 백이고, 그 냥은
+  // 산에서도 나온다. 그래서 이 모드를 승급에 묶는다.
+  //
+  // 수호신 셋을 맨손으로 물리치면 「표」 한 장. 그 표로 오늘 승급 시험
+  // 한 판을 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진
+  // 것을 실력으로 되찾는 길이 생긴다.
+  //
+  // 하루 두 판이라는 벽은 그대로다. 표는 "한 판 더"가 아니라 "그 한 판의
+  // 값을 치러 주는 것"이다. 돈으로도 못 넘던 벽을 실력으로도 못 넘는다.
+  var CHAIN_LIVES = 3;          // 하루에 주어지는 목숨
+  var CHAIN_BUY = 5;            // 옥으로 하나 더 — 하루 한 번
+  var CHAIN_WIN_FOR_TICKET = 3; // 표 한 장에 드는 수호신 수
+  function kLivesKey()  { return "nathero-kl-" + todayKey(); }
+  function kBoughtKey() { return "nathero-kb-" + todayKey(); }
+  function kWinsKey()   { return "nathero-kw-" + todayKey(); }
+  function kTicketKey() { return "nathero-kt-" + todayKey(); }
+  function kGet(k, d) {
+    try { var v = localStorage.getItem(k); return v == null ? d : (parseInt(v, 10) || 0); }
+    catch (e) { return d; }
+  }
+  function kSet(k, v) { try { localStorage.setItem(k, String(v)); } catch (e) {} }
+  function kLives()  { return kGet(kLivesKey(), CHAIN_LIVES); }
+  function kBought() { return kGet(kBoughtKey(), 0); }
+  function kWins()   { return kGet(kWinsKey(), 0); }
+  function kTicket() { return kGet(kTicketKey(), 0); }
+  function kSpendLife() { kSet(kLivesKey(), Math.max(0, kLives() - 1)); }
+
   function startChain() {
+    if (!kLives()) {
+      toast("오늘 끝말잇기 목숨을 다 쓰셨습니다 · 내일 다시");
+      setMode("quest");
+      return;
+    }
     buildChain();
     var M = MOUNTAINS[Math.floor(stage / 10) % 10];
     var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60)));
     run = { chain: true, b: { n: M.n + " 수호신", art: M.a, m: M.m, boss: false, no: 0 },
-            hp: hp, max: hp, left: 13, sec: 13, lives: 3, combo: 0, used: Object.create(null),
+            hp: hp, max: hp, left: 13, sec: 13, lives: kLives(), combo: 0, used: Object.create(null),
             words: [], mine: 0, phase: "fight", t0: Date.now(),
             ans: [], got: Object.create(null), tiles: [] };
     picked = [];
@@ -2955,11 +3118,29 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       kResume(last(best));
     }, 620);
   }
+  // 이 글자로 더 갈 수 있는가. 남은 것이 하나도 없으면 막다른 길이다.
+  function kStuck() {
+    if (!run || !run.chain) return false;
+    var pool = kpool(run.head, true);
+    for (var i = 0; i < pool.length; i++) if (!run.used[pool[i]]) return false;
+    return true;
+  }
   function kResume(ch) {
     el.kWord.disabled = false;
     run.left = run.sec;
     kSetHead(ch);
     kPaint();
+    // 사전에 남은 낱말이 아예 없는 글자를 받는 일이 있다. 그걸 모르면
+    // 자기가 모자란 줄 알고 시간만 태우다 목숨을 잃는다. 미리 말해 주고,
+    // 그 자리의 넘기기는 값을 받지 않는다 — 사전 탓이지 사람 탓이 아니다.
+    if (kStuck()) {
+      kNote("이 글자로 이을 낱말이 사전에 없습니다 · 넘기셔도 손해가 없습니다", "ok");
+      run.freePass = 1;
+      if (el.kPassSub) el.kPassSub.textContent = "손해 없음";
+    } else {
+      run.freePass = 0;
+      if (el.kPassSub) el.kPassSub.textContent = "기세 +8%";
+    }
     el.kWord.focus();
   }
   function chainSecond() {
@@ -2967,7 +3148,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     run.left--;
     if (run.left <= 0) {
       run.left = 0;
-      run.lives--; run.combo = 0;
+      run.lives--; run.combo = 0; kSpendLife();
       run.hp = Math.min(run.max, run.hp + Math.round(run.max * 0.12));
       if (window.SFX) SFX.roar();
       kPaint();
@@ -2985,7 +3166,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     drawLog();
     if (window.SFX) { won ? SFX.win() : SFX.lose(); }
     var reward = won ? Math.round(60 + r.max * 0.12 * (1 + trainLv() * 0.05)) : 0;
-    gold += reward; saveS(); drawStatsOnly();
+    gold += reward;
+    var wins = kWins(), got = 0;
+    if (won) {
+      wins += 1; kSet(kWinsKey(), wins);
+      // 표는 하루 한 장. 셋을 물리칠 때마다가 아니라, 처음 셋에 한 번.
+      if (wins >= CHAIN_WIN_FOR_TICKET && !kTicket()) { kSet(kTicketKey(), 1); got = 1; }
+    }
+    saveS(); drawStatsOnly(); drawTray();
 
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card";
@@ -3003,14 +3191,46 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var pay = document.createElement("p"); pay.className = "lead pay";
       pay.textContent = reward + "냥"; card.appendChild(pay);
     }
+    // 오늘 몇을 물리쳤고 표까지 몇이 남았는지. 셋째 판에 무엇이 걸려 있는지
+    // 모르면 둘째에서 그만둔다.
+    var tk = document.createElement("p"); tk.className = "lead gemline";
+    if (got) {
+      tk.innerHTML = "<b>승급 시험 표 한 장</b>"
+        + "<span>오늘 승급 시험 한 판을 옥 없이 보십니다</span>";
+    } else if (kTicket()) {
+      tk.innerHTML = "오늘 <b>표 한 장</b>을 이미 받으셨습니다"
+        + "<span>수련에서 쓰실 수 있습니다</span>";
+    } else {
+      var leftW = CHAIN_WIN_FOR_TICKET - kWins();
+      tk.innerHTML = "오늘 물리친 수호신 <b>" + kWins() + " / " + CHAIN_WIN_FOR_TICKET + "</b>"
+        + "<span>" + (leftW > 0 ? leftW + "을 더 물리치면 승급 시험 한 판이 공짜가 됩니다"
+                                : "표를 받으셨습니다") + "</span>";
+    }
+    card.appendChild(tk);
+    var lv = document.createElement("p"); lv.className = "lead foot";
+    lv.innerHTML = kLives() ? "오늘 남은 목숨 <b>" + kLives() + "</b>"
+      : "오늘 목숨을 다 쓰셨습니다 · <b>내일 다시</b>"
+        + (kBought() ? "" : " · 옥 " + CHAIN_BUY + "로 하나 더");
+    card.appendChild(lv);
     var ws = document.createElement("div"); ws.className = "words";
     r.words.slice(-14).forEach(function (w) {
       var x = document.createElement("span"); x.textContent = w; ws.appendChild(x);
     });
     card.appendChild(ws);
     var b1 = document.createElement("button"); b1.className = "btn go";
-    b1.textContent = "다시 도전";
-    b1.addEventListener("click", function () { ov.remove(); startChain(); });
+    var canBuy = !kLives() && !kBought();
+    b1.textContent = kLives() ? "다시 도전"
+      : canBuy ? "옥 " + CHAIN_BUY + " · 목숨 하나 더" : "내일 다시";
+    b1.disabled = !kLives() && (!canBuy || gem < CHAIN_BUY);
+    b1.addEventListener("click", function () {
+      if (!kLives()) {
+        if (!canBuy || gem < CHAIN_BUY) return;
+        gem -= CHAIN_BUY; kSet(kBoughtKey(), 1); kSet(kLivesKey(), 1);
+        saveS(); drawStatsOnly(); spent(0, CHAIN_BUY);
+        toast("옥 " + CHAIN_BUY + "을 들여 목숨 하나를 더 받았습니다");
+      }
+      ov.remove(); startChain();
+    });
     card.appendChild(b1);
     var b2 = document.createElement("button"); b2.className = "btn";
     b2.textContent = "산 오르기로";
@@ -3098,7 +3318,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.hpTail.textContent = "0이 되면 이깁니다";
       el.goLabel.textContent = "공격";
     }
-    el.gold.textContent = gold;
+    el.gold.textContent = gold.toLocaleString();
     el.gem.textContent = gem;
     drawAd();
     drawTrain();
@@ -3385,7 +3605,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var dmg = damage(w, isSlot);
     var wasWeak = weakHit();
     run.hp -= dmg;
-    run.combo++;
+    // 연속은 빈칸을 채운 것만 센다.
+    //
+    // 전에는 빈칸이 아닌 낱말도 연속을 올렸다. 그래서 아는 낱말 몇 개를
+    // 먼저 던져 연속을 꼭대기까지 올려 두고 긴 빈칸을 치면 피해가 곱절
+    // 넘게 들어갔다 — 북을 다 올린 사람은 네 배가 넘었다. 기세는 그 수를
+    // 모르고 잡히니, 어떤 판이든 두세 개면 눕는다.
+    //
+    // 아는 낱말이 헛되지 않다는 약속은 그대로다. 다만 갚는 방식이
+    // 시간과 냥이지 피해가 아니다. 그래야 기세와 실제 피해가 어긋나지 않는다.
+    if (isSlot) run.combo++;
     logEv(isSlot ? "F" : "B", w.length);
     if (!isSlot) LOG.bonus++;
     if (isSlot) {
@@ -3397,14 +3626,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       floatDmg((wasWeak ? "금빛! -" : "-") + dmg, false);
       if (window.SFX) { SFX.word(w.length); SFX.hit(); }
     } else {
-      // 기세는 그대로. 연속을 잇고 시간과 냥으로 갚는다.
+      // 기세도 연속도 그대로. 시간과 냥으로 갚는다.
       // 시간은 세 글자 이상에만 준다. 두 글자에도 주면 두 글자 구간에서
       // 아무거나 눌러 시간을 무한히 버는 길이 열린다.
       run.bonus.push(w);
       if (w.length >= 3) run.left += 3;
       gold += w.length * WORD_PAY; run.payWord += w.length * WORD_PAY;
       var s = document.createElement("span"); s.textContent = w; el.bonus.appendChild(s);
-      floatDmg(w.length >= 3 ? "연속 +1 · 시간 +3초" : "연속 +1", true);
+      floatDmg(w.length >= 3 ? "시간 +3초 · " + (w.length * WORD_PAY) + "냥"
+                             : "+" + (w.length * WORD_PAY) + "냥", true);
       if (window.SFX) { SFX.word(w.length); SFX.tap(); }
     }
     el.portrait.classList.add("hit");
@@ -3989,9 +4219,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function drawStatsOnly() {
-    el.gold.textContent = gold;
+    el.gold.textContent = gold.toLocaleString();
     el.gem.textContent = gem;
     drawPurse();
+    drawSaveBar();
     el.lv.textContent = "수련 " + trainLv() + "단";
     drawHo();
     drawTray();
@@ -4285,14 +4516,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var r2 = document.createElement("div");
       r2.className = "d rate" + (maxed ? "" : pr >= 0.8 ? " hi" : pr >= 0.5 ? " mid" : " lo");
       r2.textContent = maxed
-        ? (byStage ? "다음 산을 넘으면 한 단계 더 열립니다" : "이 회차의 최고 단계입니다")
+        ? (byStage ? "산을 하나 더 넘어야 길이 열립니다"
+                   : "이 회차에서 더는 오를 곳이 없습니다")
         : "성공률 " + Math.round(pr * 100) + "%"
           + (f ? "  ·  연속 실패 " + f + "회 보정 +" + (f * 10) + "%p" : "");
       left.appendChild(t); left.appendChild(tags);
       left.appendChild(d); left.appendChild(r2);
 
       var b = document.createElement("button");
-      b.textContent = maxed ? (byStage ? "더 올라야" : "완성") : "냥 " + cost;
+      b.textContent = maxed ? (byStage ? "다음 산에서" : "끝") : "냥 " + cost;
       b.disabled = maxed || gold < cost;
       // 겹침 — 산을 안 넘어도 올릴 수 있는 쪽. 스무 점에서 막힌다.
       if (forge[u.id] < FORGE_MAX) {
@@ -4360,20 +4592,47 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
         + "  ·  " + (!lf ? "내일 다시"
                     : dan < EXAM_EASY_DAN ? "오늘 " + lf + "번 남음 (공짜)"
+                    : cost === 0 ? "끝말잇기 표로 공짜"
                     : examUsed() ? "한 번 더 · 옥 " + cost
                     : "옥 " + cost)
       : "더 오를 단이 없습니다";
     el.btnExam.disabled = !d || !lf || (cost > 0 && gem < cost);
+    var byTicket = cost === 0 && examUsed() >= examFree() && kTicket() === 1;
     el.btnExam.textContent = !d ? "끝"
       : !lf ? "내일 다시"
       : cost > 0 && gem < cost ? "옥 " + cost + " 필요"
       : cost > 0 ? "옥 " + cost + " · " + (dan + 1) + "단 보기"
+      : byTicket ? "표로 " + (dan + 1) + "단 보기"
       : (dan ? (dan + 1) + "단 보기" : "시험 보기");
     // 「한 번 더」 단추는 없어졌다 — 값이 「시험 보기」에 그대로 적힌다
     el.btnExamX.hidden = true;
   }
 
+  // 쥔 것과 지금 능력치. 숫자가 어디에도 모여 있지 않아서, 올린 보람이
+  // 화면에 안 남았다.
+  function drawHolds() {
+    if (!el.holds) return;
+    el.holds.textContent = "";
+    SHOP.forEach(function (it) {
+      var n = bag[it.id] || 0;
+      var c = document.createElement("div");
+      c.className = "hold i-" + it.a + (n ? "" : " zero");
+      c.innerHTML = '<span class="pic i-' + it.a + '">' + (ITEM_ART[it.a] || "") + '</span>'
+        + '<span class="n">' + n + '</span><span class="nm">' + it.t.replace(" 한 병", "") + '</span>';
+      el.holds.appendChild(c);
+    });
+    if (el.statLine) {
+      el.statLine.innerHTML =
+          "빈칸 피해 <b>×" + (gearVal("atk") * Math.pow(ATK_STEP, up.atk)).toFixed(2) + "</b>"
+        + " · 제한시간 <b>+" + (up.time * TIME_STEP + Math.round(gearVal("time"))) + "초</b>"
+        + " · 연속마다 <b>+" + ((0.08 + gearVal("combo") + up.combo * COMBO_STEP) * 100).toFixed(0) + "%</b>"
+        + "<br>호 <b>" + (dan ? dan + "단 · " + danName() : "무급") + "</b>"
+        + " · 오른 산 <b>" + (stage + 1) + "단계</b>";
+    }
+  }
+
   function drawShop() {
+    drawHolds();
     if (!el.shop) return;
     el.shop.textContent = "";
     SHOP.forEach(function (it) {
@@ -4671,6 +4930,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     });
     row.appendChild(b2); row.appendChild(b1);
     card.appendChild(row);
+    // 결과표에서 막다른 데 두지 않는다. 여기가 하루 중 가장 자주 보는
+    // 화면이라, 갈 만한 곳을 여기서 열어 준다.
+    var row2 = document.createElement("div"); row2.className = "trow";
+    var b3 = document.createElement("button"); b3.className = "btn ghost";
+    b3.textContent = "보물함";
+    b3.addEventListener("click", function () { drawAd(); openPanel(el.pChest); });
+    var b4 = document.createElement("button"); b4.className = "btn ghost";
+    b4.textContent = "설정";
+    b4.addEventListener("click", function () { drawCloud(); openPanel(el.pSet); });
+    row2.appendChild(b3); row2.appendChild(b4);
+    card.appendChild(row2);
     ov.appendChild(card); document.body.appendChild(ov); b1.focus();
   }
 
@@ -4800,7 +5070,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     document.querySelector(".grid").hidden = board;
     el.slot.hidden = board;
     el.tiles.hidden = board;
-    document.querySelector(".acts").hidden = board;
+    // querySelector(".acts")는 문서의 첫째를 집는다. 그런데 끝말잇기 쪽
+    // .acts 가 먼저 적혀 있어서, 끝말잇기에 들어가면 정작 「넘기기」가
+    // 숨고 글자판용 「지우기·공격」이 남아 있었다. 이름을 달아 못박는다.
+    el.boardActs.hidden = board;
+    el.ruleNote.hidden = board || el.ruleNote.hidden;
     el.bonus.hidden = board;
 
     el.btnHint.hidden = (m !== "quest");
@@ -4839,10 +5113,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   });
   el.kPass.addEventListener("click", function () {
     if (!run || !run.chain || el.kWord.disabled) return;
-    run.combo = 0;
-    run.hp = Math.min(run.max, run.hp + Math.round(run.max * 0.08));
+    var free = !!run.freePass;
+    if (!free) {
+      run.combo = 0;
+      run.hp = Math.min(run.max, run.hp + Math.round(run.max * 0.08));
+    }
     kPaint();
-    toast("넘겼습니다 — 수호신이 기세를 조금 되찾습니다");
+    toast(free ? "막다른 글자였습니다 — 손해 없이 넘깁니다"
+               : "넘겼습니다 — 수호신이 기세를 조금 되찾습니다");
     var nw = chainOpening(); run.used[nw] = true;
     kSay(nw, "foe", "넘김"); kResume(last(nw));
   });
@@ -5059,8 +5337,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   // 돌아온 주소에 붙은 부스러기(?code=…)를 지운다. 남겨 두면 새로고침마다
   // 같은 코드를 또 바꾸려 들고, 두 번째부터는 반드시 실패한다.
+  //
+  // 다만 실패를 조용히 지우면 안 된다. 카카오 창을 다 거치고 돌아왔는데
+  // 아무 일도 안 일어나면, 사람은 자기가 뭘 잘못한 줄 안다.
+  // 주소에 실려 온 까닭을 한 번은 보여 준다.
+  var backErr = "";
   function tidyUrl() {
-    if (!/[?#].*(code=|access_token=|error=)/.test(location.href)) return;
+    var h = location.href;
+    if (!/[?#].*(code=|access_token=|error=)/.test(h)) return;
+    var m = h.match(/error_description=([^&#]*)/) || h.match(/error=([^&#]*)/);
+    if (m) { try { backErr = decodeURIComponent(m[1].replace(/\+/g, " ")); } catch (e) { backErr = m[1]; } }
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }
 
@@ -5169,6 +5455,33 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     (row.stage > here.stage ? take : keep).focus();
   }
 
+  // 띠를 띄울 때.
+  //
+  // 처음부터 띄우면 아직 잃을 것이 없어서 그냥 성가신 말이다. 다섯 단계를
+  // 넘겼거나 옥을 샀으면 그때는 지킬 것이 생긴 것이다. 「나중에」를 누르면
+  // 닷새 동안 조용하다 — 하루 만에 또 뜨면 그게 광고다.
+  var SAVE_HUSH = "nm.savehush";
+  function saveHushed() {
+    try { return (parseInt(localStorage.getItem(SAVE_HUSH) || "0", 10) || 0) > Date.now(); }
+    catch (e) { return false; }
+  }
+  function drawSaveBar() {
+    if (!el.saveBar) return;
+    var worth = stage >= 5 || firstBuy || gem >= 20;
+    // 「시작」 띠가 떠 있는 동안은 비켜 준다. 띠 둘이 한꺼번에 서면
+    // 글자판이 화면 밖으로 밀린다 — 한 화면에 담기로 한 약속이 먼저다.
+    el.saveBar.hidden = !(cloudOn() && !me && worth && !saveHushed());
+    if (el.tSetSub) {
+      var ask = cloudOn() && !me && worth;
+      el.tSetSub.textContent = ask ? "기록 지키기" : (me ? "이어져 있음" : "글씨 · 기록");
+      el.tSet.classList.toggle("lit", !!ask);
+    }
+    if (!el.saveBar.hidden) {
+      el.saveSub.textContent = firstBuy ? "사신 옥도 사라집니다"
+                                        : (stage + 1) + "단계가 사라집니다";
+    }
+  }
+
   function drawCloud() {
     if (!el.cloudBox) return;
     // 아직 안 켠 판에서는 머리글째 안 보인다. 한쪽으로만 밀어 두면
@@ -5177,6 +5490,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.cloudBox.hidden = !on;
     var h2 = el.cloudBox.previousElementSibling;
     if (h2 && h2.className === "subh") h2.hidden = !on;
+    drawSaveBar();
     if (!on) return;
     var inOut = !!me;
     el.cloudOut.hidden = inOut; el.cloudBtns.hidden = inOut;
@@ -5209,7 +5523,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (!back && !hadSession()) { drawCloud(); return; }
     sb().then(function (c) { return c.auth.getUser(); }).then(function (r) {
       var u = r && r.data && r.data.user;
-      if (!u) { drawCloud(); return; }
+      if (!u) {
+        drawCloud();
+        if (back) {
+          // 창을 다 거치고 왔는데 세션이 없다. 까닭을 적어 둔다.
+          el.cloudNote.style.color = "var(--danger)";
+          el.cloudNote.innerHTML = backErr
+            ? "잇지 못했습니다 — " + backErr
+            : "잇지 못했습니다 · Supabase의 <b>Kakao 제공자</b>에서 "
+              + "「Allow users without an email」이 켜져 있는지 보십시오";
+          toast("로그인이 끝내 이어지지 않았습니다 · 설정에서 까닭을 보십시오");
+        }
+        return;
+      }
       // 화면에 보여 줄 이름. 이메일이 있으면 이메일, 없으면 닉네임이다.
       // 카카오는 이메일을 아예 안 주고(개인 개발자 앱), 준다 해도 Supabase 가
       // 계정 칸을 비워 두는 일이 있어서 연결된 신원 쪽도 함께 뒤진다.
@@ -5284,6 +5610,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.codeNote.innerHTML = msg;
     el.codeNote.style.color = bad ? "var(--danger)" : "";
   }
+  // 띠에서 바로 「규칙」을 열어 로그인 자리로 데려다 준다. 어디 있는지
+  // 설명하는 대신 열어 주는 쪽이 늘 빠르다.
+  el.saveGo.addEventListener("click", function () {
+    drawCloud(); openPanel(el.pSet);
+    setTimeout(function () {
+      var b = document.getElementById("cloudBox");
+      if (b) b.scrollIntoView({ block: "center" });
+    }, 60);
+  });
+  el.saveNo.addEventListener("click", function () {
+    try { localStorage.setItem(SAVE_HUSH, String(Date.now() + 5 * 864e5)); } catch (e) {}
+    drawSaveBar();
+    toast("「설정」에서 언제든 이으실 수 있습니다");
+  });
+
   el.btnKakao.addEventListener("click", function () { cloudLogin("kakao"); });
   el.btnGoogle.addEventListener("click", function () { cloudLogin("google"); });
   el.btnPush.addEventListener("click", function () { cloudPush(1); });
@@ -5407,8 +5748,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var ov = document.createElement("div"); ov.className = "ov";
     var card = document.createElement("div"); card.className = "card sheet";
     var purse = document.createElement("div"); purse.className = "pursebar";
-    purse.innerHTML = '<span class="pg">냥 <b>' + gold.toLocaleString() + '</b></span>'
-                    + '<span class="pm">옥 <b>' + gem + '</b></span>';
+    purse.innerHTML =
+        '<span class="pg"><svg class="cb"><use href="#i-nyang"/></svg>'
+      + '<b>' + gold.toLocaleString() + '</b></span>'
+      + '<span class="pm"><svg class="cb"><use href="#i-ok"/></svg>'
+      + '<b>' + gem + '</b></span>';
     card.appendChild(purse);
     card.appendChild(node);
     var shut = document.createElement("button");
@@ -5428,7 +5772,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   el.tTrain.addEventListener("click", function () { drawTrain(); openPanel(el.pTrain); });
   el.tChest.addEventListener("click", function () { drawAd(); openPanel(el.pChest); });
   el.tRule.addEventListener("click", function () { openPanel(el.pRule); });
-  el.tLog.addEventListener("click", function () { drawLog(); openPanel(el.pLog); });
+  el.tSet.addEventListener("click", function () { drawCloud(); openPanel(el.pSet); });
+  el.btnLogOpen.addEventListener("click", function () { drawLog(); openPanel(el.pLog); });
+  el.btnRuleOpen.addEventListener("click", function () { openPanel(el.pRule); });
 
   if (el.buildTag) el.buildTag.textContent = "판 " + BUILD;
   loadS();
