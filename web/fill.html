@@ -653,6 +653,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   resize: vertical; word-break: break-all;
 }
 .codebox:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* 연결 살펴보기. 안 되는 까닭을 짐작으로 말하지 않고 서버에 물어 적는다. */
+.diag {
+  margin: 9px 0 0; background: #0E1017; color: var(--fg-dim);
+  border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px;
+  font-family: var(--font-mono); font-size: 11.5px; line-height: 1.75;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.diag b { color: var(--jade); } .diag u { text-decoration: none; color: var(--danger); }
 /* 카카오는 제 색이 정해져 있다. 남의 상표색은 함부로 바꾸지 않는다. */
 .btn.kakao { background: #FEE500; color: #191600; border-color: #E3CE00; }
 .btn.danger { color: var(--danger); }
@@ -1278,6 +1286,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         <button class="btn ghost danger" id="btnKill">계정 지우기</button>
       </div>
       <p class="cite" id="cloudNote"></p>
+      <div class="trow" style="margin-top:7px">
+        <button class="btn ghost" id="btnDiag">연결 살펴보기</button>
+      </div>
+      <pre class="diag" id="diagBox" hidden></pre>
     </div>
 
     <p class="subh">기록 코드 — 로그인 없이 옮기기</p>
@@ -1562,7 +1574,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
    "saveBar","saveSub","saveGo","saveNo","tSet","tSetSub","pSet","btnLogOpen","btnRuleOpen",
-   "boardActs","kPassSub","holds","statLine","buzzer",
+   "boardActs","kPassSub","holds","statLine","buzzer","btnDiag","diagBox",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub","tRule","tLog",
    "pToday","attRow","questList","exchange","streaks","cal","calNote",
@@ -1733,7 +1745,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-n";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -5643,6 +5655,52 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     })["catch"](function () { drawCloud(); });
   }
 
+  // 연결 살펴보기.
+  //
+  // "안 되네"로는 어디가 막혔는지 알 수 없고, 짐작으로 한 줄씩 고치다 보면
+  // 하루가 간다. 서버에 직접 물어 적는다 — 설정값이 닿는가, 어떤 제공자가
+  // 켜져 있는가, 세션이 잡혔는가, 지난번에 무슨 까닭으로 돌아왔는가.
+  function diag() {
+    var out = [];
+    function put(ok, line) { out.push((ok ? "<b>\u2713</b> " : "<u>\u2717</u> ") + line); }
+    el.diagBox.hidden = false;
+    el.diagBox.innerHTML = "살펴보는 중…";
+
+    put(cloudOn(), "설정값 " + (cloudOn() ? "있음" : "비어 있음 — cloud-config.js"));
+    out.push("  이 주소 " + location.origin);
+    if (!cloudOn()) { el.diagBox.innerHTML = out.join("\n"); return; }
+
+    fetch(NM_CLOUD.url + "/auth/v1/settings", { headers: { apikey: NM_CLOUD.key } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (j) {
+        put(true, "서버에 닿음");
+        var ex = j.external || {};
+        put(!!ex.kakao, "카카오 " + (ex.kakao ? "켜짐" : "꺼짐 — Providers → Kakao"));
+        put(!!ex.google, "구글 " + (ex.google ? "켜짐" : "꺼짐 — Providers → Google"));
+        return sb().then(function (c) { return c.auth.getSession(); });
+      })
+      .then(function (r) {
+        var ses = r && r.data && r.data.session;
+        put(!!ses, ses ? "이어져 있음" : "이어진 적 없음");
+        if (backErr) out.push("<u>지난 까닭</u> " + backErr);
+        out.push("");
+        out.push("안 되면 Supabase에서 이 넷을 보십시오");
+        out.push("  1 URL Configuration → Site URL 이");
+        out.push("    " + location.origin);
+        out.push("  2 Redirect URLs 에");
+        out.push("    " + location.origin + "/**");
+        out.push("  3 Providers → Kakao → Allow users");
+        out.push("    without an email  켜기");
+        out.push("  4 두 제공자의 Client ID·Secret");
+        el.diagBox.innerHTML = out.join("\n");
+      })
+      ["catch"](function (e) {
+        put(false, "서버에 못 닿음 — " + (typeof e === "number" ? "HTTP " + e : "인터넷/주소/키"));
+        out.push("  URL 과 키를 다시 보십시오");
+        el.diagBox.innerHTML = out.join("\n");
+      });
+  }
+
   // ── 기록 옮기기 ───────────────────────────────────────────────
   //
   // 결제에는 로그인이 필요 없다. Play 가 신원도 결제도 맡으므로 우리는
@@ -5713,6 +5771,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     toast("「설정」에서 언제든 이으실 수 있습니다");
   });
 
+  el.btnDiag.addEventListener("click", diag);
   el.btnKakao.addEventListener("click", function () { cloudLogin("kakao"); });
   el.btnGoogle.addEventListener("click", function () { cloudLogin("google"); });
   el.btnPush.addEventListener("click", function () { cloudPush(1); });
