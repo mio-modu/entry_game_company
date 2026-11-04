@@ -1802,7 +1802,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-r";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-s";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -2501,9 +2501,36 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     }
     if (window.SFX) SFX.up();
     saveS(); drawStatsOnly(); drawShop(); drawAd();
+    if (me) cloudPush(0);          // 돈이 오간 것은 미루지 않는다
   }
 
-  function buySku(x) {
+  // 치러 준 영수증.
+  //
+  // 소모품은 「비우기(consume)」를 해야 다시 살 수 있다. 그런데 비우기 전에는
+  // Play 가 그 영수증을 계속 들고 있다 — 앱이 죽었든 지웠다 다시 깔았든,
+  // listPurchases() 에 그대로 나온다. 그 사이에 우리가 옥을 못 줬다면
+  // 다음에 열었을 때 주면 된다. 돈을 받고 못 주는 구멍이 여기서 막힌다.
+  //
+  // 전에는 받자마자 비웠고, 되살리기는 「광고 없애기」만 봤다. 그래서
+  // 결제와 저장 사이에 앱이 죽으면 그 옥은 어디에도 없었다 — Play 는
+  // 이미 치렀다고 하고, 우리는 준 적이 없는데, 아무도 그걸 다시 묻지 않았다.
+  var PKEY = "nm.paid";
+  function paidSeen() {
+    try { return JSON.parse(localStorage.getItem(PKEY) || "[]") || []; } catch (e) { return []; }
+  }
+  function paidMark(t) {
+    var a = paidSeen();
+    if (a.indexOf(t) >= 0) return;
+    a.push(t); if (a.length > 50) a = a.slice(-50);
+    try { localStorage.setItem(PKEY, JSON.stringify(a)); } catch (e) {}
+  }
+  // 받은 것을 확실히 간수한 뒤에 비운다. 로그인해 두셨으면 서버까지.
+  function settleBuy(done) {
+    saveS();
+    if (me) { cloudPush(0).then(done, done); } else { done(); }
+  }
+
+  function doBuy(x) {
     billing(function (svc) {
       if (!svc) { toast("앱에서만 사실 수 있습니다 · 스토어에서 받아 주세요"); return; }
       var pr;
@@ -2515,23 +2542,78 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       pr.show().then(function (resp) {
         var token = resp.details && resp.details.token;
         resp.complete("success").then(function () {
+          if (token) paidMark(token);
           grantSku(x);
-          // 소모품은 비워 줘야 다시 살 수 있다. 광고 없애기는 남겨 둔다.
-          if (!x.once && token && svc.consume) svc.consume(token)["catch"](function () {});
           logEv("P", x.id);
+          // 순서가 중요하다 — 간수가 끝난 뒤에 비운다. 거꾸로 하면
+          // 비운 직후 앱이 죽었을 때 Play 도 우리도 그 영수증을 잃는다.
+          settleBuy(function () {
+            if (!x.once && token && svc.consume) svc.consume(token)["catch"](function () {});
+          });
         });
       })["catch"](function () {});
     });
   }
 
-  // 앱을 다시 깔아도 산 것이 살아 있어야 한다
+  // 결제 앞의 한마디.
+  //
+  // 로그인 없이 사시면 그 옥은 이 폰 안에만 남는다. 앱을 지우거나 폰을
+  // 바꾸면 되찾을 길이 없다. 막지는 않는다 — 막으면 사려던 사람의 절반이
+  // 돌아오지 않고, 심사에서도 "로그인 없이 전부 된다"는 말과 어긋난다.
+  // 다만 모르고 지나가게 두지는 않는다.
+  function buySku(x) {
+    if (!cloudOn() || me || !inApp()) return doBuy(x);
+    var ov = document.createElement("div"); ov.className = "ov";
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.textContent = "이 기기에만 남습니다";
+    var p1 = document.createElement("p"); p1.className = "lead";
+    p1.innerHTML = "로그인하지 않고 사시면 " + x.t
+      + "은 <b>이 폰 안에만</b> 남습니다. 앱을 지우거나 폰을 바꾸면 "
+      + "<b>되찾을 수 없습니다.</b>";
+    var p2 = document.createElement("p"); p2.className = "lead foot";
+    p2.innerHTML = "로그인은 <b>한 번이면 끝</b>이고, 그 뒤로는 산 옥도 단계도 "
+      + "저절로 지켜집니다.";
+    var row = document.createElement("div"); row.className = "trow";
+    var no = document.createElement("button"); no.className = "btn ghost";
+    no.textContent = "그냥 사기";
+    no.addEventListener("click", function () { ov.remove(); doBuy(x); });
+    var yes = document.createElement("button"); yes.className = "btn go";
+    yes.textContent = "로그인하고 사기";
+    yes.addEventListener("click", function () {
+      ov.remove();
+      document.querySelectorAll(".ov").forEach(function (q) { q.remove(); });
+      drawCloud(); openPanel(el.pSet);
+      setTimeout(function () {
+        var bx = document.getElementById("cloudBox");
+        if (bx) bx.scrollIntoView({ block: "center" });
+      }, 60);
+    });
+    row.appendChild(no); row.appendChild(yes);
+    card.appendChild(h); card.appendChild(p1); card.appendChild(p2); card.appendChild(row);
+    ov.appendChild(card); document.body.appendChild(ov); yes.focus();
+  }
+
+  // 앱을 다시 깔아도, 결제 도중에 죽었어도, 산 것이 살아 있어야 한다
   function restorePurchases() {
     billing(function (svc) {
       if (!svc || !svc.listPurchases) return;
       svc.listPurchases().then(function (list) {
-        list.forEach(function (p2) {
-          if (p2.itemId === "no_ads") { noAds = 1; saveS(); drawAd(); drawShop(); }
+        var seen = paidSeen(), hit = 0;
+        (list || []).forEach(function (p2) {
+          if (p2.itemId === "no_ads") { noAds = 1; hit = 1; return; }
+          var sku = null;
+          SKUS.forEach(function (k) { if (k.id === p2.itemId) sku = k; });
+          if (!sku || sku.once) return;
+          // 아직 비우지 않은 소모품이 남아 있다 = 우리가 못 준 것이다
+          var t = p2.purchaseToken || p2.token || "";
+          if (!t || seen.indexOf(t) >= 0) return;
+          paidMark(t); grantSku(sku); hit = 1;
+          toast("못 받으셨던 " + sku.t + "을 돌려 드렸습니다");
+          settleBuy(function () {
+            if (svc.consume) svc.consume(t)["catch"](function () {});
+          });
         });
+        if (hit) { saveS(); drawStatsOnly(); drawAd(); drawShop(); }
       })["catch"](function () {});
     });
   }
