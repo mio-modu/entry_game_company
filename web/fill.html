@@ -1807,7 +1807,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-t";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-u";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2996,7 +2996,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       });
       card.appendChild(ml);
       var fn = document.createElement("p"); fn.className = "lead foot";
-      fn.innerHTML = "떨어져도 <b>잃는 것은 없습니다</b> · 몇 번이든 다시 보실 수 있습니다";
+      fn.innerHTML = "떨어져도 <b>단은 그대로</b>입니다 · 다만 오늘 치른 몫은 돌아오지 않습니다";
       card.appendChild(fn);
     }
 
@@ -3006,14 +3006,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     note.innerHTML = !nextDan() ? "서른 단을 모두 지나셨습니다 · <b>용</b>"
       : !lf ? "오늘 시험은 여기까지입니다 · <b>내일 다시</b>"
       : examNowCost()
-        ? "한 번 더 보시려면 <b>옥 " + examNowCost() + "</b>"
+        ? "오늘 " + (examUsed() + 1) + "판째 — <b>옥 " + examNowCost() + "</b>"
+          + (gem < examNowCost() ? " · 지금 옥 " + gem : "")
         : "오늘 남은 시험 <b>" + lf + "번</b>";
     card.appendChild(note);
 
-    var again = document.createElement("button"); again.className = "btn ghost";
-    again.textContent = !nextDan() ? "" : !lf ? "" : (pass ? "바로 다음 단" : "다시 보기");
-    if (again.textContent) {
-      again.addEventListener("click", function () { ov.remove(); startExam(); });
+    var c2 = examNowCost(), poor2 = c2 > 0 && gem < c2;
+    var again = document.createElement("button");
+    again.className = poor2 ? "btn go" : "btn ghost";
+    again.innerHTML = !nextDan() || !lf ? ""
+      : poor2 ? "옥 사러 가기<small>옥 " + c2 + "이 듭니다</small>"
+      : c2 ? "옥 " + c2 + " · 한 번 더<small>오늘 " + (examUsed() + 1) + "판째</small>"
+      : (pass ? "바로 다음 단" : "다시 보기");
+    if (again.innerHTML) {
+      again.addEventListener("click", function () {
+        ov.remove();
+        if (poor2) return goShop();
+        startExam();
+      });
       row.appendChild(again);
     }
     var back = document.createElement("button"); back.className = "btn";
@@ -3498,13 +3508,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var retry = kCanRetry(), poor = gem < CHAIN_RETRY_GEM;
     b1.innerHTML = kDone() ? "내일 다시"
       : !kDead() ? (kWins() + 1) + "판으로<small>" + CHAIN_SEC[kWins()] + "초</small>"
+      : retry && poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM + "이 듭니다</small>"
       : retry ? "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
                 + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>"
       : "내일 다시";
-    b1.disabled = kDone() || (kDead() && (!retry || poor));
+    b1.disabled = kDone() || (kDead() && !retry);
     b1.addEventListener("click", function () {
       if (kDead()) {
-        if (!retry || gem < CHAIN_RETRY_GEM) return;
+        if (!retry) return;
+        if (gem < CHAIN_RETRY_GEM) { ov.remove(); return goShop(); }
         gem -= CHAIN_RETRY_GEM;
         kSet(kRetryKey(), kRetry() + 1); kSet(kDeadKey(), 0);
         saveS(); drawStatsOnly(); spent(0, CHAIN_RETRY_GEM);
@@ -4906,6 +4918,20 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     drawExam();
   }
 
+  // 옥이 모자란 자리에서 길이 끊기면 안 된다.
+  //
+  // 「옥 13 필요」라고만 적고 단추를 잠가 두면, 사고 싶은 사람도 어디서
+  // 사는지 찾아 나서야 한다. 사려던 마음은 그 사이에 식는다.
+  // 모자란 자리마다 상점으로 가는 길을 바로 낸다.
+  function goShop() {
+    document.querySelectorAll(".ov").forEach(function (x) { x.remove(); });
+    drawAd(); drawShop(); openPanel(el.pChest);
+    setTimeout(function () {
+      var g = document.getElementById("gemShop");
+      if (g) g.scrollIntoView({ block: "center" });
+    }, 60);
+  }
+
   function drawExam() {
     if (!el.examBar) return;
     var d = nextDan();
@@ -4916,14 +4942,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         + "  ·  " + (!lf ? "내일 다시"
                     : dan < EXAM_EASY_DAN ? "오늘 " + lf + "번 남음 (공짜)"
                     : cost === 0 ? "끝말잇기 표로 공짜"
-                    : examUsed() ? "한 번 더 · 옥 " + cost
-                    : "옥 " + cost)
+                    : "오늘 " + (examUsed() + 1) + "판째 · 옥 " + cost
+                      + (gem < cost ? " (지금 " + gem + ")" : ""))
       : "더 오를 단이 없습니다";
-    el.btnExam.disabled = !d || !lf || (cost > 0 && gem < cost);
+    el.btnExam.disabled = !d || !lf;
     var byTicket = cost === 0 && examUsed() >= examFree() && kTicket() === 1;
+    var poor = cost > 0 && gem < cost;
+    el.btnExam.dataset.buy = poor ? "1" : "";
     el.btnExam.textContent = !d ? "끝"
       : !lf ? "내일 다시"
-      : cost > 0 && gem < cost ? "옥 " + cost + " 필요"
+      : poor ? "옥 사러 가기"
       : cost > 0 ? "옥 " + cost + " · " + (dan + 1) + "단 보기"
       : byTicket ? "표로 " + (dan + 1) + "단 보기"
       : (dan ? (dan + 1) + "단 보기" : "시험 보기");
@@ -5490,6 +5518,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   });
 
   el.btnExam.addEventListener("click", function () {
+    if (el.btnExam.dataset.buy === "1") return goShop();
     var ov = document.querySelector(".ov");
     // 열려 있던 패널들을 걷고 시험만 남긴다
     document.querySelectorAll(".ov").forEach(function (x) {
