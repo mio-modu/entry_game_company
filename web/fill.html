@@ -1605,7 +1605,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -2316,7 +2316,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 못 쓴다. 남는 것은 아는 낱말과 손이 전부다. 그래서 여기서 받은 호는
   // 돈으로 살 수 없고, 그 사실이 호를 값지게 만든다.
   //
-  // 떨어져도 잃는 것은 없다. 실력은 운이 아니라서 몇 번을 봐도 괜찮다.
+  // 네 단째부터 판마다 옥이 드는 것은 이 말과 어긋나지 않는다. 옥으로
+  // 사는 것은 「치를 기회」지 합격이 아니다. 옥을 아무리 부어도 모르는
+  // 낱말은 끝내 안 떠오르고, 하루 두 판에서 막히므로 돌려 뽑지도 못한다.
+  //
+  // 떨어져도 잃는 것은 없다 — 다만 그 판에 치른 옥은 돌아오지 않는다.
   // 칸 구성은 눈대중으로 못 정한다.
   //
   // 출제 사전은 2글자 3,443 · 3글자 2,722 · 4글자 643이다. 4글자가 유독
@@ -2424,8 +2428,31 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // "실력"이 아니라 "시도 횟수"가 되고, 몇 번이고 돌리면 운 좋은 글자판이
   // 언젠가 나온다. 그러면 호가 값을 잃고, 돈으로 못 산다는 사실 하나로
   // 지탱되던 이 자리가 통째로 무너진다.
-  var EXAM_EASY_DAN = 3;        // 이 단까지는 하루 두 번
-  function examCap() { return dan < EXAM_EASY_DAN ? 2 : 1; }
+  // 하루 두 번. 그리고 네 단째부터는 두 번 다 옥이다.
+  //
+  // 호는 이 게임에서 돈으로 못 사는 유일한 것이다. 그 사실은 그대로다 —
+  // 옥으로 사는 것은 「치를 기회」뿐이고, 통과는 끝까지 맨몸 실력이다.
+  // 검도 등도 북도 꺼지고 힌트도 소모품도 못 쓴다. 옥을 아무리 부어도
+  // 모르는 낱말은 끝내 안 떠오른다.
+  //
+  // 왜 공짜를 없애는가. 공짜 한 번이 날마다 들어오면 시험은 그냥
+  // 「매일 하는 것」이 된다. 값을 치러야 비로소 고른다 — 오늘 볼까,
+  // 한 단 더 수련하고 내일 볼까. 그 망설임이 이 자리를 무겁게 만든다.
+  //
+  // 그리고 옥이 갈 곳이 생긴다. 힌트만으로는 옥이 쌓이기만 했다.
+  // 이제 가장 간절한 자리가 가장 큰 옥을 먹는다.
+  //
+  // 다만 맨 아래 세 단은 공짜다. 시험이 무엇인지 알기도 전에 값을 물리면
+  // 들어온 날 한 번 떨어지고 그냥 나간다. 초석·반석·금석은 글자판
+  // 생김새가 똑같고(2자 셋·3자 하나) 빨라지기만 하는 구간이라 거기가
+  // 배우는 자리다. 생김새가 바뀌는 거암부터 값이 붙는다.
+  //
+  // 하루 두 번에서 멈추는 것은 그대로다. 돈을 부어도 셋째 판은 없다.
+  // 몇 번이고 돌려 운 좋은 글자판을 뽑는 길은 끝까지 없어야 한다 —
+  // 그 하나로 호가 지탱된다.
+  var EXAM_EASY_DAN = 3;        // 이 단까지는 두 번 다 공짜
+  var EXAM_DAY_MAX = 2;         // 하루 최대 — 돈으로도 못 넘는다
+  function examFree() { return dan < EXAM_EASY_DAN ? EXAM_DAY_MAX : 0; }
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
     try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
@@ -2434,30 +2461,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function examBump() {
     try { localStorage.setItem(examKey(), String(examUsed() + 1)); } catch (e) {}
   }
-  // 다만 하루 한 번은 옥으로 더 본다.
+  function examLeft() { return Math.max(0, EXAM_DAY_MAX - examUsed()); }
+
+  // 값은 두 갈래로 오른다.
   //
-  // 그날 횟수를 다 쓰고 "한 번만 더"가 되는 자리를 아주 막아 두면,
-  // 들어왔다가 두 번 떨어지고 그냥 나가는 사람이 생긴다. 한 번은 열어 둔다.
+  // 하나는 단. 같은 한 판이라도 초석을 노리는 판과 용을 노리는 판은 값이
+  // 다르다 — 올라갈수록 그 한 판이 더 간절해지므로, 값이 그대로면 위로
+  // 갈수록 오히려 헐해진다. 한 단에 옥 반 알씩. 가파르면 위에서 막힌다.
   //
-  // 돈이 아니라 옥으로 받는다. 옥은 수호신을 쓰러뜨려도 나오고 광고로도
-  // 나오니, 돈 쓰는 사람만의 길이 아니다. 그리고 하루 한 번에서 멈추므로
-  // 몇 번이고 돌려 운 좋은 글자판을 뽑는 일은 여전히 못 한다.
-  // 호가 걸린 일이라 싸면 안 된다. 하루 한 번뿐이기도 하다.
-  //
-  // 그리고 위로 갈수록 조금씩 비싸진다. 같은 "한 번 더"라도 초석을 노리는
-  // 한 번과 용을 노리는 한 번은 값이 다르다 — 올라갈수록 그 한 번이
-  // 더 간절해지므로, 값이 그대로면 위로 갈수록 오히려 헐해진다.
-  // 다만 가파르면 위에서 길이 막힌다. 한 단에 옥 반 알씩만 올린다.
-  function examExtraCost() { return 6 + Math.floor(dan * 0.6); }
-  function examExtraKey() { return "nathero-examx-" + todayKey(); }
-  function examExtraUsed() {
-    try { return localStorage.getItem(examExtraKey()) === "1"; } catch (e) { return false; }
+  // 다른 하나는 그날 몇 번째인가. 둘째 판은 「한 번만 더」의 자리라
+  // 첫 판보다 반 곱절 비싸다. 거기서 끝이라 더 오를 곳도 없다.
+  function examCostAt(n) {
+    var base = 6 + Math.floor(dan * 0.6);
+    return n <= 0 ? base : Math.round(base * 1.5);
   }
-  function examExtraTake() {
-    try { localStorage.setItem(examExtraKey(), "1"); } catch (e) {}
-  }
-  function examLeft() {
-    return Math.max(0, examCap() + (examExtraUsed() ? 1 : 0) - examUsed());
+  // 지금 치르려면 옥이 몇 알 드는가. 공짜 몫이 남았으면 0.
+  function examNowCost() {
+    var used = examUsed();
+    return used < examFree() ? 0 : examCostAt(used - examFree());
   }
   function nextDan() { return dan + 1 < DAN.length ? DAN[dan + 1] : null; }
 
@@ -2496,10 +2517,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var d = nextDan();
     if (!d) { toast("더 오를 단이 없습니다 · " + danName()); return; }
     if (!examLeft()) {
-      toast(examExtraUsed()
-        ? "오늘 시험은 여기까지입니다 · 내일 다시 보실 수 있습니다"
-        : "오늘 몫을 다 쓰셨습니다 · 옥 " + examExtraCost() + "을 들이면 한 번 더");
+      toast("오늘 시험은 여기까지입니다 · 내일 다시 보실 수 있습니다");
       return;
+    }
+    // 옥이 드는 판이면 여기서 치른다. 값은 들어가기 직전에 한 번만 읽는다.
+    var cost = examNowCost();
+    if (cost) {
+      if (gem < cost) {
+        toast("옥 " + cost + "이 있어야 봅니다 · 수호신·완전 격파·광고로 나옵니다");
+        return;
+      }
+      gem -= cost; saveS(); drawStatsOnly(); spent(0, cost);
     }
     examBump();
     var p = makeExam(d);
@@ -2576,11 +2604,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var lf = examLeft();
     var note = document.createElement("p"); note.className = "lead foot";
     note.innerHTML = !nextDan() ? "서른 단을 모두 지나셨습니다 · <b>용</b>"
-      : lf ? "오늘 남은 시험 <b>" + lf + "번</b>"
-      : examExtraUsed()
-        ? "오늘 시험은 여기까지입니다 · <b>내일 다시</b>"
-        : "오늘 횟수를 다 쓰셨습니다 · <b>수련</b>에서 옥 "
-          + examExtraCost() + "을 들이면 한 번 더";
+      : !lf ? "오늘 시험은 여기까지입니다 · <b>내일 다시</b>"
+      : examNowCost()
+        ? "한 번 더 보시려면 <b>옥 " + examNowCost() + "</b>"
+        : "오늘 남은 시험 <b>" + lf + "번</b>";
     card.appendChild(note);
 
     var again = document.createElement("button"); again.className = "btn ghost";
@@ -4312,22 +4339,22 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (!el.examBar) return;
     var d = nextDan();
     el.examHead.textContent = dan ? dan + "단 · " + danName() : "승급 시험";
-    var lf = examLeft();
+    var lf = examLeft(), cost = examNowCost();
     el.examSub.textContent = d
       ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
-        + "  ·  " + (lf ? "오늘 " + lf + "번 남음"
-                        : examExtraUsed() ? "내일 다시" : "오늘 몫을 썼습니다")
-        + (dan < EXAM_EASY_DAN ? " (초반 두 번)" : "")
+        + "  ·  " + (!lf ? "내일 다시"
+                    : dan < EXAM_EASY_DAN ? "오늘 " + lf + "번 남음 (공짜)"
+                    : examUsed() ? "한 번 더 · 옥 " + cost
+                    : "옥 " + cost)
       : "더 오를 단이 없습니다";
-    el.btnExam.disabled = !d || !lf;
+    el.btnExam.disabled = !d || !lf || (cost > 0 && gem < cost);
     el.btnExam.textContent = !d ? "끝"
       : !lf ? "내일 다시"
+      : cost > 0 && gem < cost ? "옥 " + cost + " 필요"
+      : cost > 0 ? "옥 " + cost + " · " + (dan + 1) + "단 보기"
       : (dan ? (dan + 1) + "단 보기" : "시험 보기");
-    // 다 쓴 날에만, 하루 한 번만 나타난다
-    var canX = !!d && !lf && !examExtraUsed();
-    el.btnExamX.hidden = !canX;
-    el.btnExamX.disabled = gem < examExtraCost();
-    el.btnExamX.textContent = "옥 " + examExtraCost() + " · 한 번 더";
+    // 「한 번 더」 단추는 없어졌다 — 값이 「시험 보기」에 그대로 적힌다
+    el.btnExamX.hidden = true;
   }
 
   function drawShop() {
@@ -4810,14 +4837,6 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (window.SFX) SFX.up();
     saveS(); drawStatsOnly(); draw();
     toast("기름 한 병 · 마무리 시간 +15초");
-  });
-
-  el.btnExamX.addEventListener("click", function () {
-    var cost = examExtraCost();
-    if (examExtraUsed() || gem < cost) return;
-    gem -= cost; examExtraTake();
-    saveS(); drawStatsOnly(); drawExam(); spent(0, cost);
-    toast("옥 " + cost + "을 들여 오늘 한 번 더 보십니다");
   });
 
   el.btnExam.addEventListener("click", function () {
