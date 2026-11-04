@@ -185,7 +185,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   font-size: 10px; font-weight: 700; white-space: nowrap;
   background: var(--jade); color: #06201B; border-radius: 20px; padding: 2px 8px;
 }
-/* 지닌 것. 소모품이 장터 줄 귀퉁이에 "1개"로만 적혀 있어서, 내가 무엇을
+/* 내 물건. 소모품이 장터 줄 귀퉁이에 "1개"로만 적혀 있어서, 내가 무엇을
    몇 개 쥐고 있는지 한 번에 볼 자리가 없었다. */
 .holds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .hold {
@@ -1155,7 +1155,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   <div class="savebar" id="saveBar" hidden>
     <div class="st"><b>기록을 지켜 두세요</b><small id="saveSub">폰을 바꾸면 사라집니다</small></div>
     <div class="sb">
-      <button id="saveGo">잇기</button>
+      <button id="saveGo">로그인</button>
       <button class="later" id="saveNo">나중에</button>
     </div>
   </div>
@@ -1226,7 +1226,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button id="btnExamX" hidden>옥 3 · 한 번 더</button>
       <button id="btnExam">시험 보기</button>
     </div>
-    <p class="subh">지닌 것</p>
+    <p class="subh">내 물건</p>
     <div class="holds" id="holds"></div>
     <p class="cite" id="statLine"></p>
     <div id="ups"></div>
@@ -1268,13 +1268,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <div id="cloudBox">
       <div class="lines" id="cloudOut">
         <p>기록은 <b>이 기기 안에만</b> 있습니다. 폰을 바꾸거나 앱을 지우면
-           <b>단계도 산 옥도 따라오지 않습니다.</b></p>
-        <p>한 번 이어 두시면 그 뒤로는 <b>저절로 지켜집니다.</b>
+           <b>단계도 사신 옥도 따라오지 않습니다.</b></p>
+        <p>한 번 <b>로그인</b>해 두시면 그 뒤로는 <b>자동으로 저장됩니다.</b>
            로그인은 <b>해도 되고 안 해도 됩니다</b> — 안 하셔도 게임은 그대로 다 됩니다.</p>
       </div>
       <div class="trow" id="cloudBtns">
-        <button class="btn kakao" id="btnKakao">카카오로 잇기</button>
-        <button class="btn" id="btnGoogle">구글로 잇기</button>
+        <button class="btn kakao" id="btnKakao">카카오로 로그인</button>
+        <button class="btn" id="btnGoogle">구글로 로그인</button>
       </div>
       <div class="acct" id="cloudWho" hidden></div>
       <div class="trow" id="cloudIn" hidden>
@@ -1287,14 +1287,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       </div>
       <p class="cite" id="cloudNote"></p>
       <div class="trow" style="margin-top:7px">
-        <button class="btn ghost" id="btnDiag">연결 살펴보기</button>
+        <button class="btn ghost" id="btnDiag">연결 상태 확인</button>
       </div>
       <pre class="diag" id="diagBox" hidden></pre>
     </div>
 
     <p class="subh">기록 코드 — 로그인 없이 옮기기</p>
     <div class="lines">
-      <p>로그인이 내키지 않으시면 이 길도 있습니다. 기록을 <b>글 한 줄</b>로
+      <p>로그인이 내키지 않으시면 이 방법도 있습니다. 기록을 <b>글 한 줄</b>로
          만들어 메모장에 두었다가, 새 폰에서 그 줄을 넣으시면 그대로 돌아옵니다.</p>
       <p>이 줄은 <b>화면에서만 만들어집니다</b> — 어디로도 보내지 않습니다.</p>
     </div>
@@ -1745,7 +1745,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-o";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-p";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -3274,7 +3274,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     card.appendChild(ws);
     var b1 = document.createElement("button"); b1.className = "btn go";
     var retry = kCanRetry(), poor = gem < CHAIN_RETRY_GEM;
-    b1.innerHTML = kDone() ? "오늘 끝"
+    b1.innerHTML = kDone() ? "내일 다시"
       : !kDead() ? (kWins() + 1) + "판으로<small>" + CHAIN_SEC[kWins()] + "초</small>"
       : retry ? "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
                 + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>"
@@ -4132,7 +4132,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var back = Math.round((60 + tier * 90) * (pts ? 0.5 : 1));
       gold += back;
       var d = pts
-        ? "같은 " + G.t + "을 겹쳤습니다 · 더 세집니다 · 겹침 " + forge[id]
+        ? "같은 " + G.t + "이 겹쳐 더 세집니다 · 강화 " + forge[id]
           + "/" + FORGE_MAX
           + " (+" + (forge[id] * FORGE_STEP * 100).toFixed(1) + "%) · 냥 +" + back
         : G.t + "은 더 겹칠 자리가 없습니다 · 냥 +" + back;
@@ -4608,7 +4608,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       tags.appendChild(g);
       if (forge[u.id]) {
         var fz = document.createElement("span"); fz.className = "forge";
-        fz.textContent = "겹침 " + forge[u.id] + "/" + FORGE_MAX
+        fz.textContent = "강화 " + forge[u.id] + "/" + FORGE_MAX
           + " (+" + (forge[u.id] * FORGE_STEP * 100).toFixed(1) + "%)";
         tags.appendChild(fz);
       }
@@ -4631,14 +4631,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         var fcost = forgeCost(u.id);
         var fb = document.createElement("button");
         fb.className = "honebtn forgebtn";
-        fb.textContent = "겹쳐 다듬기 +1 · 냥 " + fcost.toLocaleString();
+        fb.textContent = "강화 +1 · 냥 " + fcost.toLocaleString();
         fb.disabled = gold < fcost;
         fb.addEventListener("click", function () {
           if (gold < fcost || forge[u.id] >= FORGE_MAX) return;
           gold -= fcost; forge[u.id]++; spent(fcost, 0);
           if (window.SFX) SFX.up();
           logEv("F", u.id.charAt(0));
-          toast(u.t + " 겹침 " + forge[u.id] + "/" + FORGE_MAX
+          toast(u.t + " 강화 " + forge[u.id] + "/" + FORGE_MAX
                 + " · +" + (forge[u.id] * FORGE_STEP * 100).toFixed(1) + "%");
           saveS(); drawTrain(); drawStatsOnly();
         });
@@ -4757,7 +4757,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       n.style.color = left ? "" : "var(--fg-faint)";
       tx.appendChild(n);
       var b = document.createElement("button");
-      b.textContent = left ? "냥 " + cost.toLocaleString() : "오늘 끝";
+      b.textContent = left ? "냥 " + cost.toLocaleString() : "내일 다시";
       b.disabled = gold < cost || !left;
       b.addEventListener("click", function () {
         if (gold < cost || !shopLeft(it)) return;
@@ -5583,7 +5583,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.saveBar.hidden = !(cloudOn() && !me && worth && !saveHushed());
     if (el.tSetSub) {
       var ask = cloudOn() && !me && worth;
-      el.tSetSub.textContent = ask ? "기록 지키기" : (me ? "이어져 있음" : "글씨 · 기록");
+      el.tSetSub.textContent = ask ? "기록 지키기" : (me ? "로그인됨" : "글씨 · 기록");
       el.tSet.classList.toggle("lit", !!ask);
     }
     if (!el.saveBar.hidden) {
@@ -5606,8 +5606,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.cloudOut.hidden = inOut; el.cloudBtns.hidden = inOut;
     el.cloudWho.hidden = !inOut; el.cloudIn.hidden = !inOut; el.cloudIn2.hidden = !inOut;
     if (inOut) {
-      el.cloudWho.innerHTML = "<b>이어져 있습니다</b>"
-        + (me.by === "kakao" ? "카카오" : "구글") + "로 이었습니다 · 저장할 때마다 저절로 올라갑니다"
+      el.cloudWho.innerHTML = "<b>로그인되어 있습니다</b>"
+        + (me.by === "kakao" ? "카카오" : "구글") + " 계정 · 저장할 때마다 자동으로 올라갑니다"
         + (me.who ? "<span>" + me.who + "</span>" : "");
     }
   }
@@ -5665,7 +5665,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       me = { id: u.id, who: who,
              by: (u.app_metadata && u.app_metadata.provider) || "google" };
       drawCloud(); cloudSync();
-      if (back) toast("이어졌습니다 · 이제 저절로 지켜집니다");
+      if (back) toast("로그인됐습니다 · 이제 기록이 자동으로 저장됩니다");
     })["catch"](function (e) {
       tidyUrl(); drawCloud();
       if (back) {
@@ -5701,7 +5701,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       })
       .then(function (r) {
         var ses = r && r.data && r.data.session;
-        put(!!ses, ses ? "이어져 있음" : "이어진 적 없음");
+        put(!!ses, ses ? "로그인됨" : "로그인된 적 없음");
         if (backErr) out.push("<u>지난 까닭</u> " + backErr);
         out.push("");
         out.push("안 되면 Supabase에서 이 넷을 보십시오");
