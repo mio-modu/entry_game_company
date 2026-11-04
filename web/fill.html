@@ -1202,7 +1202,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   <div class="tray">
     <button class="tbtn" id="tToday"><b>오늘</b><small id="tTodaySub">—</small></button>
     <button class="tbtn" id="tTrain"><b>수련</b><small id="tTrainSub">0단</small></button>
-    <button class="tbtn" id="tMine"><b>내 것</b><small id="tMineSub">—</small></button>
+    <button class="tbtn" id="tMine"><b>내 정보</b><small id="tMineSub">—</small></button>
     <button class="tbtn" id="tChest"><b>상점</b><small id="tChestSub">—</small></button>
     <button class="tbtn" id="tSet"><b>설정</b><small id="tSetSub">글씨 · 기록</small></button>
   </div>
@@ -1269,14 +1269,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       단수가 높을수록 받는 냥이 늘어납니다.</p>
     <div class="trow" style="margin-top:11px">
       <button class="btn ghost" id="btnToShop">상점으로</button>
-      <button class="btn ghost" id="btnToMine">내 것 보기</button>
+      <button class="btn ghost" id="btnToMine">내 정보</button>
     </div>
   </div>
 
   <!-- 보는 곳. 내가 무엇을 쥐었고 얼마나 세졌는지만 적는다.
        여기서는 아무것도 사거나 올리지 않는다 — 그래야 보러 들어온다. -->
   <div class="panel" id="pMine">
-    <h2>내 것</h2>
+    <h2>내 정보</h2>
     <div class="mehead" id="meHead"></div>
     <p class="subh">능력치</p>
     <div class="stats" id="statGrid"></div>
@@ -1802,7 +1802,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-q";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-r";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -4770,7 +4770,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 수련 안에 내 물건과 장터가 같이 들어 있었다. 올리는 곳에 보는 것과
   // 사는 것이 섞이면 "여기가 무엇 하는 곳인가"가 흐려지고, 셋 다 대충
-  // 보게 된다. 올리는 곳(수련) · 보는 곳(내 것) · 사는 곳(상점)으로 가른다.
+  // 보게 된다. 올리는 곳(수련) · 보는 곳(내 정보) · 사는 곳(상점)으로 가른다.
   //
   // 여기서는 아무것도 사거나 올리지 않는다. 그래야 보러 들어온다.
   function drawMine() {
