@@ -164,9 +164,12 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .gempack:active { transform: scale(.96); }
 .gempack.best { border-color: var(--jade); }
 .gempack .pic { width: 100%; max-width: 68px; aspect-ratio: 1; border-radius: 9px;
-  overflow: hidden; border: 1.5px solid #4E8F6E; background: #F3EFE4; }
-.gempack .pic svg, .gempack .pic img { width: 100%; height: 100%; display: block;
-  object-fit: cover; }
+  overflow: hidden; border: 1.5px solid #4E8F6E; background: #EEE1C8; }
+/* 붓그림(svg)은 정사각으로 그렸으니 꽉 채우고, 수묵 그림(jpg)은 세로로 길어서
+   잘라 내면 자루 입이나 궤 뚜껑이 날아간다. 통째로 앉히고 남는 자리는
+   종이색으로 둔다 — 칸 바탕이 그림의 종이와 같은 색이라 이어져 보인다. */
+.gempack .pic svg { width: 100%; height: 100%; display: block; }
+.gempack .pic img { width: 100%; height: 100%; display: block; object-fit: contain; }
 .gempack .n { font-family: var(--font-display); font-size: 19px; font-weight: 700;
   color: var(--jade); line-height: 1.1; }
 .gempack .nm { font-size: 11px; color: var(--fg-dim); }
@@ -1605,7 +1608,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-04-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-04-g";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
   function saveS() {
     try {
@@ -1762,7 +1765,15 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 하한이 없으면 검과 북이 쌓이는 대로 '한 낱말'로 수렴한다. 실제로
   // 강화 9에 장비 4를 갖추면 1단계부터 70단계까지 전부 한 개였다.
   // 오르는 맛이 사라지는 자리가 바로 거기다.
-  function floorNeed(need) { return Math.max(1, Math.ceil(need * 0.5)); }
+  // 아무리 갖춰도 이만큼은 채워야 한다.
+  //
+  // 전에는 절반이었다. 그래서 화면이 "네 개면 쓰러집니다"라고 적은 판이
+  // 실제로는 두 개에 눕고, 스무 단계쯤 가면 판마다 그랬다. 깨는 맛이
+  // 사라진 자리가 여기다 — 어렵게 만든 판을 강화가 통째로 건너뛰었다.
+  //
+  // 이제 한 개만 깎아 준다. 강화는 "덜 채워도 되는 것"이 아니라
+  // "더 짧은 낱말로도 되는 것"이어야 한다.
+  function floorNeed(need) { return Math.max(1, need - 1); }
 
   // ── 발자국 ────────────────────────────────────────────────────────
   //
@@ -1834,16 +1845,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function hpFor(ans, need, boost) {
     var byLen = ans.slice().sort(function (a, b) { return a.length - b.length; });
     var hp = 0;
-    // 기세는 '강화가 하나도 없을 때' 기준으로 잡는다.
+    // 기세는 '강화가 하나도 없을 때' 기준으로 잡되, 지금 공격력을 따라
+    // 함께 올린다. 다만 올린 만큼 다 따라오지는 않는다.
     //
-    // 강화까지 반영해 역산하면 검을 아무리 갈아도 기세가 같이 올라가 늘 같은
-    // 개수가 필요해진다 — 강화가 아무 효과도 없는 셈이다. 여기를 고정해 두면
-    // 검과 북을 올릴수록 필요한 낱말 수가 실제로 줄어든다.
+    // 고정해 두었더니 이렇게 됐다 — 스무 단계에서 공격이 두 배가 넘는데
+    // 기세는 그대로라, 화면이 네 개라는 판이 두 개에 눕는다. 강화가
+    // 판을 깨 주는 게 아니라 판을 없애 버렸다.
     //
-    // 그래서 화면의 "N개면 쓰러집니다"는 상한이다. 강화하면 더 적게 걸린다.
+    // 그렇다고 공격력만큼 그대로 올리면 검을 간 보람이 아예 없다.
+    // 그래서 0.78 제곱만큼만 따라오게 한다 — 공격이 두 배가 되면 기세는
+    // 1.7배가 되어, 남는 0.3배가 검을 간 값이다. 쌓이면 분명히 수월해지되
+    // 판이 거저 넘어가지는 않는다.
+    var pw = Math.pow(gearVal("atk") * Math.pow(ATK_STEP, up.atk), 0.78);
     for (var i = 0; i < need && i < byLen.length; i++) {
       hp += Math.round(16 * Math.pow(byLen[i].length, 1.8)
-        * (1 + Math.min(i, COMBO_CAP) * 0.08));
+        * (1 + Math.min(i, COMBO_CAP) * 0.08) * pw);
     }
 
     // 그리고 바닥을 깐다 — 다 갖춰도 산이 요구하는 것의 절반은 채워야 한다.
@@ -5055,7 +5071,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var opt = { redirectTo: location.origin + location.pathname };
       // 카카오는 supabase-js 의 scopes 옵션이 제 기본값 뒤에 덧붙기만 해서
       // 듣지 않는다. 날것의 scope 를 직접 넘겨야 원하는 조합이 그대로 간다.
-      if (provider === "kakao") opt.queryParams = { scope: "account_email profile_nickname" };
+      //
+      // 이메일은 요구하지 않는다. 개인 개발자 앱은 account_email 권한이
+      // 아예 없고(콘솔에 「권한 없음」으로 잠겨 있다), 요구하면 KOE205 로
+      // 로그인 자체가 막힌다. 비즈니스 앱으로 전환하면 열리지만 사업자
+      // 서류가 필요하고, 우리가 이메일로 하는 일은 「어느 계정으로
+      // 이었는지」를 보여 주는 것뿐이다. 그건 닉네임으로 충분하다.
+      // 기록을 잇는 열쇠는 처음부터 이메일이 아니라 계정 번호였다.
+      if (provider === "kakao") opt.queryParams = { scope: "profile_nickname" };
       return c.auth.signInWithOAuth({ provider: provider, options: opt });
     }).then(function (r) {
       if (!r || r.error) {
@@ -5161,7 +5184,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (inOut) {
       el.cloudWho.innerHTML = "<b>이어져 있습니다</b>"
         + (me.by === "kakao" ? "카카오" : "구글") + "로 이었습니다 · 저장할 때마다 저절로 올라갑니다"
-        + (me.mail ? "<span>" + me.mail + "</span>" : "");
+        + (me.who ? "<span>" + me.who + "</span>" : "");
     }
   }
 
@@ -5187,16 +5210,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     sb().then(function (c) { return c.auth.getUser(); }).then(function (r) {
       var u = r && r.data && r.data.user;
       if (!u) { drawCloud(); return; }
-      // 카카오는 이메일을 주고도 Supabase 가 계정 칸을 비워 두는 일이 있다.
-      // 비어 있으면 연결된 신원 쪽에 남은 것을 대신 쓴다.
+      // 화면에 보여 줄 이름. 이메일이 있으면 이메일, 없으면 닉네임이다.
+      // 카카오는 이메일을 아예 안 주고(개인 개발자 앱), 준다 해도 Supabase 가
+      // 계정 칸을 비워 두는 일이 있어서 연결된 신원 쪽도 함께 뒤진다.
+      var md = u.user_metadata || {};
       var mail = u.email || "";
       if (!mail && u.identities) {
         for (var i = 0; i < u.identities.length; i++) {
-          var e2 = u.identities[i].identity_data && u.identities[i].identity_data.email;
-          if (e2) { mail = e2; break; }
+          var dd = u.identities[i].identity_data || {};
+          if (dd.email) { mail = dd.email; break; }
         }
       }
-      me = { id: u.id, mail: mail, by: (u.app_metadata && u.app_metadata.provider) || "google" };
+      var who = mail || md.name || md.full_name || md.nickname
+                || md.preferred_username || md.user_name || "";
+      me = { id: u.id, who: who,
+             by: (u.app_metadata && u.app_metadata.provider) || "google" };
       tidyUrl(); drawCloud(); cloudSync();
     })["catch"](function () { drawCloud(); });
   }
