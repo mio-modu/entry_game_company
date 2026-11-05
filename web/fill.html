@@ -2190,7 +2190,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-p";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-q";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3838,19 +3838,39 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     });
   }
 
+  // 카톡에 붙는 글. 이 게임이 퍼지는 길은 여기 하나뿐이라 한 줄씩 따진다.
+  //
+  // 고친 것 셋.
+  //
+  // 하나, 날짜가 「11.5」였다. 점수인지 날짜인지 알 수가 없다. 「11월 5일」.
+  //
+  // 둘, 호가 안 들어가고 있었다. rankName()은 호가 아니라 회차라서
+  // 백두산을 넘기 전에는 빈 글자다 — 거의 모두가 등급만 적어 보냈다는
+  // 뜻이다. 꼬들과 다른 점이 바로 호인데 그게 빠져 있었다. danName()을
+  // 쓴다. 무급이면 적지 않는다 — 없는 것을 적으면 초라해 보인다.
+  //
+  // 셋, 둘째 줄에 성적을 올린다. 넘겨 보는 사람 눈에 처음 닿는 줄이
+  // 거기다. 블록은 그림이라 셋째 줄부터여도 눈에 들어온다.
+  //
+  // 답은 한 글자도 안 나간다. 길이별로 몇 개를 채웠는지만 나가므로,
+  // 받은 사람이 이 글로 오늘 낱말을 알아낼 길이 없다.
   function dailyShare() {
     var d = new Date();
     var n = run.ans.filter(function (w) { return run.got[w]; }).length;
     var ratio = run.ans.length ? n / run.ans.length : 0;
-    var ho = rankName();
-    return "낱말산 · 오늘의 낱말 " + (d.getMonth() + 1) + "." + d.getDate() + "\n"
-      + "\ud83c\udfc5 " + rank(ratio) + (ho ? "  \u00b7  " + ho : "") + "\n\n"
+    var st = dailyStreak(), cyc = rankName();
+    var ho = dan ? danName() + " " + dan + "단" : "";
+    return "낱말산 · " + (d.getMonth() + 1) + "월 " + d.getDate() + "일\n"
+      + rank(ratio) + " · " + n + "/" + run.ans.length + " 채움 · "
+      + run.score.toLocaleString() + "점\n\n"
       + dailyRows().map(function (r) {
           return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
         }).join("\n")
-      + "\n\n채운 낱말 " + n + "/" + run.ans.length + " · " + run.score.toLocaleString() + "점"
-      + (dailyStreak() > 1 ? "  \u00b7  " + dailyStreak() + "일 연속" : "") + "\n\n"
-      + "같이 풀어요 \u25b6 " + location.href.split("#")[0] + "#daily";
+      + (ho || cyc || st > 1
+          ? "\n\n\ud83c\udfc5 " + [ho, cyc, st > 1 ? st + "일 연속" : ""]
+              .filter(Boolean).join(" \u00b7 ")
+          : "")
+      + "\n\n오늘의 낱말, 같이 풀어요\n" + location.href.split("#")[0] + "#daily";
   }
 
   // ── 끝말잇기 도전 ──────────────────────────────────────────────────
@@ -6370,18 +6390,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
     var det = document.createElement("details"); det.className = "shbox";
     var sum = document.createElement("summary");
-    sum.textContent = "카톡에 붙여넣을 내용 보기";
+    sum.textContent = "보내지는 내용 보기";
     det.appendChild(sum);
     var sh = document.createElement("div"); sh.className = "share";
     sh.textContent = dailyShare();
     det.appendChild(sh);
     card.appendChild(det);
 
+    // 복사하고, 카톡을 열고, 방을 고르고, 붙여넣는다 — 네 걸음이다.
+    // 그 사이 어디서든 손이 멈추면 공유는 안 일어난다. 폰에는 공유 시트가
+    // 있어서 단추 하나로 「어디에 보낼까」까지 간다. 그걸 먼저 쓰고,
+    // 안 되는 기기에서만 복사로 내려간다.
+    var canShare = !!(navigator.share);
     var cp = document.createElement("button"); cp.className = "btn go";
-    cp.textContent = "결과 복사하기";
-    cp.addEventListener("click", function () {
-      var t = dailyShare();
-      logEv("C");
+    cp.textContent = canShare ? "카톡으로 보내기" : "결과 복사하기";
+    function fallbackCopy(t) {
       try {
         navigator.clipboard.writeText(t).then(
           function () { cp.textContent = "복사됨 · 카톡에 붙여넣으세요"; },
@@ -6391,6 +6414,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
             det.open = true; cp.textContent = "위 글을 직접 복사해 주세요";
           });
       } catch (e) { det.open = true; cp.textContent = "위 글을 직접 복사해 주세요"; }
+    }
+    cp.addEventListener("click", function () {
+      var t = dailyShare();
+      logEv("C");
+      if (!canShare) return fallbackCopy(t);
+      // 글 안에 이미 링크가 있다. url 을 따로 주면 기기에 따라 링크만
+      // 보내고 글을 버리는 수가 있어서, 글 한 덩이로만 넘긴다.
+      navigator.share({ text: t })["catch"](function (e) {
+        // 사람이 공유 시트를 닫은 것은 실패가 아니다. 그때는 가만히 둔다.
+        if (e && e.name === "AbortError") return;
+        fallbackCopy(t);
+      });
     });
     card.appendChild(cp);
 
