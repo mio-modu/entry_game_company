@@ -1659,8 +1659,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="subh">기록 지키기</p>
     <div id="cloudBox">
       <div class="lines" id="cloudOut">
-        <p>기록은 <b>이 기기 안에만</b> 있습니다. 폰을 바꾸거나 앱을 지우면
-           <b>단계도 사신 옥도 따라오지 않습니다.</b></p>
+        <p><b>아직 이으신 데가 없어</b> 기록이 이 기기 안에만 있습니다.
+           이대로 폰을 바꾸거나 앱을 지우면 <b>단계도 사신 옥도
+           따라오지 않습니다.</b></p>
         <p>한 번 <b>로그인</b>해 두시면 그 뒤로는 <b>자동으로 저장됩니다.</b>
            로그인은 <b>해도 되고 안 해도 됩니다</b> — 안 하셔도 게임은 그대로 다 됩니다.</p>
       </div>
@@ -2189,7 +2190,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-o";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-p";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2315,6 +2316,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   var dan = 0;                      // 승단 시험으로 받은 단
   var noAds = 0, firstBuy = 0;      // 광고 없애기 · 첫 구매를 썼는가
+
+  // 광고 사업자의 코드가 아직 안 들어 있다. 「광고 보기」는 광고를 띄우지
+  // 않고 보상만 준다. 그런데 장터에서는 「광고 없애기」를 팔고 있었다 —
+  // 없는 것을 없애 준다고 돈을 받는 꼴이다.
+  //
+  // 게다가 그 상품은 「광고로 받던 옥을 하루 세 알씩」 영영 대신 준다.
+  // 한 해면 1,095알이고, 옥 한 자루(55알)가 5,500원이니 11만 원어치다.
+  // 한 번 치르고 해마다 그만큼을 받으면 옥에 붙은 값이 사라진다.
+  //
+  // 광고를 붙이는 날 함께 연다. 그날 값과 기간을 같이 정해야 한다 —
+  // 한 번 내고 영영 받는 꼴로는 어떤 값을 매겨도 맞지 않는다.
+  var ADS_LIVE = 0;
   var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
   // ── 시험판 기록 ─────────────────────────────────────────────────────
@@ -5676,6 +5689,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.gemShop.appendChild(packs);
     SKUS.forEach(function (x) {
       if (!x.once || noAds) return;        // 이미 산 것은 안 보인다
+      if (x.id === "no_ads" && !ADS_LIVE) return;
       var row = document.createElement("div"); row.className = "shoprow";
       row.style.marginTop = "11px";
       var L = document.createElement("div");
