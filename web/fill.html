@@ -581,6 +581,10 @@ body.quake { animation: shake .42s ease-out; }
 .gate .gnote {
   margin-top: 18px; max-width: 310px; font-size: 12.5px; line-height: 1.75; color: #9B866A;
 }
+/* 이번 주 달력에서 아직 오지 않은 날 — 비어 있는 것과 아직인 것은 다르다 */
+.cal i.ahead { opacity: .34; }
+.att .r .cc { width: 13px; height: 13px; vertical-align: -2px; margin-right: 3px; }
+
 .rulenote {
   margin-top: 7px; font-size: 11.5px; line-height: 1.6; color: var(--fg-dim);
   display: flex; flex-direction: column; gap: 4px;
@@ -1496,9 +1500,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="subh">승급 시험</p>
     <div class="lines">
       <p>하루 <b>두 판</b>까지입니다. 한 판에 <b>옥 열</b>이고,
-         <b>둘째 판도 같은 값</b>입니다.</p>
-      <p>처음 세 단은 두 판 다 공짜이고, <b>거암(4단)부터</b> 옥이 듭니다.
-         돈을 부어도 <b>하루 셋째 판은 없습니다.</b></p>
+         <b>첫 단부터 둘째 판까지 모두 같은 값</b>입니다.</p>
+      <p>돈을 부어도 <b>하루 셋째 판은 없습니다.</b>
+         옥이 없으셔도 <b>끝말잇기 표</b>로 한 판을 보실 수 있습니다 —
+         그 길은 맨손입니다.</p>
       <p class="pivot"><b>붙으면 다음 한 판은 공짜</b>입니다 —
          한 판을 치르고 잘하면 <b>하루에 두 단</b>이 오릅니다.</p>
       <p>떨어져도 <b>단은 그대로</b>입니다. 다만 치른 옥은 돌아오지 않습니다.</p>
@@ -1904,7 +1909,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-e";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-f";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2362,11 +2367,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
   // 약해지고, 전부 냥이면 올 이유가 약해진다. 작은 옥을 드물게 섞는다.
-  // 사흘째에 또 옥 하나면 "힌트 한 번 더"가 전부라 야박하다.
-  // 올수록 커지고, 이렛날에 일곱 알로 끝난다.
+  //
+  // 이레에 네 번(2·4·6·7일) 열여섯 알은 많았다. 옥은 귀해야 힌트를 쓸 때
+  // 한 번 망설이고, 망설여야 값이 선다. 사흘·닷새·이레 세 번으로 줄이고
+  // 2·3·5 열 알로 깎는다. 사이사이는 냥과 반딧불이 메운다.
   var ATT = [
-    { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "반", n: 2 },
-    { r: "옥", n: 3 }, { r: "냥", n: 0 }, { r: "옥", n: 4 }, { r: "옥", n: 7 }
+    { r: "냥", n: 0 }, { r: "반", n: 2 }, { r: "옥", n: 2 },
+    { r: "냥", n: 0 }, { r: "옥", n: 3 }, { r: "반", n: 3 }, { r: "옥", n: 5 }
   ];
   function attGold() { return Math.round((300 + stage * 14) * (1 + cycle() * 0.6)); }
   function dayKey(k) { return "nathero-" + k + "-" + todayKey(); }
@@ -2474,6 +2481,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     toast("냥 " + c.toLocaleString() + "을 옥 한 알로 바꿨습니다");
   }
 
+  function COIN(id) { return '<svg class="cc"><use href="#' + id + '"/></svg>'; }
+
   function drawToday() {
     if (!el.attRow) return;
 
@@ -2491,9 +2500,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.streaks.appendChild(box);
     });
 
-    // 이번 달 달력 — 오늘의 낱말을 한 날에 불이 들어온다
-    var now = new Date(), y = now.getFullYear(), m = now.getMonth();
-    var first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate();
+    // 이번 주 — 오늘의 낱말을 한 날에 불이 들어온다.
+    //
+    // 달로 보이던 때는 서른 칸 가운데 두어 칸만 켜져 있어 늘 비어 보였다.
+    // 매일 오게 하려는 자리인데 못 온 날이 스물여덟 칸이면 기가 꺾인다.
+    // 이레만 보이면 "이번 주 닷새"가 한눈에 들어오고 채울 만해 보인다.
+    var now = new Date();
+    var sun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
     if (el.calHead && !el.calHead.children.length) {
       ["일", "월", "화", "수", "목", "금", "토"].forEach(function (w, wi) {
         var sp = document.createElement("span");
@@ -2504,20 +2517,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       });
     }
     el.cal.textContent = "";
-    for (var b0 = 0; b0 < first.getDay(); b0++) {
-      var sp = document.createElement("i"); sp.className = "none"; el.cal.appendChild(sp);
-    }
     var done = 0;
-    for (var dd = 1; dd <= days; dd++) {
-      var cell = document.createElement("i");
-      var day = new Date(y, m, dd), on = dailyDoneOn(day);
+    for (var i = 0; i < 7; i++) {
+      var day = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i);
+      var isToday = day.toDateString() === now.toDateString();
+      var ahead = day > now && !isToday;
+      var on = !ahead && dailyDoneOn(day);
       if (on) done++;
-      cell.className = (on ? "on " : "") + (dd === now.getDate() ? "today" : "");
-      cell.textContent = dd;
-      cell.title = (m + 1) + "월 " + dd + "일" + (on ? " · 했습니다" : "");
+      var cell = document.createElement("i");
+      cell.className = (on ? "on " : "") + (isToday ? "today " : "") + (ahead ? "ahead" : "");
+      cell.textContent = day.getDate();
+      cell.title = (day.getMonth() + 1) + "월 " + day.getDate() + "일"
+                 + (ahead ? "" : on ? " · 했습니다" : " · 안 했습니다");
       el.cal.appendChild(cell);
     }
-    el.calNote.textContent = (m + 1) + "월에 " + done + "일 하셨습니다"
+    el.calNote.textContent = "이번 주에 " + done + "일 하셨습니다"
       + (dSt > 1 ? " · 지금 " + dSt + "일 연속" : "");
 
     // 끊겼으면 첫 칸으로 돌아가야 한다. 저장된 값이 아니라 '지금 연속'을 본다.
@@ -2530,7 +2544,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         + (!taken && i === idx ? " now" : "") + (i === 6 ? " big" : "");
       var d = document.createElement("div"); d.className = "d"; d.textContent = (i + 1) + "일";
       var r = document.createElement("div"); r.className = "r";
-      r.textContent = g.r === "냥" ? "냥" : g.r === "옥" ? "옥 " + g.n : "반딧불";
+      // 「냥」이라고만 적으면 몇 냥인지 몰라 올 까닭이 서지 않는다.
+      // 머리에 쓰는 것과 같은 그림을 쓰고 숫자를 붙인다.
+      if (g.r === "냥") r.innerHTML = COIN("i-nyang") + attGold().toLocaleString();
+      else if (g.r === "옥") r.innerHTML = COIN("i-ok") + g.n;
+      else r.textContent = "반딧불 " + g.n;
       box.appendChild(d); box.appendChild(r);
       el.attRow.appendChild(box);
     });
@@ -2955,17 +2973,26 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 그리고 옥이 갈 곳이 생긴다. 힌트만으로는 옥이 쌓이기만 했다.
   // 이제 가장 간절한 자리가 가장 큰 옥을 먹는다.
   //
-  // 다만 맨 아래 세 단은 공짜다. 시험이 무엇인지 알기도 전에 값을 물리면
-  // 들어온 날 한 번 떨어지고 그냥 나간다. 초석·반석·금석은 글자판
-  // 생김새가 똑같고(2자 셋·3자 하나) 빨라지기만 하는 구간이라 거기가
-  // 배우는 자리다. 생김새가 바뀌는 거암부터 값이 붙는다.
+  // 맨 아래 세 단을 공짜로 열어 두었다가 닫는다.
+  //
+  // "시험이 무엇인지 알기도 전에 값을 물리면 들어온 날 한 번 떨어지고
+  // 그냥 나간다"가 까닭이었다. 그런데 공짜로 두 판을 치르고 나면 넷째
+  // 단에서 갑자기 옥 열이 붙는다. 처음부터 값이 있는 것보다, 있다가
+  // 없던 것이 생기는 쪽이 훨씬 비싸게 느껴진다.
+  //
+  // 호는 이 게임에서 돈으로 살 수 없는 단 하나다. 그 문 앞에 값을 다는
+  // 일은 첫 단부터 한결같아야 한다. 첫 시험을 보려고 옥 열을 모으는
+  // 며칠이 곧 "이게 귀한 것이구나"를 가르친다 — 공짜로 받은 두 판은
+  // 아무것도 안 가르친다.
+  //
+  // 배우는 자리는 따로 있다. 산 오르기는 끝까지 공짜이고, 끝말잇기 표는
+  // 맨손으로 딸 수 있다. 옥 한 알 없이도 첫 시험에 닿는 길이 있다.
   //
   // 하루 두 번에서 멈추는 것은 그대로다. 돈을 부어도 셋째 판은 없다.
   // 몇 번이고 돌려 운 좋은 글자판을 뽑는 길은 끝까지 없어야 한다 —
   // 그 하나로 호가 지탱된다.
-  var EXAM_EASY_DAN = 3;        // 이 단까지는 두 번 다 공짜
   var EXAM_DAY_MAX = 2;         // 하루 최대 — 돈으로도 못 넘는다
-  function examFree() { return dan < EXAM_EASY_DAN ? EXAM_DAY_MAX : 0; }
+  function examFree() { return 0; }   // 공짜 몫은 없다. 첫 단부터 옥 열.
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
     try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
@@ -3003,7 +3030,6 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
   // 이 판의 값이 왜 그런가. 까닭을 알아야 화면에 제대로 적을 수 있다.
   function examCostWhy() {
-    if (examUsed() < examFree()) return "free";      // 초반 세 단의 공짜 몫
     if (examFreeNext() === 1) return "streak";       // 방금 붙어서 얹어 준 판
     if (kTicket() === 1) return "ticket";            // 끝말잇기로 얻은 표
     return "gem";
@@ -5281,7 +5307,6 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.examSub.textContent = d
       ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
         + "  ·  " + (!lf ? "내일 다시"
-                    : dan < EXAM_EASY_DAN ? "오늘 " + lf + "번 남음 (공짜)"
                     : examCostWhy() === "streak" ? "연승 — 이 판은 공짜"
                     : examCostWhy() === "ticket" ? "끝말잇기 표로 공짜"
                     : "오늘 " + (examUsed() + 1) + "판째 · 옥 " + cost
@@ -6671,9 +6696,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 처음 깐 사람은 4.4초 전체를, 그 뒤로는 1.9초짜리를 본다.
   // 매번 보이되 매번 기다리게 하지는 않는다 — 둘은 같은 말이 아니다.
   var first = !tut.opened;
-  if (first) { tut.opened = 1; saveTut(); }
-  showOpening(first ? "media/opening.mp4" : "media/opening-short.mp4",
-              function () { showGate(afterGate); });
+  // 잠깐 나갔다 돌아온 것이라면 다시 틀지 않는다. 몇 초 사이에 두 번 보면
+  // 여는 영상이 아니라 같은 장면이 되풀이되는 것으로만 보인다.
+  if (Date.now() - (tut.openAt || 0) < 90000) {
+    showGate(afterGate);
+  } else {
+    if (first) tut.opened = 1;
+    tut.openAt = Date.now(); saveTut();
+    showOpening(first ? "media/opening.mp4" : "media/opening-short.mp4",
+                function () { showGate(afterGate); });
+  }
 
   // ── 글씨 크기 ─────────────────────────────────────────
   // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
