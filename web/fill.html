@@ -148,7 +148,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .qrow .qp .rw { color: var(--gold); font-weight: 600; }
 .qrow .qb { flex: none; font-family: var(--font-mono); font-size: 11.5px;
   border-radius: 20px; padding: 5px 12px; border: 1px solid var(--edge);
-  color: var(--fg-dim); background: var(--surface-2); }
+  color: #C2C7DB; background: var(--surface-2); }
+.qrow .qb[disabled] { color: var(--fg-faint); background: transparent; }
 .qrow .qb.on { border-color: var(--jade); color: var(--jade); }
 .shoprow { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
@@ -158,7 +159,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   color: var(--jade); border: 1px solid var(--jade); border-radius: 20px; padding: 1px 6px; }
 .shoprow .sd { font-size: 11.5px; color: var(--fg-dim); margin-top: 2px; }
 .shoprow button { flex: none; background: var(--surface-2); color: var(--gold);
-  border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px;
+  border: 1px solid var(--edge); border-radius: 10px; padding: 9px 13px;
   font: inherit; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
 .shoprow button:disabled { color: var(--fg-faint); border-color: #2A2F42; }
 /* 장터 칸의 작은 그림. 결과 칸(.gearshot)과 같은 종이·테두리를 써서
@@ -652,12 +653,42 @@ button:not(.tile):not(.skip):active:not(:disabled), .tbtn:active {
   box-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 6px 14px -7px var(--gold);
   transition-duration: .05s;
 }
+
+/* 마우스로 쓰는 분. 손가락에는 「닿았다」가 없어서 :active 만 걸었더니
+   웹에서는 커서를 올려도 아무 일이 없었다. 폰이 먼저이되, 웹도 본다.
+
+   hover 를 그냥 걸면 터치 기기에서 「붙은 hover」가 생긴다 — 한 번
+   누른 단추가 손을 떼도 올라온 채로 남는다. 그래서 진짜 마우스가
+   있는 창에서만 켠다. */
+@media (hover: hover) and (pointer: fine) {
+  button:not(.tile):not(.skip):not([disabled]):hover, .tbtn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(201, 162, 39, .62);
+    background: var(--surface-2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 5px 13px -8px #000;
+  }
+  /* 큰 붉은 단추는 밝아지기만 한다 — 회색으로 덮으면 주인공이 사라진다 */
+  .btn.go:not([disabled]):hover { background: #E24E42; border-color: transparent; }
+  /* 지금 보고 있는 칸은 이미 금빛이다. 건드리지 않는다 */
+  .modes .mode.on:hover { background: #352A14; }
+  .tile:not(:disabled):hover { border-color: rgba(201, 162, 39, .45); }
+  /* 올라왔다가, 누르면 제자리로 내려앉는다 — 마우스에는 그게 「눌림」이다 */
+  button:not(.tile):not(.skip):not([disabled]):active, .tbtn:active {
+    transform: translateY(0) scale(.985);
+  }
+}
+/* 글쇠로 다니는 분에게도 같은 표시를 준다 */
+button:not(.tile):focus-visible, .tbtn:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
 button[disabled], button[disabled]:active {
   transform: none; box-shadow: none; opacity: .72;
 }
 .btn[disabled] { border-color: #2A2F42; color: var(--fg-faint); }
 /* 「상점」·「설정」처럼 곁들이는 단추. 작고 조용하되 꺼진 것은 아니다. */
-.btn.ghost { background: var(--surface); color: var(--fg-dim); font-size: 12.5px; }
+/* 「상점」·「설정」처럼 곁들이는 단추. --fg-dim 은 이 화면에서 「못 누름」과
+   너무 가까웠다. 주인공은 아니되 살아 있는 밝기로 한 단 올린다. */
+.btn.ghost { background: var(--surface); color: #C2C7DB; font-size: 12.5px; }
 .btn.ghost:active:not(:disabled) { color: var(--fg); background: var(--surface-2); }
 
 /* 수호신을 쓰러뜨린 뒤의 덤 시간. 하던 판을 마저 채우면 냥을 더 받지만,
@@ -1972,7 +2003,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-h";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
