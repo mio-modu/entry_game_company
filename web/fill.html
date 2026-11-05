@@ -396,6 +396,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 }
 .brand .dan .rk {
   width: 18px; height: 18px; flex: none; background-color: currentColor;
+  position: relative;
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
   -webkit-mask-size: contain;     mask-size: contain;
   -webkit-mask-position: center;  mask-position: center;
@@ -424,24 +425,97 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   -webkit-mask-size: contain;     mask-size: contain;
   -webkit-mask-position: center;  mask-position: center;
   filter: drop-shadow(0 0 16px currentColor);
-  animation: grantdrop .52s cubic-bezier(.2,1.25,.4,1) both;
+  animation: stampfall 1.25s linear both;
 }
 .grant .nm {
   font-family: var(--font-display); font-weight: 700; font-size: 34px;
   color: currentColor; letter-spacing: .06em; text-shadow: 0 0 20px currentColor;
-  animation: grantrise .45s .22s both;
+  animation: grantrise .5s 1.0s both;
 }
 .grant small {
   font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim); letter-spacing: .08em;
-  animation: grantrise .45s .36s both;
+  animation: grantrise .5s 1.18s both;
 }
-.grant.top .nm { font-size: 48px; letter-spacing: .18em; }
+/* 꼭대기 도장 — 금빛 위로 빛줄기가 좌상에서 우하로 지나간다.
+   그림은 알파 한 장이고 금빛도 빛도 여기서 입힌다. 그래야 빛이
+   네모 칸이 아니라 용의 몸 안에서만 흐른다. */
+.grant .dragon {
+  position: relative; display: block; width: 132px; height: 165px;
+  animation: stampfall 1.25s linear both;
+}
+.grant .dragon i {
+  position: absolute; inset: 0;
+  -webkit-mask: url(icon/rank/dragon.png) center/contain no-repeat;
+          mask: url(icon/rank/dragon.png) center/contain no-repeat;
+}
+.grant .dragon .dg { background: currentColor; filter: drop-shadow(0 0 16px currentColor); }
+.grant .dragon .dgs {
+  /* 꼭대기만 무지개가 지나간다. 서른 단을 올라온 사람에게만 보이는 빛이다. */
+  background: linear-gradient(135deg,
+    transparent 32%, rgba(255,110,110,.92) 40%, rgba(255,214,110,.92) 45%,
+    rgba(150,255,180,.92) 50%, rgba(120,205,255,.92) 55%, rgba(205,140,255,.92) 60%,
+    transparent 68%);
+  background-size: 280% 280%;
+  animation: dgshine 2.6s linear infinite;
+}
+@keyframes dgshine {
+  0%   { background-position: -60% -60%; }
+  38%  { background-position: 160% 160%; }
+  100% { background-position: 160% 160%; }
+}
+.grant.top .nm { font-size: 44px; letter-spacing: .18em; }
+/* 도장이 찍히는 순간 — 멀리서 크게 떨어져 내려와 쿵 하고 눌린다.
+   0.6초에 툭 떨어지면 「받았다」가 아니라 「떴다」로 보인다.
+   1.15초에 걸쳐 느리게 내려오고, 닿는 자리에서 한 번 눌렸다 펴진다. */
+@keyframes stampfall {
+  0%   { transform: scale(3.8) rotate(-18deg); opacity: 0;   filter: blur(8px); }
+  12%  { opacity: .4; }
+  40%  { transform: scale(2.5) rotate(-11deg); opacity: .8;  filter: blur(4px); }
+  60%  { transform: scale(1.7) rotate(-6deg);  opacity: .95; filter: blur(1.6px); }
+  72%  { transform: scale(1.0) rotate(0deg);   opacity: 1;   filter: blur(0); }
+  78%  { transform: scale(.88) rotate(-1.8deg); }   /* 쿵 — 눌린다 */
+  86%  { transform: scale(1.07) rotate(.9deg); }
+  93%  { transform: scale(.98) rotate(-.3deg); }
+  100% { transform: none; }
+}
+/* 닿는 자리에서 퍼지는 테 */
+.grant .grantbox { position: relative; display: grid; place-items: center; }
+.grant .grantbox::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 84%; height: 84%; margin: -42% 0 0 -42%;
+  border: 5px solid currentColor; border-radius: 26%;
+  animation: stampring .85s .9s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes stampring {
+  0%   { transform: scale(.52); opacity: .85; border-width: 6px; }
+  100% { transform: scale(2.6);  opacity: 0;   border-width: 1px; }
+}
+/* 쿵 할 때 카드가 한 번 내려앉는다 */
+.card.grantshake { animation: grantshake .42s .88s both; }
+@keyframes grantshake {
+  0%, 100% { transform: none; }
+  20% { transform: translateY(6px); }
+  46% { transform: translateY(-3px); }
+  72% { transform: translateY(2px); }
+}
+
 @keyframes grantdrop {
   0%   { transform: scale(2.4) rotate(-14deg); opacity: 0; }
   55%  { opacity: 1; }
   100% { transform: none; opacity: 1; }
 }
 @keyframes grantrise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 열다섯 단부터 도장에 빛이 흐른다. 올라온 것이 눈에 보여야 오를 맛이 난다.
+   도장에 마스크가 걸려 있어 빛은 저절로 문양 안에서만 지나간다. */
+.rk.shine::after {
+  content: ""; position: absolute; inset: -25%;
+  background: linear-gradient(135deg, transparent 38%, rgba(255,255,255,.85) 50%, transparent 62%);
+  background-size: 260% 260%;
+  animation: dgshine 2.6s linear infinite;
+}
+.grant .rk { position: relative; }
+.grant .rk.shine::after { inset: -22%; }
 
 /* 수련은 뒤로 — 작고 조용하게 */
 .lv {
@@ -3318,15 +3392,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 이름이 땅에서 시작해 물·바람·불·벼락·하늘을 지나 신수에 닿고,
   // 꼭대기에 용 하나가 선다. 무리마다 도장과 색이 다르다.
   // 색은 뜻을 따라 골랐다 — 물은 쪽빛, 불은 주홍, 벼락은 보라.
+  // 꼭대기 도장. 빛이 좌상에서 우하로 2.6초마다 한 번 지나간다.
+  // 머리의 18px 자리에는 넣지 않는다 — 그 크기에서는 금빛 덩어리가 된다.
+  var DRAGON = '<span class="dragon"><i class="dg"></i><i class="dgs"></i></span>';
+
+  // 열다섯 단부터 도장에 빛이 흐르고, 서른 단만 무지개다.
   function danGroup(d) {
+    var sh = d >= 15;
     if (!d)      return { g: "none",  c: "#8A92A5", k: "" };
     if (d <= 4)  return { g: "earth", c: "#B99A6B", k: "땅" };
     if (d <= 8)  return { g: "water", c: "#4A9E8F", k: "물" };
     if (d <= 12) return { g: "wind",  c: "#C3CBD6", k: "바람" };
-    if (d <= 16) return { g: "fire",  c: "#E6705C", k: "불" };
-    if (d <= 19) return { g: "bolt",  c: "#C77BE0", k: "벼락" };
-    if (d <= 23) return { g: "sky",   c: "#9BB4F0", k: "하늘" };
-    if (d <= 29) return { g: "beast", c: "#FFD76A", k: "신수" };
+    if (d <= 16) return { g: "fire",  c: "#E6705C", k: "불",    sh: sh };
+    if (d <= 19) return { g: "bolt",  c: "#C77BE0", k: "벼락",  sh: sh };
+    if (d <= 23) return { g: "sky",   c: "#9BB4F0", k: "하늘",  sh: sh };
+    if (d <= 29) return { g: "beast", c: "#FFD76A", k: "신수",  sh: sh };
     return { g: "beast", c: "#FFF3C4", k: "용", top: 1 };
   }
   // 하루에 한 번. 다만 첫 세 단만 두 번.
@@ -3554,10 +3634,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       var seal = document.createElement("div");
       seal.className = "grant" + (G.top ? " top" : "");
       seal.style.color = G.c;
-      if (!G.top) {
-        var si = document.createElement("i"); si.className = "rk g-" + G.g;
-        seal.appendChild(si);
+      var box = document.createElement("div"); box.className = "grantbox";
+      if (G.top) {
+        var dw = document.createElement("div");
+        dw.innerHTML = DRAGON;
+        box.appendChild(dw.firstChild);
+      } else {
+        var si = document.createElement("i"); si.className = "rk g-" + G.g + (G.sh ? " shine" : "");
+        box.appendChild(si);
       }
+      seal.appendChild(box);
+      card.classList.add("grantshake");
       var sn = document.createElement("b"); sn.className = "nm"; sn.textContent = danName();
       seal.appendChild(sn);
       var sg = document.createElement("small");
@@ -5328,7 +5415,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         b.style.color = G.c;
         b.title = (G.k ? G.k + " · " : "") + dan + "단 " + danName();
         if (!G.top) {
-          var i = document.createElement("i"); i.className = "rk g-" + G.g;
+          var i = document.createElement("i"); i.className = "rk g-" + G.g + (G.sh ? " shine" : "");
           var n = document.createElement("b"); n.className = "n"; n.textContent = dan;
           var u = document.createElement("span"); u.className = "u"; u.textContent = "단";
           b.appendChild(i); b.appendChild(n); b.appendChild(u);
