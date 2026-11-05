@@ -63,7 +63,10 @@ html, body { height: 100%; }
    값마다 전부 고쳐 적으면 어디 한 곳이 빠져 어긋나므로, 한 군데서 배율로 민다.
    글자판은 칸이 1fr 이라 늘어난 만큼 알아서 나눠 가진다. */
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
-  font-size: 15px; line-height: 1.6; margin: 0; zoom: var(--z, 1.12); }
+  font-size: 15px; line-height: 1.6; margin: 0; zoom: var(--z, 1.12);
+  /* 한글은 낱말 사이가 아니라 글자 사이에서 끊긴다 — 「있습/니다」가 된다.
+     keep-all 이 낱말을 통째로 넘긴다. 긴 영문·주소만 break-word 로 푼다. */
+  word-break: keep-all; overflow-wrap: break-word; }
 /* --z 는 「고른 글씨 크기 × 화면 맞춤」이 곱해진 값이다. 둘을 따로 두면
    한쪽을 고칠 때마다 다른 쪽이 지워졌다. 곱은 자리에서만 한다. */
 /* 배율을 못 읽는 자리를 위한 대비 — 글씨만이라도 커진다 */
@@ -127,6 +130,24 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .cal i.today { border-color: var(--gold); color: var(--gold); font-weight: 700; }
 .cal i.on.today { color: #06201B; }
 .cal i.none { background: transparent; }
+/* 달 도장. 이레 칸 아래에 한 달치를 막대 한 줄로 얹는다. */
+.mon { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--line); }
+.mon .mline { display: flex; align-items: baseline; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap; }
+.mon .mline b { font-family: var(--font-display); font-size: 16px; color: var(--gold); }
+.mon .mline span { font-size: 11.5px; color: var(--fg-dim);
+  display: inline-flex; align-items: center; gap: 3px; }
+.mon .mline span .cc { width: 13px; height: 13px; }
+.mon .mbar { margin-top: 7px; height: 7px; border-radius: 99px;
+  background: #232738; overflow: hidden; }
+.mon .mbar i { display: block; height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #8A7250, var(--gold));
+  transition: width .5s ease; }
+/* 단추는 한 줄을 통째로 쓴다. 안 그러면 둘이 나란히 붙어 버린다. */
+.mon .btn { display: block; width: 100%; }
+.mon .btn small { display: flex; align-items: center; gap: 3px;
+  justify-content: center; }
+.mon .btn small .cc { width: 12px; height: 12px; }
 .attrow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
 .att {
   border: 1px solid var(--line); border-radius: 9px; padding: 7px 2px 6px;
@@ -598,6 +619,9 @@ body.quake { animation: shake .42s ease-out; }
 }
 .att .r .cc, .qrow .qp .cc { width: 13px; height: 13px; margin: 0; }
 
+/* 띠 안에서 한 단 낮은 줄. 따로 칸을 내지 않고 작게 붙인다. */
+.lead.foot .sub { display: block; margin-top: 4px;
+  font-size: 11px; color: var(--fg-faint); font-weight: 400; }
 .rulenote {
   margin-top: 7px; font-size: 11.5px; line-height: 1.6; color: var(--fg-dim);
   display: flex; flex-direction: column; gap: 4px;
@@ -1397,6 +1421,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <div class="calhead" id="calHead"></div>
     <div class="cal" id="cal"></div>
     <p class="muted" id="calNote" style="margin:7px 0 0"></p>
+    <div id="mon" class="mon"></div>
     <p class="subh">바꾸기</p>
     <div id="exchange"></div>
   </div>
@@ -1824,7 +1849,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnToShop","btnToMine","btnMineTrain","btnMineRule",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub",
-   "pToday","attRow","questList","exchange","streaks","cal","calHead","calNote",
+   "pToday","attRow","questList","exchange","streaks","cal","calHead","calNote","mon",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
@@ -2003,7 +2028,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2512,9 +2537,100 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     a.streak = st + 1;
     a.best = Math.max(a.best || 0, a.streak);
     a.last = todayKey(); attSave(a);
+    camSet(new Date());                        // 이번 달 도장 한 칸
     saveS(); drawStatsOnly(); drawToday(); drawTray();
     if (window.SFX) SFX.up();
     toast((broke ? "다시 첫날입니다 · " : a.streak + "일 연속 · ") + say);
+  }
+
+  // ── 달 도장 ───────────────────────────────────────────────────────
+  //
+  // 이레 고리는 끝없이 돌기만 했다. 여드레째가 첫날과 같아서, 서른 날을
+  // 온 사람과 이레를 온 사람이 받는 것이 똑같았다. streak 과 best 를
+  // 저장만 해 두고 아무 데도 쓰지 않은 것이 그 증거다.
+  //
+  // 그래서 한 달짜리 계단을 하나 얹는다. 다만 「연속 서른 날」이 아니라
+  // 「이번 달에 스무닷새」다.
+  //
+  // 연속으로 걸면 스무여드레째에 하루 빠진 사람이 그 달을 통째로
+  // 포기한다. 0으로 돌아가니까. 가장 열심이던 사람이 제일 크게 실망하고
+  // 나가는 장치가 된다. 누적이면 두세 번 빠져도 닿고, 스무날째에
+  // "닷새만 더"가 보이면 오히려 더 온다. 끊어진 연속은 포기하게 만들고
+  // 모이는 누적은 쫓아오게 만든다.
+  //
+  // 상은 옥만으로 두지 않는다. 옥 스물은 승급 시험 딱 하루치라, 그만큼
+  // 옥 수요를 깎는다. 진짜 상은 보물함이다 — 장비 등급은 돈으로 못 사는
+  // 것이라 과금과 겨루지 않고, 산을 오른 사람에게만 값이 있다.
+  var MON_GOAL = 25, MON_GEM = 20, MON_PATCH_GEM = 3;
+  function monthTag() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+  function camKey(d) { return "nathero-attday-" + keyOf(d); }
+  function camSet(d) { try { localStorage.setItem(camKey(d), "1"); } catch (e) {} }
+  // 「왔다」로 치는 것 두 가지.
+  //
+  // 출석 도장은 오늘부터 찍히기 시작한다. 지금 깔려 있는 분들에게는
+  // 지난 날이 없으니, 이번 달은 「오늘의 낱말」 기록으로 메꿔 센다 —
+  // 그건 날마다 남아 있어 소급이 되고, 그 낱말을 푼 날은 실제로 온 날이다.
+  function cameOn(d) {
+    try {
+      return !!(localStorage.getItem(camKey(d))
+             || localStorage.getItem("nathero-daily-" + keyOf(d)));
+    } catch (e) { return false; }
+  }
+  function monthDays() {
+    var now = new Date(), n = 0;
+    for (var i = 1; i <= now.getDate(); i++) {
+      if (cameOn(new Date(now.getFullYear(), now.getMonth(), i))) n++;
+    }
+    return n;
+  }
+  function monStampKey() { return "nathero-mstamp-" + monthTag(); }
+  function monPatchKey() { return "nathero-mpatch-" + monthTag(); }
+  function monTaken() { return kGet(monStampKey(), 0) === 1; }
+  function monPatched() { return kGet(monPatchKey(), 0); }
+  // 이번 달에서 가장 가까운 빠진 날. 오늘은 아직 끝나지 않았으니 뺀다.
+  function monMiss() {
+    var now = new Date();
+    for (var i = now.getDate() - 1; i >= 1; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth(), i);
+      if (!cameOn(d)) return d;
+    }
+    return null;
+  }
+  // 첫 하루는 그냥 봐 드린다. 한 번도 안 봐주면 메우기가 벌로 읽히고,
+  // 끝없이 봐주면 스무닷새라는 말이 뜻을 잃는다.
+  function monPatchCost() { return monPatched() === 0 ? 0 : MON_PATCH_GEM; }
+  function takePatch() {
+    var d = monMiss(); if (!d) return;
+    var c = monPatchCost();
+    if (c && gem < c) return goShop();
+    if (c) { gem -= c; spent(0, c); }
+    camSet(d);
+    kSet(monPatchKey(), monPatched() + 1);
+    // 어제를 메웠고 연속이 끊겨 있었으면 그 연속도 이어 준다.
+    // 메운다는 말은 날과 연속을 둘 다 메운다는 뜻이라야 말이 된다.
+    var a = attState();
+    if (keyOf(d) === yesterdayKey() && a.streak > 0
+        && a.last && a.last < yesterdayKey()) {
+      a.last = yesterdayKey(); attSave(a);
+    }
+    saveS(); drawStatsOnly(); drawToday(); drawTray();
+    if (window.SFX) SFX.up();
+    toast((d.getMonth() + 1) + "월 " + d.getDate() + "일을 메웠습니다"
+      + (c ? " · 옥 " + c : " · 이번 달 한 번은 그냥"));
+  }
+  function takeMonth() {
+    if (monTaken() || monthDays() < MON_GOAL) return;
+    kSet(monStampKey(), 1);
+    gem += MON_GEM;
+    saveS(); drawStatsOnly(); drawToday(); drawTray();
+    toast("이번 달 " + MON_GOAL + "일 · 옥 +" + MON_GEM + " · 보물함이 열립니다");
+    // 등급 상한을 한 칸 올려 연다. 날마다 온 사람만 보는 함이다.
+    openChest(topMountain(), function () { drawToday(); },
+              Math.max(1, Math.min(6, tierCap(topMountain()) + cycle() + 1)),
+              GEAR_BOSS);
   }
 
   // 할 일 셋. 날마다 바뀌지 않는다 — 바뀌면 외울 수가 없고,
@@ -2628,6 +2744,50 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     }
     el.calNote.textContent = "이번 주에 " + done + "일 하셨습니다"
       + (dSt > 1 ? " · 지금 " + dSt + "일 연속" : "");
+
+    // 달 도장. 주 달력은 이레만 보이므로(서른 칸에 두 칸만 켜지면 기가
+    // 꺾인다) 한 달은 숫자와 막대 한 줄로 보여 준다.
+    if (el.mon) {
+      var md = monthDays(), mGot = monTaken(), miss = monMiss();
+      el.mon.textContent = "";
+      var bar = document.createElement("div"); bar.className = "mbar";
+      var fill = document.createElement("i");
+      fill.style.width = Math.min(100, md / MON_GOAL * 100) + "%";
+      bar.appendChild(fill);
+      var line = document.createElement("div"); line.className = "mline";
+      line.innerHTML = '<b>' + md + ' / ' + MON_GOAL + '일</b>'
+        + '<span>' + (mGot ? "이번 달 몫을 받으셨습니다"
+            : md >= MON_GOAL ? "다 채우셨습니다"
+            : MON_GOAL - md + "일 더 오시면 " + COIN("i-ok") + MON_GEM
+              + " + 보물함") + '</span>';
+      el.mon.appendChild(line); el.mon.appendChild(bar);
+
+      // 못 채웠을 때는 단추를 내지 않는다. 「아직 21일 남았습니다」라고
+      // 적힌 못 누르는 단추는 자리만 먹고 아무 일도 하지 않는다 —
+      // 남은 날수는 바로 윗줄이 이미 말하고 있다.
+      if (md >= MON_GOAL) {
+        var mb = document.createElement("button");
+        mb.className = "btn" + (mGot ? " ghost" : " go");
+        mb.style.marginTop = "9px";
+        mb.textContent = mGot ? "이번 달 받았습니다" : "이번 달 몫 받기";
+        mb.disabled = mGot;
+        mb.addEventListener("click", takeMonth);
+        el.mon.appendChild(mb);
+      }
+
+      // 빠진 날이 있을 때만 메우기를 보여 준다. 없는데 보이면
+      // "내가 뭘 빠뜨렸나" 하고 찾게 된다.
+      if (miss && !mGot && md < MON_GOAL) {
+        var pc = monPatchCost();
+        var pb = document.createElement("button");
+        pb.className = "btn ghost"; pb.style.marginTop = "6px";
+        pb.innerHTML = (miss.getMonth() + 1) + "월 " + miss.getDate() + "일 메우기"
+          + "<small>" + (pc ? COIN("i-ok") + pc + (gem < pc ? " · 지금 " + gem : "")
+                            : "이번 달 한 번은 그냥") + "</small>";
+        pb.addEventListener("click", takePatch);
+        el.mon.appendChild(pb);
+      }
+    }
 
     // 끊겼으면 첫 칸으로 돌아가야 한다. 저장된 값이 아니라 '지금 연속'을 본다.
     var idx = aSt % 7, taken = attTaken();
@@ -5721,7 +5881,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       }
     }
 
-    if (!won) {
+    // 답을 보여 주는 자리와 「한 번 더」를 파는 자리가 붙어 있었다.
+    //
+    // 못 채운 낱말을 먼저 다 적어 놓고, 바로 아래에서 "광고 보고 이 판
+    // 다시"를 내밀고 있었다. 답을 본 사람에게 같은 판을 다시 주면 그건
+    // 도전이 아니라 받아쓰기다. 광고를 볼 까닭이 사라지고, 봐도 깨는
+    // 맛이 없어 다음부터는 안 본다. 광고 자리를 우리 손으로 망가뜨린 셈이다.
+    //
+    // 그래서 다시 칠 길이 남아 있으면 답을 감춘다. 다시 칠 길이 없을 때만
+    // 알려 준다 — 그때는 감춰 봐야 답답함만 남고 배우는 것이 없다.
+    var canRetry = !won && lastBoard && adsLeft();
+    if (!won && !canRetry) {
       var miss = document.createElement("p"); miss.className = "lead";
       miss.textContent = "못 채운 낱말"; card.appendChild(miss);
       var ws = document.createElement("div"); ws.className = "words";
@@ -5729,17 +5899,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         var s = document.createElement("span"); s.textContent = w; ws.appendChild(s);
       });
       card.appendChild(ws);
-
-      // 진 자리에서 빈손으로 돌려보내지 않는다. 다음이 어떻게 달라지는지
-      // 눈에 보여야 "한 번 더"가 나온다.
+    }
+    // 진 자리에 설명 띠가 셋이나 쌓여 있었다 — 덮어 둔다는 말, 발자국,
+    // 도움. 셋 다 맞는 말인데 셋을 세 칸에 나눠 적으니 단추가 화면 밖으로
+    // 밀려났다. 진 사람이 보고 싶은 것은 글이 아니라 다음 단추다.
+    // 한 줄에 모으고, 점으로 나눈다.
+    if (!won) {
+      var say = [];
       var st = stepsAt(stage);
-      if (st) {
-        var fp = document.createElement("p"); fp.className = "lead foot";
-        fp.innerHTML = ORD[Math.min(st, STEP_MAX)] + " 걸음 \u00b7 미끄러진 자리에 길이 납니다<br>"
-          + "<b>이 단계 제한시간 +" + stepBonus(stage) + "초</b>"
-          + (st >= STEP_MAX ? " (여기까지)" : "");
-        card.appendChild(fp);
-      }
+      if (st) say.push("<b>제한시간 +" + stepBonus(stage) + "초</b>"
+        + (st >= STEP_MAX ? " (여기까지)" : ""));
+      say.push("다음 판에 <b>도움</b>을 쓰실 수 있습니다");
+      var fp = document.createElement("p"); fp.className = "lead foot";
+      fp.innerHTML = say.join(" \u00b7 ")
+        + (canRetry ? '<span class="sub">못 채운 낱말은 한 번 더 치신 뒤에 보여 드립니다</span>' : "");
+      card.appendChild(fp);
     }
     if (firstWin) {
       var fw = document.createElement("p"); fw.className = "lead foot";
@@ -5751,9 +5925,6 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 다음 판은 「시작」을 누를 때까지 기다려 준다.
     // 졌을 때만, 다음 한 판을 수월하게 해 주는 길을 연다.
     if (!won) {
-      var hint = document.createElement("p"); hint.className = "lead foot";
-      hint.innerHTML = "다음 한 판만 <b>도움</b>을 받으실 수 있습니다";
-      card.appendChild(hint);
       var brow = document.createElement("div"); brow.className = "trow";
       var rc = retryCost();
       var bg = document.createElement("button"); bg.className = "btn ghost";
@@ -5794,7 +5965,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 새 글자판을 주면 그건 "다시"가 아니라 그냥 다음 판이다. 같은 판을
     // 그대로 돌려준다. 목숨을 빼앗았다가 광고로 파는 것이 아니라,
     // 안 해도 그만인 자리에 한 번 더를 얹어 주는 것이다.
-    if (!won && lastBoard && adsLeft()) {
+    if (canRetry) {
       var ad = document.createElement("button"); ad.className = "btn go";
       ad.innerHTML = "광고 보고 이 판 다시<small>같은 글자판 · 기세도 처음부터</small>";
       ad.addEventListener("click", function () {
