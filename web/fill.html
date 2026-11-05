@@ -382,10 +382,72 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   padding: 1px 8px; margin-left: 5px; vertical-align: middle; white-space: nowrap;
   text-shadow: 0 0 10px rgba(255,215,106,.5);
 }
+/* 승단 호(號) — 도장과 단수와 칭호가 한 덩어리로 선다.
+   「수련 13단」 옆에서 밀리던 까닭은 그림이 없어서가 아니라 숫자가
+   없어서였다. 숫자는 쌓인 것을 보여 주는데 「반석」은 두 글자뿐이었다.
+   그림 · 단수 · 칭호 셋을 같이 세우고, 수련은 뒤로 물린다. */
+.brand .dan {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-display); font-weight: 700;
+  border: 1px solid currentColor; border-radius: 20px;
+  padding: 2px 10px 2px 7px; margin-left: 6px;
+  vertical-align: middle; white-space: nowrap;
+  background: rgba(255,255,255,.035);
+}
+.brand .dan .rk {
+  width: 18px; height: 18px; flex: none; background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: contain;     mask-size: contain;
+  -webkit-mask-position: center;  mask-position: center;
+}
+.brand .dan .n { font-family: var(--font-mono); font-size: 14px; line-height: 1; }
+.brand .dan .u { font-size: 10px; opacity: .75; margin-left: -1px; }
+.brand .dan .t { font-size: 13.5px; margin-left: 3px; letter-spacing: .02em; }
+/* 꼭대기 — 숫자도 꾸밈도 없이 「용」 한 글자 */
+.brand .dan.top { padding: 2px 14px; letter-spacing: .12em; }
+.brand .dan.top .t { font-size: 16px; margin: 0; text-shadow: 0 0 12px currentColor; }
+.rk.g-earth { -webkit-mask-image: url(icon/rank/earth.png); mask-image: url(icon/rank/earth.png); }
+.rk.g-water { -webkit-mask-image: url(icon/rank/water.png); mask-image: url(icon/rank/water.png); }
+.rk.g-wind  { -webkit-mask-image: url(icon/rank/wind.png);  mask-image: url(icon/rank/wind.png); }
+.rk.g-fire  { -webkit-mask-image: url(icon/rank/fire.png);  mask-image: url(icon/rank/fire.png); }
+.rk.g-bolt  { -webkit-mask-image: url(icon/rank/bolt.png);  mask-image: url(icon/rank/bolt.png); }
+.rk.g-sky   { -webkit-mask-image: url(icon/rank/sky.png);   mask-image: url(icon/rank/sky.png); }
+.rk.g-beast { -webkit-mask-image: url(icon/rank/beast.png); mask-image: url(icon/rank/beast.png); }
+.rk.g-none  { -webkit-mask-image: url(icon/rank/none.png);  mask-image: url(icon/rank/none.png); }
+
+/* 칭호를 받는 순간 — 도장이 내려와 쿵 찍히고, 칭호가 서고, 단이 뒤따른다.
+   오른 것을 숫자 하나로만 알려 주면 오른 느낌이 나지 않는다. */
+.grant { display: flex; flex-direction: column; align-items: center; gap: 9px; margin: 8px 0 4px; }
+.grant .rk {
+  width: 88px; height: 88px; background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: contain;     mask-size: contain;
+  -webkit-mask-position: center;  mask-position: center;
+  filter: drop-shadow(0 0 16px currentColor);
+  animation: grantdrop .52s cubic-bezier(.2,1.25,.4,1) both;
+}
+.grant .nm {
+  font-family: var(--font-display); font-weight: 700; font-size: 34px;
+  color: currentColor; letter-spacing: .06em; text-shadow: 0 0 20px currentColor;
+  animation: grantrise .45s .22s both;
+}
+.grant small {
+  font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim); letter-spacing: .08em;
+  animation: grantrise .45s .36s both;
+}
+.grant.top .nm { font-size: 48px; letter-spacing: .18em; }
+@keyframes grantdrop {
+  0%   { transform: scale(2.4) rotate(-14deg); opacity: 0; }
+  55%  { opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes grantrise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 수련은 뒤로 — 작고 조용하게 */
 .lv {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em;
-  color: var(--gold); border: 1px solid #4A3E18; background: #2E2412;
-  border-radius: 20px; padding: 1px 8px; margin-left: 7px; vertical-align: middle;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em;
+  color: #9A8339; border: 1px solid #3A3016; background: #241C0E;
+  border-radius: 20px; padding: 1px 7px; margin-left: 6px; vertical-align: middle;
 }
 .brand small { font-family: var(--font-body); font-size: 11px; color: var(--fg-faint);
   letter-spacing: .1em; margin-left: 7px; }
@@ -1287,7 +1349,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
 <div class="wrap">
   <div class="hud">
-    <div class="brand">낱말산 <span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
+    <div class="brand">낱말산 <span class="dan" id="danBadge" hidden></span><span class="lv" id="lv">수련 0단</span><span class="ho" id="ho" hidden></span></div>
     <div class="purse">
       <span class="co"><svg class="cc"><use href="#i-nyang"/></svg><b id="gold">0</b></span>
       <span class="co"><svg class="cc"><use href="#i-ok"/></svg><b id="gem">0</b></span>
@@ -1427,7 +1489,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <p class="pivot">그래서 광고는 <b>다른 것</b>을 줍니다.</p>
       <p><b>두 편</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>
       <p class="pivot"><b>세 편</b>마다 <b>옥 한 알</b>.
-         옥은 <b>승급 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고,
+         옥은 <b>승단 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고,
          <b>냥으로는 살 수 없습니다.</b></p>
       <p><b>일곱 편</b>이면 보물함 하나. 여기엔 장비도 들어 있습니다.</p>
       <p>다만 등급은 <b>지금 오른 산까지</b>입니다 — 더 좋은 것은
@@ -1454,7 +1516,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <!-- 수련은 실력을 올리는 곳, 시험은 재는 곳. 짝이 맞는 자리에 둔다. -->
     <div class="exambar" id="examBar">
       <div>
-        <b id="examHead">승급 시험</b>
+        <b id="examHead">승단 시험</b>
         <small id="examSub"></small>
       </div>
       <button id="btnExamX" hidden>옥 3 · 한 번 더</button>
@@ -1615,17 +1677,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <p class="pivot">이을 낱말이 <b>사전에 아예 없는 글자</b>를 받으실 때가 있습니다.
          그때는 화면이 먼저 알려 드리고, 넘기셔도 <b>아무 손해가 없습니다.</b></p>
       <p>옥 하나로 <b>힌트</b> — 뜻풀이 한 줄입니다.</p>
-      <p>판에 지면 그 판은 거기서 끝입니다. <b>옥 하나</b>를 들이면
-         <b>그 판을 다시</b> 칩니다 — 하루 세 번까지.</p>
-      <p>세 판을 다 물리치면 <b>승급 시험 표 한 장</b>.
+      <p>판에 지면 그 판은 거기서 끝입니다. <b>옥 둘</b>을 들이면
+         <b>그 판을 다시</b> 칩니다 — <b>판마다 다섯 번</b>까지.</p>
+      <p>세 판을 다 물리치면 <b>승단 시험 표 한 장</b>.
          오늘 시험 한 판을 <b>옥 없이</b> 보십니다. 하루 한 장입니다.</p>
     </div>
 
-    <p class="subh">승급 시험</p>
+    <p class="subh">승단 시험</p>
     <div class="lines">
-      <p>하루 <b>두 판</b>까지입니다. 한 판에 <b>옥 열</b>이고,
-         <b>첫 단부터 둘째 판까지 모두 같은 값</b>입니다.</p>
-      <p>돈을 부어도 <b>하루 셋째 판은 없습니다.</b>
+      <p>하루 <b>세 판</b>까지입니다. <b>세 판 모두 같은 값</b>이고,
+         값은 <b>다섯 단마다</b> 한 칸씩 오릅니다 —
+         1~5단 <b>옥 5</b> · 6~10단 <b>7</b> · 11~15단 <b>10</b> ·
+         16~20단 <b>15</b> · 21~25단 <b>22</b> · 26~30단 <b>30</b>.</p>
+      <p>돈을 부어도 <b>하루 넷째 판은 없습니다.</b>
          옥이 없으셔도 <b>끝말잇기 표</b>로 한 판을 보실 수 있습니다 —
          그 길은 맨손입니다.</p>
       <p class="pivot"><b>붙으면 다음 한 판은 공짜</b>입니다 —
@@ -1862,7 +1926,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
-   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","guide","btnIntro","btnOpening",
+   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","danBadge","guide","btnIntro","btnOpening",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "codeAct2","btnCodeFile","btnCodeShare",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
@@ -2051,7 +2115,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-n";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-o";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2175,7 +2239,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     } catch (e) {}
   }
 
-  var dan = 0;                      // 승급 시험으로 받은 단
+  var dan = 0;                      // 승단 시험으로 받은 단
   var noAds = 0, firstBuy = 0;      // 광고 없애기 · 첫 구매를 썼는가
   var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
@@ -2251,6 +2315,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (c < 0xAC00 || c > 0xD7A3) return n + "은";
     return n + (((c - 0xAC00) % 28) ? "은" : "는");
   }
+  // 숫자 뒤의 이/가. 「옥 2이 듭니다」가 아니라 「옥 2가 듭니다」다.
+  // 끝자리를 소리내어 읽은 받침으로 가른다 — 영·일·삼·육·칠·팔·십은
+  // 받침이 있고, 이·사·오·구는 없다.
+  function josaGa(n) { return "2459".indexOf(String(n).slice(-1)) >= 0 ? "가" : "이"; }
+
   function josaEul(n) {
     var c = n.charCodeAt(n.length - 1);
     if (c < 0xAC00 || c > 0xD7A3) return "을";
@@ -2505,7 +2574,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 두 재화가 하는 일이 다르다.
   //
   //   냥 — 수련·겹침·장터. 많이 벌고 많이 쓴다. 실력과 시간이 번다.
-  //   옥 — 승급 시험·끝말잇기 재도전·힌트. 귀하고 적다.
+  //   옥 — 승단 시험·끝말잇기 재도전·힌트. 귀하고 적다.
   //        수호신·광고·결제가 준다.
   //
   // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
@@ -2517,7 +2586,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 네 번(2·4·6·7일) 2·3·4·7로 되돌린다. 자주 들어와야 "모레면 또 옥이네"가
   // 생긴다. 액수는 열여섯이라 열보다 여섯 많지만, 하루로 치면 한 알이 채
-  // 안 된다 — 승급 시험 한 판이 열이니 그 정도로는 귀함이 무너지지 않는다.
+  // 안 된다 — 승단 시험 한 판이 열이니 그 정도로는 귀함이 무너지지 않는다.
   // 옥을 조이는 일은 한 판에 하나씩 주던 자리에서 이미 했다.
   var ATT = [
     { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "반", n: 2 },
@@ -2586,7 +2655,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // "닷새만 더"가 보이면 오히려 더 온다. 끊어진 연속은 포기하게 만들고
   // 모이는 누적은 쫓아오게 만든다.
   //
-  // 상은 옥만으로 두지 않는다. 옥 스물은 승급 시험 딱 하루치라, 그만큼
+  // 상은 옥만으로 두지 않는다. 옥 스물은 승단 시험 딱 하루치라, 그만큼
   // 옥 수요를 깎는다. 진짜 상은 보물함이다 — 장비 등급은 돈으로 못 사는
   // 것이라 과금과 겨루지 않고, 산을 오른 사람에게만 값이 있다.
   var MON_GOAL = 25, MON_GEM = 20, MON_PATCH_GEM = 3;
@@ -2708,7 +2777,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 첫 알은 그대로 두고 둘째·셋째를 곱절로 한다. 셋을 다 바꾸려면
   // 15,400냥, 서른 판 가까이다. 급하면 첫 알만 바꾸고 말게 된다.
-  var EX_GOLD = 2200, EX_DAY = 3;
+  // 하루 세 번에서 두 번으로. 시험이 하루 세 판으로 늘어 옥 수요가
+  // 커졌는데 들어오는 쪽을 그대로 두면 모자란 느낌이 끝내 안 생긴다.
+  // 냥으로 옥을 메우는 길이 가장 넓은 길이라 여기부터 좁힌다.
+  var EX_GOLD = 2200, EX_DAY = 2;
   function exCost() { return EX_GOLD * Math.pow(2, dGet("ex", 0)); }
   function exLeft() { return Math.max(0, EX_DAY - dGet("ex", 0)); }
   function takeExchange() {
@@ -3140,7 +3212,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     });
   }
 
-  // ── 승급 시험 ──────────────────────────────────────────────────────
+  // ── 승단 시험 ──────────────────────────────────────────────────────
   //
   // 산 오르기는 노력과 운과 (나중에는) 돈이 섞인 자리다. 그래서 거기서
   // 얻은 단계는 "내가 얼마나 아는가"를 말해 주지 못한다.
@@ -3151,7 +3223,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 네 단째부터 판마다 옥이 드는 것은 이 말과 어긋나지 않는다. 옥으로
   // 사는 것은 「치를 기회」지 합격이 아니다. 옥을 아무리 부어도 모르는
-  // 낱말은 끝내 안 떠오르고, 하루 두 판에서 막히므로 돌려 뽑지도 못한다.
+  // 낱말은 끝내 안 떠오르고, 값이 올라가므로 돌려 뽑지도 못한다.
   //
   // 떨어져도 잃는 것은 없다 — 다만 그 판에 치른 옥은 돌아오지 않는다.
   // 칸 구성은 눈대중으로 못 정한다.
@@ -3242,6 +3314,21 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return out.join(" · ");
   }
   function danName() { return DAN[Math.min(dan, DAN.length - 1)].n; }
+
+  // 이름이 땅에서 시작해 물·바람·불·벼락·하늘을 지나 신수에 닿고,
+  // 꼭대기에 용 하나가 선다. 무리마다 도장과 색이 다르다.
+  // 색은 뜻을 따라 골랐다 — 물은 쪽빛, 불은 주홍, 벼락은 보라.
+  function danGroup(d) {
+    if (!d)      return { g: "none",  c: "#8A92A5", k: "" };
+    if (d <= 4)  return { g: "earth", c: "#B99A6B", k: "땅" };
+    if (d <= 8)  return { g: "water", c: "#4A9E8F", k: "물" };
+    if (d <= 12) return { g: "wind",  c: "#C3CBD6", k: "바람" };
+    if (d <= 16) return { g: "fire",  c: "#E6705C", k: "불" };
+    if (d <= 19) return { g: "bolt",  c: "#C77BE0", k: "벼락" };
+    if (d <= 23) return { g: "sky",   c: "#9BB4F0", k: "하늘" };
+    if (d <= 29) return { g: "beast", c: "#FFD76A", k: "신수" };
+    return { g: "beast", c: "#FFF3C4", k: "용", top: 1 };
+  }
   // 하루에 한 번. 다만 첫 세 단만 두 번.
   //
   // 전에는 단에 따라 두 번에서 일곱 번까지 늘려 두었다. 기회가 많으면
@@ -3290,11 +3377,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 배우는 자리는 따로 있다. 산 오르기는 끝까지 공짜이고, 끝말잇기 표는
   // 맨손으로 딸 수 있다. 옥 한 알 없이도 첫 시험에 닿는 길이 있다.
   //
-  // 하루 두 번에서 멈추는 것은 그대로다. 돈을 부어도 셋째 판은 없다.
-  // 몇 번이고 돌려 운 좋은 글자판을 뽑는 길은 끝까지 없어야 한다 —
-  // 그 하나로 호가 지탱된다.
-  var EXAM_DAY_MAX = 2;         // 하루 최대 — 돈으로도 못 넘는다
-  function examFree() { return 0; }   // 공짜 몫은 없다. 첫 단부터 옥 열.
+  // 하루 세 판에서 멈춘다. 돈을 부어도 넷째 판은 없다.
+  //
+  // 두 판이던 때는 벽이 「횟수」 하나로 호를 지켰다. 이제 값이 함께
+  // 지킨다 — 26단 위에서는 한 판이 옥 서른이라 세 판이면 아흔이다.
+  // 그만큼을 부어 가며 운 좋은 글자판을 뽑는 사람은 없다. 벽을 한 칸
+  // 열어 주되 값이 그 자리를 받는 것이다.
+  //
+  // 세 판 모두 같은 값이다. 둘째·셋째를 더 받으면 값이 두 겹으로
+  // 올라 외울 수가 없어진다.
+  var EXAM_DAY_MAX = 3;         // 하루 최대 — 돈으로도 못 넘는다
+  function examFree() { return 0; }   // 공짜 몫은 없다. 첫 단부터 값이 붙는다.
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
     try { return parseInt(localStorage.getItem(examKey()) || "0", 10) || 0; }
@@ -3305,19 +3398,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
   function examLeft() { return Math.max(0, EXAM_DAY_MAX - examUsed()); }
 
-  // 한 판 옥 열. 그것이 전부다.
+  // 값은 다섯 단마다 한 칸씩 오른다.
   //
-  // 전에는 「6 + 단×0.6」에 둘째 판은 반 곱절이었다. 12단이면 13과 20,
-  // 30단이면 24와 36. 단이 오를 때마다 값이 바뀌니 "시험 한 판이
-  // 얼마인가"에 답할 수가 없었다. 값을 못 외우면 옥을 모을 목표도 못
-  // 세우고, 목표가 없으면 사지도 않는다.
+  // 한동안 전 구간 옥 열로 고정했다. "값을 외울 수 있어야 모을 목표가
+  // 선다"가 까닭이었고, 외우기 쉬워야 하는 것은 지금도 맞다. 다만 초석을
+  // 노리는 판과 용을 노리는 판이 같은 값인 것은 틀렸다 — 위로 갈수록
+  // 그 한 판이 간절해지는데 값이 그대로면 위에서 오히려 헐해진다.
   //
-  // 둘째 판도 같은 값이다. 둘째를 비싸게 받아야 할 까닭이 있다면 그건
-  // "몇 번이고 돌리지 못하게"인데, 그건 값이 아니라 벽이 지킨다 —
-  // 하루 두 판은 돈으로도 못 넘는다. 벽이 하는 일을 값에 또 시키면
-  // 값만 복잡해지고 막는 힘은 그대로다.
-  var EXAM_GEM = 10;
-  function examCostAt() { return EXAM_GEM; }
+  // 한 알씩 야금야금 올리지 않고 다섯 단을 한 묶음으로 묶는다. 그래야
+  // "지금 내 구간은 얼마"가 한마디로 남는다. 묶음이 바뀌는 자리에서만
+  // 값이 뛰므로, 오르는 것이 벌이 아니라 자리가 바뀐 표시로 읽힌다.
+  //
+  //    1~5단  옥 5     6~10단  옥 7     11~15단  옥 10
+  //   16~20단 옥 15    21~25단 옥 22    26~30단  옥 30
+  var EXAM_GEM_BY = [5, 7, 10, 15, 22, 30];
+  function examCostAt() {
+    var want = Math.max(1, Math.min(30, dan + 1));   // 지금 노리는 단
+    return EXAM_GEM_BY[Math.min(EXAM_GEM_BY.length - 1, Math.floor((want - 1) / 5))];
+  }
   // 붙으면 다음 판은 공짜다.
   //
   // 전에는 붙으나 떨어지나 판값이 같았다. 그러면 옥을 치르는 손이
@@ -3325,7 +3423,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 셈이 뒤집힌다 — 한 판을 샀는데 잘하면 두 단이 오른다.
   //
   // 공짜로 주는 것이 헤픈 것도 아니다. 그 한 판을 받으려면 맨몸으로
-  // 한 단을 통과해야 하고, 하루 두 판이라는 벽은 그대로라 셋째 판은 없다.
+  // 한 단을 통과해야 하고, 하루 세 판이라는 벽은 그대로라 넷째 판은 없다.
   // 잘한 사람에게만, 그날 한 번만 열린다.
   function exNextKey() { return "nathero-exnext-" + todayKey(); }
   function examFreeNext() { return kGet(exNextKey(), 0); }
@@ -3383,7 +3481,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var why = examCostWhy(), cost = examNowCost();
     if (cost) {
       if (gem < cost) {
-        toast("옥 " + cost + "이 있어야 봅니다 · 수호신·완전 격파·광고로 나옵니다");
+        toast("옥 " + cost + josaGa(cost) + " 있어야 봅니다 · 수호신·완전 격파·광고로 나옵니다");
         return;
       }
       gem -= cost; saveS(); drawStatsOnly(); spent(0, cost);
@@ -3400,7 +3498,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var spec = { t: d.t, lo: 2, hi: 4, w: p.ans.length, k: p.ans.length };
     var cells = 0;
     p.ans.forEach(function (w) { cells += w.length; });
-    run = { b: { n: "승급 시험", art: "bonghwang", m: (dan + 1) + "단", no: 0,
+    run = { b: { n: "승단 시험", art: "bonghwang", m: (dan + 1) + "단", no: 0,
                  need: p.ans.length, spec: spec, mod: null, mod2: null, d: "" },
             exam: true, daily: true,          // 셈은 오늘의 낱말과 같다 — 빈칸이 곧 기세
             hp: cells, max: cells, left: d.sec, combo: 0, phase: "fight",
@@ -3414,7 +3512,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     el.pimg.src = "art/" + (DAN_ART[dan + 1] || "bonghwang") + ".jpg";
     el.bossName.textContent = (dan + 1) + "단 — " + d.n;
     el.bossHint.textContent = danMixText(d) + " · 맨몸으로 봅니다";
-    el.stageNo.textContent = "승급 시험";
+    el.stageNo.textContent = "승단 시험";
     el.stageUnit.textContent = "";
     el.mtName.textContent = p.ans.length + "칸 · " + d.sec + "초";
     el.hpMax.textContent = cells;
@@ -3450,12 +3548,30 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     h.className = pass ? "win" : "lose";
     h.textContent = pass ? "통과하셨습니다" : "다음에 다시";
     card.appendChild(h);
-    var big = document.createElement("div"); big.className = "big";
-    big.textContent = pass ? dan + "단" : got.length + " / " + r.ans.length;
-    card.appendChild(big);
-    var lead = document.createElement("p"); lead.className = "lead";
-    lead.textContent = pass ? danName() : "빈칸 " + r.ans.length + "칸을 다 채우셔야 합니다";
-    card.appendChild(lead);
+    if (pass) {
+      // 숫자만 띄우던 자리에 도장을 찍는다. 받은 것이 눈에 보여야 오른 보람이 선다.
+      var G = danGroup(dan);
+      var seal = document.createElement("div");
+      seal.className = "grant" + (G.top ? " top" : "");
+      seal.style.color = G.c;
+      if (!G.top) {
+        var si = document.createElement("i"); si.className = "rk g-" + G.g;
+        seal.appendChild(si);
+      }
+      var sn = document.createElement("b"); sn.className = "nm"; sn.textContent = danName();
+      seal.appendChild(sn);
+      var sg = document.createElement("small");
+      sg.textContent = G.top ? "꼭대기에 닿으셨습니다" : G.k + " · " + dan + "단";
+      seal.appendChild(sg);
+      card.appendChild(seal);
+    } else {
+      var big = document.createElement("div"); big.className = "big";
+      big.textContent = got.length + " / " + r.ans.length;
+      card.appendChild(big);
+      var lead = document.createElement("p"); lead.className = "lead";
+      lead.textContent = "빈칸 " + r.ans.length + "칸을 다 채우셔야 합니다";
+      card.appendChild(lead);
+    }
 
     if (!pass) {
       var left2 = r.ans.filter(function (w) { return !r.got[w]; });
@@ -3494,7 +3610,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var again = document.createElement("button");
     again.className = poor2 ? "btn go" : "btn ghost";
     again.innerHTML = !nextDan() || !lf ? ""
-      : poor2 ? "옥 사러 가기<small>옥 " + c2 + "이 듭니다</small>"
+      : poor2 ? "옥 사러 가기<small>옥 " + c2 + josaGa(c2) + " 듭니다</small>"
       : c2 ? "옥 " + c2 + " · 한 번 더<small>오늘 " + (examUsed() + 1) + "판째</small>"
       : bonus ? (dan + 1) + "단 바로 도전<small>공짜</small>"
       : (pass ? "바로 다음 단" : "다시 보기");
@@ -3684,13 +3800,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // ── 끝말잇기의 값 ─────────────────────────────────────────────
   //
   // 끝말잇기만으로는 할 까닭이 없었다. 이겨도 냥 몇 백이고, 그 냥은
-  // 산에서도 나온다. 그래서 이 모드를 승급에 묶는다.
+  // 산에서도 나온다. 그래서 이 모드를 승단에 묶는다.
   //
-  // 수호신 셋을 맨손으로 물리치면 「표」 한 장. 그 표로 오늘 승급 시험
+  // 수호신 셋을 맨손으로 물리치면 「표」 한 장. 그 표로 오늘 승단 시험
   // 한 판을 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진
   // 것을 실력으로 되찾는 길이 생긴다.
   //
-  // 하루 두 판이라는 벽은 그대로다. 표는 "한 판 더"가 아니라 "그 한 판의
+  // 하루 세 판이라는 벽은 그대로다. 표는 "한 판 더"가 아니라 "그 한 판의
   // 값을 치러 주는 것"이다. 돈으로도 못 넘던 벽을 실력으로도 못 넘는다.
   // 하루 세 판. 갈수록 어려워진다 — 어려워진다는 것은 생각할 틈이 준다는 뜻이다.
   //
@@ -3706,18 +3822,33 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 판에 지면 그 판은 거기서 끝이다. 옥 하나를 들이면 그 판을 다시 친다 —
   // 큰돈이 아니라 "한 번만 더"가 되는 값이라야 손이 나간다.
   //
-  // 세 판을 다 물리치면 「표」 한 장. 그 표로 오늘 승급 시험 한 판을
+  // 세 판을 다 물리치면 「표」 한 장. 그 표로 오늘 승단 시험 한 판을
   // 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진 것을
-  // 실력으로 되찾는 길이다. 하루 두 판이라는 벽은 그대로다 —
+  // 실력으로 되찾는 길이다. 하루 세 판이라는 벽은 그대로다 —
   // 표는 "한 판 더"가 아니라 "그 한 판의 값을 치러 주는 것"이다.
   var CHAIN_SEC = [13, 11, 7];  // 판마다 한 턴에 주어지는 시간
+  // 셋째 판이 이 놀이의 몸통이다. 7초는 직접 쳐 보니 맨손으로 꽤 어렵고,
+  // 바로 그래서 "한 번만 더"가 나온다.
+  //
+  // 앞의 두 판은 거기 닿기 위한 길이라 빨리 지나가야 한다 — 기세를
+  // 깎아 서너 낱말에 눕게 한다. 셋째 판은 거꾸로 한 뼘 올린다.
+  // 몸통이 몸통답게 버텨야 "한 번만 더"가 그 자리에서 나온다.
+  //
+  // 시간은 어느 판도 건드리지 않는다. 시간을 늘리면 수월해지는 게
+  // 아니라 늘어지고, 줄이면 어려워지는 게 아니라 억울해진다.
+  var CHAIN_HP_MUL = [0.72, 0.86, 1.15];
   var CHAIN_LIVES = 3;          // 한 판 안에서의 목숨
-  var CHAIN_RETRY_GEM = 1;      // 진 판을 다시 치는 값
-  var CHAIN_RETRY_DAY = 3;      // 하루에 다시 칠 수 있는 횟수
+  // 다시 치는 값을 둘로 올린다. 7초 판은 한 번에 되는 일이 드물어
+  // 손이 자주 나가는 자리고, 그만큼 한 알로는 너무 헐했다.
+  var CHAIN_RETRY_GEM = 2;      // 진 판을 다시 치는 값
+  // 횟수는 판마다 따로 센다. 앞의 두 판에서 다 써 버리면 정작 몸통인
+  // 셋째 판에서 손을 못 쓰게 되기 때문이다. 판마다 다섯 번씩.
+  var CHAIN_RETRY_BY = [5, 5, 5];
   var CHAIN_WIN_FOR_TICKET = 3; // 표 한 장에 드는 수호신 수
   function kWinsKey()   { return "nathero-kw-" + todayKey(); }
   function kDeadKey()   { return "nathero-kd-" + todayKey(); }
-  function kRetryKey()  { return "nathero-kr-" + todayKey(); }
+  function kRetryKey()  { return "nathero-kr" + kRound() + "-" + todayKey(); }
+  function kRetryMax()  { return CHAIN_RETRY_BY[Math.min(CHAIN_RETRY_BY.length - 1, kRound() - 1)]; }
   function kTicketKey() { return "nathero-kt-" + todayKey(); }
   function kGet(k, d) {
     try { var v = localStorage.getItem(k); return v == null ? d : (parseInt(v, 10) || 0); }
@@ -3731,7 +3862,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function kRound()  { return Math.min(CHAIN_SEC.length, kWins() + 1); }   // 오늘 몇 판째인가
   function kSec()    { return CHAIN_SEC[Math.min(CHAIN_SEC.length - 1, kWins())]; }
   function kDone()   { return kWins() >= CHAIN_WIN_FOR_TICKET; }
-  function kCanRetry() { return kDead() && kRetry() < CHAIN_RETRY_DAY; }
+  function kCanRetry() { return kDead() && kRetry() < kRetryMax(); }
 
   // 다시 칠 수 있다고 말만 하고 단추는 안 주던 자리.
   //
@@ -3759,13 +3890,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
     var tk = document.createElement("p"); tk.className = "lead gemline";
     if (kTicket()) {
-      tk.innerHTML = "<b>승급 시험 표 한 장</b>"
-        + "<span>오늘 승급 시험 한 판을 옥 없이 보십니다</span>";
+      tk.innerHTML = "<b>승단 시험 표 한 장</b>"
+        + "<span>오늘 승단 시험 한 판을 옥 없이 보십니다</span>";
     } else if (done) {
       tk.innerHTML = "오늘 몫은 여기까지입니다"
         + "<span>내일 다시 세 판이 열립니다</span>";
     } else {
-      tk.innerHTML = "세 판을 다 물리치면 <b>승급 시험 한 판이 공짜</b>"
+      tk.innerHTML = "세 판을 다 물리치면 <b>승단 시험 한 판이 공짜</b>"
         + "<span>" + (retry
             ? "다시 치면 " + kRound() + "판부터입니다 · 이긴 판은 그대로 남습니다"
             : "오늘 다시 칠 수 있는 횟수를 다 쓰셨습니다") + "</span>";
@@ -3774,13 +3905,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 
     var b1 = document.createElement("button"); b1.className = "btn go";
     b1.innerHTML = done
-      ? (kTicket() ? "승급 시험 보러 가기<small>표 한 장 · 옥 없이 봅니다</small>"
+      ? (kTicket() ? "승단 시험 보러 가기<small>표 한 장 · 옥 없이 봅니다</small>"
                    : "내일 다시")
       : !retry ? "내일 다시"
-      : poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM + "이 듭니다 · 지닌 옥 "
-               + gem + "</small>"
+      : poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM + josaGa(CHAIN_RETRY_GEM)
+               + " 듭니다 · 지닌 옥 " + gem + "</small>"
       : "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
-        + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>";
+        + (kRetryMax() - kRetry()) + "번 남음</small>";
     b1.disabled = done ? !kTicket() : !retry;
     b1.addEventListener("click", function () {
       if (done) {                       // 표를 쓰러 간다
@@ -3824,7 +3955,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 산에서 고쳐 둔 구멍이 여기 그대로 남아 있었다.
     // 산과 같은 식으로, 오른 만큼 다 따라오지는 않게 0.78 제곱만큼 올린다.
     var hp = Math.round(620 * Math.pow(1.06, Math.min(stage, 60))
-      * Math.pow(gearVal("atk") * Math.pow(ATK_STEP, up.atk), 0.78));
+      * Math.pow(gearVal("atk") * Math.pow(ATK_STEP, up.atk), 0.78)
+      * CHAIN_HP_MUL[Math.min(CHAIN_HP_MUL.length - 1, kRound() - 1)]);
     run = { chain: true, b: { n: M.n + " 수호신", art: M.a, m: M.m, boss: false, no: 0 },
             hp: hp, max: hp, left: kSec(), sec: kSec(), round: kRound(),
             lives: CHAIN_LIVES, combo: 0, used: Object.create(null),
@@ -4051,13 +4183,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     // 모르면 둘째에서 그만둔다.
     var tk = document.createElement("p"); tk.className = "lead gemline";
     if (got) {
-      tk.innerHTML = "<b>승급 시험 표 한 장</b>"
-        + "<span>오늘 승급 시험 한 판을 옥 없이 보십니다</span>";
+      tk.innerHTML = "<b>승단 시험 표 한 장</b>"
+        + "<span>오늘 승단 시험 한 판을 옥 없이 보십니다</span>";
     } else {
       var leftW = CHAIN_WIN_FOR_TICKET - kWins();
       tk.innerHTML = "오늘 <b>" + kWins() + " / " + CHAIN_WIN_FOR_TICKET + "</b>판"
         + "<span>" + (leftW > 0
-            ? "세 판을 다 물리치면 승급 시험 한 판이 공짜가 됩니다"
+            ? "세 판을 다 물리치면 승단 시험 한 판이 공짜가 됩니다"
               + (leftW < CHAIN_WIN_FOR_TICKET
                  ? " · 다음은 " + (kWins() + 1) + "판 " + CHAIN_SEC[kWins()] + "초" : "")
             : "표를 받으셨습니다") + "</span>";
@@ -4072,9 +4204,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var retry = kCanRetry(), poor = gem < CHAIN_RETRY_GEM;
     b1.innerHTML = kDone() ? "내일 다시"
       : !kDead() ? (kWins() + 1) + "판으로<small>" + CHAIN_SEC[kWins()] + "초</small>"
-      : retry && poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM + "이 듭니다</small>"
+      : retry && poor ? "옥 사러 가기<small>옥 " + CHAIN_RETRY_GEM
+                        + josaGa(CHAIN_RETRY_GEM) + " 듭니다</small>"
       : retry ? "옥 " + CHAIN_RETRY_GEM + " · " + kRound() + "판 다시<small>오늘 "
-                + (CHAIN_RETRY_DAY - kRetry()) + "번 남음</small>"
+                + (kRetryMax() - kRetry()) + "번 남음</small>"
       : "내일 다시";
     b1.disabled = kDone() || (kDead() && !retry);
     b1.addEventListener("click", function () {
@@ -5185,11 +5318,29 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function drawHo() {
-    var c = rankName(), parts = [];
-    if (dan) parts.push(danName());
-    if (c) parts.push(c);
-    el.ho.hidden = !parts.length;
-    el.ho.textContent = parts.join(" · ");
+    var b = el.danBadge;
+    if (b) {
+      b.textContent = "";
+      b.hidden = !dan;
+      if (dan) {
+        var G = danGroup(dan);
+        b.className = "dan" + (G.top ? " top" : "");
+        b.style.color = G.c;
+        b.title = (G.k ? G.k + " · " : "") + dan + "단 " + danName();
+        if (!G.top) {
+          var i = document.createElement("i"); i.className = "rk g-" + G.g;
+          var n = document.createElement("b"); n.className = "n"; n.textContent = dan;
+          var u = document.createElement("span"); u.className = "u"; u.textContent = "단";
+          b.appendChild(i); b.appendChild(n); b.appendChild(u);
+        }
+        var t = document.createElement("b"); t.className = "t"; t.textContent = danName();
+        b.appendChild(t);
+      }
+    }
+    // 그 밖의 호(수호신 격파 칭호 따위)는 뒤에 작게 남긴다
+    var c = rankName();
+    el.ho.hidden = !c;
+    el.ho.textContent = c || "";
   }
 
   // ── 처음 오신 길 ───────────────────────────────────────────────
@@ -5616,7 +5767,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   function drawExam() {
     if (!el.examBar) return;
     var d = nextDan();
-    el.examHead.textContent = dan ? dan + "단 · " + danName() : "승급 시험";
+    el.examHead.textContent = dan ? dan + "단 · " + danName() : "승단 시험";
     var lf = examLeft(), cost = examNowCost();
     el.examSub.textContent = d
       ? (dan + 1) + "단 — " + danMixText(d) + " · " + d.sec + "초 · 맨몸"
@@ -5894,7 +6045,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         if (r.b.boss) why.push("수호신");
         if (perfGem) why.push("맨손 완전 격파");
         gm.innerHTML = why.join(" · ") + ' <b>옥 +' + bossGem + '</b>'
-          + '<span>승급 시험 옥 ' + EXAM_GEM + ' · 끝말잇기 재도전 · 힌트에 쓰입니다</span>';
+          + '<span>승단 시험 · 끝말잇기 재도전 · 힌트에 쓰입니다</span>';
         card.appendChild(gm);
       }
     }
