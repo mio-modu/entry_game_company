@@ -115,16 +115,19 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 /* 달력에 날짜가 없으면 네모가 몇 개인지만 보인다 — 언제 왔는지가 안 읽힌다. */
 .calhead { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
   margin-bottom: 4px; }
-.calhead span { text-align: center; font-family: var(--font-mono); font-size: 10px;
-  color: var(--fg-faint); }
+.calhead span { text-align: center; font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--fg-dim); }
 .calhead span.sun { color: #C96A5E; }
 .calhead span.sat { color: #6E8FC9; }
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* 한 달이 다 들어와야 하므로 네모가 아니라 납작한 칸으로 둔다.
+   정사각형이면 여섯 줄에 270px를 먹는데, 날짜는 그만큼 클 필요가 없고
+   세로 자리는 아깝다. 대신 글씨는 키운다 — 40~60대가 보는 달력이다. */
 .cal i {
-  aspect-ratio: 1; border-radius: 5px; background: var(--surface-2);
+  height: 32px; border-radius: 6px; background: var(--surface-2);
   border: 1px solid transparent; display: grid; place-items: center;
-  font-family: var(--font-mono); font-size: 11px; font-style: normal;
-  color: var(--fg-faint);
+  font-family: var(--font-mono); font-size: 13.5px; font-style: normal;
+  color: var(--fg-dim);
 }
 .cal i.on { background: var(--jade); color: #06201B; font-weight: 700; }
 .cal i.today { border-color: var(--gold); color: var(--gold); font-weight: 700; }
@@ -134,10 +137,10 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 .mon { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--line); }
 .mon .mline { display: flex; align-items: baseline; justify-content: space-between;
   gap: 8px; flex-wrap: wrap; }
-.mon .mline b { font-family: var(--font-display); font-size: 16px; color: var(--gold); }
-.mon .mline span { font-size: 11.5px; color: var(--fg-dim);
+.mon .mline b { font-family: var(--font-display); font-size: 20px; color: var(--gold); }
+.mon .mline span { font-size: 12.5px; color: var(--fg-dim);
   display: inline-flex; align-items: center; gap: 3px; }
-.mon .mline span .cc { width: 13px; height: 13px; }
+.mon .mline span .cc { width: 15px; height: 15px; }
 .mon .mbar { margin-top: 7px; height: 7px; border-radius: 99px;
   background: #232738; overflow: hidden; }
 .mon .mbar i { display: block; height: 100%; border-radius: 99px;
@@ -153,8 +156,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   border: 1px solid var(--line); border-radius: 9px; padding: 7px 2px 6px;
   text-align: center; background: var(--surface-2);
 }
-.att .d { font-family: var(--font-mono); font-size: 9.5px; color: var(--fg-faint); }
-.att .r { font-size: 11px; font-weight: 700; color: var(--fg-dim); margin-top: 3px; }
+.att .d { font-family: var(--font-mono); font-size: 11px; color: var(--fg-dim); }
+.att .r { font-size: 13px; font-weight: 700; color: var(--fg); margin-top: 4px; }
 .att.got { border-color: var(--jade); }
 .att.got .r { color: var(--jade); }
 .att.now { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold) inset; }
@@ -164,7 +167,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
 .qrow:first-child { border-top: 0; }
 .qrow .qt { font-size: 13px; font-weight: 600; }
-.qrow .qp { font-size: 11.5px; color: var(--fg-dim); margin-top: 3px;
+.qrow .qp { font-size: 12.5px; color: var(--fg-dim); margin-top: 3px;
   display: flex; align-items: center; gap: 7px; }
 .qrow .qp .rw { color: var(--gold); font-weight: 600; }
 .qrow .qb { flex: none; font-family: var(--font-mono); font-size: 11.5px;
@@ -617,7 +620,7 @@ body.quake { animation: shake .42s ease-out; }
 .att .r, .qrow .qp .rw {
   display: flex; align-items: center; justify-content: center; gap: 3px;
 }
-.att .r .cc, .qrow .qp .cc { width: 13px; height: 13px; margin: 0; }
+.att .r .cc, .qrow .qp .cc { width: 15px; height: 15px; margin: 0; }
 
 /* 띠 안에서 한 단 낮은 줄. 따로 칸을 내지 않고 작게 붙인다. */
 .lead.foot .sub { display: block; margin-top: 4px;
@@ -1386,6 +1389,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="muted" id="gemNote" style="margin:6px 0 14px"></p>
     <p class="subh">냥으로 사기</p>
     <div id="shop"></div>
+    <!-- 냥을 옥으로 바꾸는 자리. 「오늘」에 있었는데 그건 하는 곳이고
+         여기는 사는 곳이다. 하루 세 번이라는 것 때문에 「오늘」에 뒀던
+         것인데, 횟수가 하루 단위라고 해서 사는 일이 하는 일이 되지는 않는다. -->
+    <p class="subh">냥을 옥으로</p>
+    <div id="exchange"></div>
     <p class="subh">광고</p>
     <div class="up">
       <div>
@@ -1420,10 +1428,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     <p class="subh">이번 달</p>
     <div class="calhead" id="calHead"></div>
     <div class="cal" id="cal"></div>
-    <p class="muted" id="calNote" style="margin:7px 0 0"></p>
     <div id="mon" class="mon"></div>
-    <p class="subh">바꾸기</p>
-    <div id="exchange"></div>
   </div>
 
   <div class="panel" id="pTrain">
@@ -1849,7 +1854,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnToShop","btnToMine","btnMineTrain","btnMineRule",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub",
-   "pToday","attRow","questList","exchange","streaks","cal","calHead","calNote","mon",
+   "pToday","attRow","questList","exchange","streaks","cal","calHead","mon",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
@@ -2028,7 +2033,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-05-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2488,12 +2493,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 출석과 할 일은 그 둘을 섞어 준다. 매일 오는 값이 옥이면 과금이
   // 약해지고, 전부 냥이면 올 이유가 약해진다. 작은 옥을 드물게 섞는다.
   //
-  // 이레에 네 번(2·4·6·7일) 열여섯 알은 많았다. 옥은 귀해야 힌트를 쓸 때
-  // 한 번 망설이고, 망설여야 값이 선다. 사흘·닷새·이레 세 번으로 줄이고
-  // 2·3·5 열 알로 깎는다. 사이사이는 냥과 반딧불이 메운다.
+  // 한때 세 번(3·5·7일) 열 알로 줄였다. "옥은 귀해야 한 번 망설인다"가
+  // 까닭이었다. 그런데 출석이 하는 일은 옥을 아끼는 것이 아니라 날마다
+  // 오게 하는 것이다. 세 번이면 사이가 비고, 비면 그 사이에 빠진다.
+  //
+  // 네 번(2·4·6·7일) 2·3·4·7로 되돌린다. 자주 들어와야 "모레면 또 옥이네"가
+  // 생긴다. 액수는 열여섯이라 열보다 여섯 많지만, 하루로 치면 한 알이 채
+  // 안 된다 — 승급 시험 한 판이 열이니 그 정도로는 귀함이 무너지지 않는다.
+  // 옥을 조이는 일은 한 판에 하나씩 주던 자리에서 이미 했다.
   var ATT = [
-    { r: "냥", n: 0 }, { r: "반", n: 2 }, { r: "옥", n: 2 },
-    { r: "냥", n: 0 }, { r: "옥", n: 3 }, { r: "반", n: 3 }, { r: "옥", n: 5 }
+    { r: "냥", n: 0 }, { r: "옥", n: 2 }, { r: "반", n: 2 },
+    { r: "옥", n: 3 }, { r: "냥", n: 0 }, { r: "옥", n: 4 }, { r: "옥", n: 7 }
   ];
   function attGold() { return Math.round((300 + stage * 14) * (1 + cycle() * 0.6)); }
   function dayKey(k) { return "nathero-" + k + "-" + todayKey(); }
@@ -2711,13 +2721,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.streaks.appendChild(box);
     });
 
-    // 이번 주 — 오늘의 낱말을 한 날에 불이 들어온다.
+    // 이번 달 — 온 날에 불이 들어온다.
     //
-    // 달로 보이던 때는 서른 칸 가운데 두어 칸만 켜져 있어 늘 비어 보였다.
-    // 매일 오게 하려는 자리인데 못 온 날이 스물여덟 칸이면 기가 꺾인다.
-    // 이레만 보이면 "이번 주 닷새"가 한눈에 들어오고 채울 만해 보인다.
+    // 한동안 이레만 보여 줬다. 서른 칸에 두어 칸만 켜지면 기가 꺾인다는
+    // 까닭이었고, 그때는 맞았다. 그런데 달 도장이 「이번 달 스무닷새」를
+    // 걸고 나니, 제목은 「이번 달」인데 이레를 보여 주는 꼴이 됐다.
+    // 스무닷새가 닿을 만한지 가늠하려면 달이 보여야 하고, 어느 날을
+    // 빠뜨렸는지 보여야 메울 마음도 생긴다.
+    //
+    // 기가 꺾이는 것은 막대가 받아 준다 — 아직 오지 않은 날은 흐리게
+    // 두어 「못 온 날」이 아니라 「아직인 날」로 읽히게 한다.
     var now = new Date();
-    var sun = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
     if (el.calHead && !el.calHead.children.length) {
       ["일", "월", "화", "수", "목", "금", "토"].forEach(function (w, wi) {
         var sp = document.createElement("span");
@@ -2728,22 +2742,25 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       });
     }
     el.cal.textContent = "";
-    var done = 0;
-    for (var i = 0; i < 7; i++) {
-      var day = new Date(sun.getFullYear(), sun.getMonth(), sun.getDate() + i);
-      var isToday = day.toDateString() === now.toDateString();
-      var ahead = day > now && !isToday;
-      var on = !ahead && dailyDoneOn(day);
-      if (on) done++;
+    var y = now.getFullYear(), mo = now.getMonth();
+    var lead = new Date(y, mo, 1).getDay();        // 1일이 무슨 요일인가
+    var last = new Date(y, mo + 1, 0).getDate();   // 이 달이 며칠까지인가
+    for (var b0 = 0; b0 < lead; b0++) {
+      var pad = document.createElement("i"); pad.className = "none";
+      el.cal.appendChild(pad);
+    }
+    for (var i = 1; i <= last; i++) {
+      var day = new Date(y, mo, i);
+      var isToday = i === now.getDate();
+      var ahead = i > now.getDate();
+      var on = !ahead && cameOn(day);
       var cell = document.createElement("i");
       cell.className = (on ? "on " : "") + (isToday ? "today " : "") + (ahead ? "ahead" : "");
-      cell.textContent = day.getDate();
-      cell.title = (day.getMonth() + 1) + "월 " + day.getDate() + "일"
-                 + (ahead ? "" : on ? " · 했습니다" : " · 안 했습니다");
+      cell.textContent = i;
+      cell.title = (mo + 1) + "월 " + i + "일"
+                 + (ahead ? "" : on ? " · 오신 날" : " · 안 오신 날");
       el.cal.appendChild(cell);
     }
-    el.calNote.textContent = "이번 주에 " + done + "일 하셨습니다"
-      + (dSt > 1 ? " · 지금 " + dSt + "일 연속" : "");
 
     // 달 도장. 주 달력은 이레만 보이므로(서른 칸에 두 칸만 켜지면 기가
     // 꺾인다) 한 달은 숫자와 막대 한 줄로 보여 준다.
@@ -2845,13 +2862,20 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.questList.appendChild(row);
     });
 
+    drawExchange();
+  }
+
+  // 냥을 옥으로. 「오늘」에 있던 것을 상점으로 옮겼으므로, 상점을 열 때도
+  // 그려야 한다. 그리는 자리를 따로 떼 둔다.
+  function drawExchange() {
+    if (!el.exchange) return;
     el.exchange.textContent = "";
     var xr = document.createElement("div"); xr.className = "shoprow";
     var XL = document.createElement("div");
     var xt = document.createElement("div"); xt.className = "st"; xt.textContent = "옥 한 알";
     var xd = document.createElement("div"); xd.className = "sd";
     xd.textContent = exLeft()
-      ? "옥 한 알 · 오늘 " + exLeft() + " / " + EX_DAY + "번 · 바꿀수록 값이 오릅니다"
+      ? "오늘 " + exLeft() + " / " + EX_DAY + "번 · 바꿀수록 값이 오릅니다"
       : "오늘 몫을 다 바꾸셨습니다 · 내일 다시";
     XL.appendChild(xt); XL.appendChild(xd);
     var xb = document.createElement("button");
@@ -5657,6 +5681,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   function drawShop() {
+    drawExchange();
     if (!el.shop) return;
     el.shop.textContent = "";
     SHOP.forEach(function (it) {
