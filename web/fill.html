@@ -1304,6 +1304,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 .words span { font-family: var(--font-body); font-size: 13px; background: var(--surface-2);
   border: 1px solid var(--line); border-radius: 20px; padding: 2px 10px; }
 /* 아래 단추 줄. 네 칸이 똑같은 폭으로 가지런히 선다. */
+/* 확률표. 숫자는 오른쪽으로 모아야 자릿수가 눈에 들어온다. */
+table.odds{width:100%;border-collapse:collapse;margin:12px 0 0;font-size:13px}
+table.odds td{padding:6px 7px;border-bottom:1px solid var(--line);color:var(--fg)}
+table.odds tr:first-child td{color:var(--dim);font-size:11.5px}
+table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ov .card table.odds + .lead{margin-top:14px}
+
 /* 광고 진행. 열째 점이 보물함이다. */
 .addots { display: flex; gap: 5px; align-items: center; margin-top: 8px; }
 .addots i {
@@ -1707,6 +1714,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       <button class="btn ghost" id="btnLogOpen">시험판 기록 보기</button>
       <button class="btn ghost" id="btnRuleOpen">규칙 다시 보기</button>
     </div>
+    <!-- 전자상거래법은 파는 사람이 누구인지, 어떤 약속으로 파는지를
+         사는 자리에서 닿을 수 있게 두라고 한다. 확률형 아이템 정보공개
+         의무도 같은 자리에 둔다 — 보물함 확률은 살 때가 아니라 사기
+         전에 볼 수 있어야 한다. -->
+    <p class="subh">안내</p>
+    <div class="trow">
+      <button class="btn ghost" id="btnOdds">보물함 확률</button>
+      <button class="btn ghost" id="btnTerms">이용약관</button>
+    </div>
+    <div class="trow">
+      <button class="btn ghost" id="btnPrivacy">개인정보 처리방침</button>
+      <button class="btn ghost" id="btnErase">계정 지우기</button>
+    </div>
   </div>
 
   <div class="panel" id="pRule">
@@ -2006,6 +2026,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    "btnToShop","btnToMine","btnMineTrain","btnMineRule",
    "btnKakao","btnGoogle","btnPush","btnPull","btnOut","btnKill",
    "tToday","tTodaySub","tTrain","tTrainSub","tChest","tChestSub",
+   "btnOdds","btnTerms","btnPrivacy","btnErase",
    "pToday","attRow","questList","exchange","streaks","cal","calHead","mon",
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
@@ -2185,7 +2206,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-h";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2900,10 +2921,22 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   //
   // 첫 알은 그대로 두고 둘째·셋째를 곱절로 한다. 셋을 다 바꾸려면
   // 15,400냥, 서른 판 가까이다. 급하면 첫 알만 바꾸고 말게 된다.
-  // 하루 세 번에서 두 번으로. 시험이 하루 세 판으로 늘어 옥 수요가
-  // 커졌는데 들어오는 쪽을 그대로 두면 모자란 느낌이 끝내 안 생긴다.
-  // 냥으로 옥을 메우는 길이 가장 넓은 길이라 여기부터 좁힌다.
-  var EX_GOLD = 2200, EX_DAY = 2;
+  // 두 번으로 줄였다가 세 번으로 되돌린다.
+  //
+  // 옥이 들어오는 길을 좁히려던 것인데, 재 보니 좁힐 자리가 아니었다.
+  // 셋째 알은 8,800냥이라 중반 하루 수입의 대부분이다. 그걸 바꾸면
+  // 그날 수련도 장터도 못 한다 — 곱절 값이 이미 문을 좁히고 있어서,
+  // 횟수까지 줄이면 문이 아니라 벽이 된다. 옥으로 치면 하루 한 알
+  // 차이뿐이라 옥 수지도 거의 안 움직인다.
+  //
+  // 그보다 냥 쪽이 문제다. 수련은 한 산에서 수입의 15~25%만 먹고,
+  // 백두산에 닿으면 상한이 차서 아예 0이 된다. 그때부터 냥 쓸 곳이
+  // 장터뿐이라 하루 5,000씩 남는다. 셋째 알 8,800이 그 자리를 받는다.
+  //
+  //   후반 하루(2산)  수입 21,710
+  //                  장터 10,221 + 교환 두 번 6,600  = 16,821   남는다
+  //                  장터 10,221 + 교환 세 번 15,400 = 25,621   모자라다
+  var EX_GOLD = 2200, EX_DAY = 3;
   function exCost() { return EX_GOLD * Math.pow(2, dGet("ex", 0)); }
   function exLeft() { return Math.max(0, EX_DAY - dGet("ex", 0)); }
   function takeExchange() {
@@ -7379,6 +7412,84 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   el.tTrain.addEventListener("click", function () { drawTrain(); openPanel(el.pTrain); });
   el.tMine.addEventListener("click", function () { drawMine(); openPanel(el.pMine); });
   el.tChest.addEventListener("click", function () { drawAd(); drawShop(); openPanel(el.pChest); });
+
+  // 바깥 문서. 앱 안에서는 Capacitor 가 바깥 브라우저로 넘긴다 — 약관과
+  // 방침은 앱이 아니라 웹에 사는 글이므로 그 편이 맞다.
+  var DOCS = "https://wordgamebest.vercel.app/docs/";
+  function openDoc(name) {
+    try { window.open(DOCS + name, "_blank", "noopener"); }
+    catch (e) { location.href = DOCS + name; }
+  }
+  el.btnTerms.addEventListener("click", function () { openDoc("terms.html"); });
+  el.btnPrivacy.addEventListener("click", function () { openDoc("privacy.html"); });
+  el.btnErase.addEventListener("click", function () { openDoc("account-delete.html"); });
+
+  // 보물함 확률.
+  //
+  // 숫자를 손으로 적지 않는다. 상자를 여는 코드가 보는 바로 그 표
+  // (CHEST·TIER_W·GEAR_BOSS)를 여기서도 본다. 밸런스를 고치는 날
+  // 확률표만 옛 숫자로 남는 일이 없어야 한다.
+  el.btnOdds.addEventListener("click", function () {
+    var gp = GEAR_BOSS, sc = (100 - gp) / CHEST_SUM;
+    var ov = document.createElement("div"); ov.className = "ov";
+    ov.addEventListener("click", function (e) { if (e.target === ov) ov.remove(); });
+    var card = document.createElement("div"); card.className = "card";
+    var h = document.createElement("h2"); h.textContent = "보물함 확률";
+    card.appendChild(h);
+
+    var p0 = document.createElement("p"); p0.className = "lead";
+    p0.innerHTML = "보물함 하나에서 <b>한 가지</b>가 나옵니다. 장비가 나올 자리는 "
+      + "<b>" + gp + "%</b>이고, 나머지를 아래가 나눕니다.";
+    card.appendChild(p0);
+
+    var t1 = document.createElement("table"); t1.className = "odds";
+    CHEST.forEach(function (c) {
+      var tr = t1.insertRow();
+      tr.insertCell().textContent = c.t;
+      var td = tr.insertCell(); td.className = "num";
+      td.textContent = (c.p * sc).toFixed(1) + "%";
+    });
+    var tr = t1.insertRow();
+    tr.insertCell().textContent = "장비";
+    var td = tr.insertCell(); td.className = "num"; td.textContent = gp.toFixed(1) + "%";
+    card.appendChild(t1);
+
+    var p1 = document.createElement("p"); p1.className = "lead foot";
+    p1.innerHTML = "장비가 나오면 등급을 다시 뽑습니다. <b>오른 산이 높을수록</b> "
+      + "윗등급이 열립니다 — 낮은 산에서는 아무리 열어도 윗등급이 나오지 않습니다.";
+    card.appendChild(p1);
+
+    var t2 = document.createElement("table"); t2.className = "odds";
+    var hr = t2.insertRow();
+    hr.insertCell().textContent = "열린 등급";
+    for (var i = 1; i <= 6; i++) {
+      var c2 = hr.insertCell(); c2.className = "num"; c2.textContent = TIER[i];
+    }
+    for (var capN = 1; capN <= 6; capN++) {
+      var row = t2.insertRow();
+      row.insertCell().textContent = "상한 " + TIER[capN];
+      var tot = 0, j;
+      for (j = 1; j <= capN; j++) tot += TIER_W[j];
+      for (j = 1; j <= 6; j++) {
+        var cell = row.insertCell(); cell.className = "num";
+        if (j > capN) { cell.textContent = "—"; continue; }
+        var pc = gp * TIER_W[j] / tot;
+        cell.textContent = (pc < 1 ? pc.toFixed(2) : pc.toFixed(1)) + "%";
+      }
+    }
+    card.appendChild(t2);
+
+    var p2 = document.createElement("p"); p2.className = "lead foot";
+    p2.textContent = "확률은 열 때마다 새로 뽑습니다. 여러 번 열어도 다음 한 번의 "
+      + "확률은 달라지지 않습니다.";
+    card.appendChild(p2);
+
+    var ok = document.createElement("button"); ok.className = "btn";
+    ok.textContent = "닫기";
+    ok.addEventListener("click", function () { ov.remove(); });
+    card.appendChild(ok);
+    ov.appendChild(card); document.body.appendChild(ov); ok.focus();
+  });
   // 방 사이를 오가는 길. 한 방에서 할 일이 끝나면 다음 방이 어디인지
   // 알려 주는 쪽이, 닫고 서랍을 다시 뒤지게 하는 것보다 낫다.
   el.btnToShop.addEventListener("click", function () {
