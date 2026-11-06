@@ -2206,7 +2206,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-j";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3900,10 +3900,30 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     draw();
   }
 
+  // 오늘의 낱말이 맨손으로 서 있었다.
+  //
+  // 점수와 도장과 뜻풀이 한 줄뿐, 냥도 옥도 안 줬다. 그 옆에서는 산
+  // 오르기가 한 판에 오백 넘게 쏟아낸다. 사람은 주는 쪽으로 간다 —
+  // "해 봤는데 아무것도 안 주네"가 되면 내일 안 온다.
+  //
+  // 하루 한 판뿐이라 산을 흔들지 않는다. 등급을 따라 넷으로 가른다.
+  // 틀은 출석과 같은 식이다 — 단계를 따라 오르고 회차를 따라 커진다.
+  function dailyPay(ratio) {
+    var base = Math.round((300 + stage * 14) * (1 + cycle() * 0.6));
+    var mul = ratio >= 1 ? 1.6 : ratio >= 0.8 ? 1.2 : ratio >= 0.6 ? 0.8 : 0.4;
+    return Math.round(base * mul);
+  }
+
   function endDaily() {
     if (timerId) { clearInterval(timerId); timerId = null; }
     run.phase = "over";
     var got = run.ans.filter(function (w) { return run.got[w]; });
+    // 이미 받은 날에는 또 주지 않는다. 기록이 남아 있으면 끝난 날이다.
+    if (!dailyRec()) {
+      var pay = dailyPay(run.ans.length ? got.length / run.ans.length : 0);
+      gold += pay; run.dayPay = pay;
+      saveS(); drawStatsOnly(); drawTray();
+    }
     dailySave(got, run.score);
     logEv("Z", got.length + "/" + run.ans.length);
     drawLog();
@@ -4817,7 +4837,6 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     gold += PERFECT_PAY; run.extra += PERFECT_PAY; run.payPerfect += PERFECT_PAY;
     if (window.SFX) SFX.clear();
     toast("완전 격파 · 빈칸을 모두 채웠습니다 · +" + PERFECT_PAY + "냥");
-    giftStep("perf");                 // 오늘의 선물이 한 걸음 찬다
     draw();
     setTimeout(function () { if (run) victory(run); }, 700);
   }
@@ -5087,8 +5106,15 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 끝의 상은 일단 보물함 그대로 둔다. 자리가 한 곳(n === AD_CHEST_EVERY)에
   // 모여 있으므로 나중에 거기만 고치면 무엇으로든 바뀐다.
-  function giftStep(why) {
-    if (!adsLeft()) return;
+  // after 를 받는 까닭.
+  //
+  // 일곱 걸음째는 보물함을 연다. 그걸 판 도중에 열면 0.7초 뒤에 뜨는
+  // 결과표와 겹쳐서 덮개가 두 장이 된다 — 소크가 단계 7에서 그걸
+  // 147번 잡아냈다. 수호신 함은 처음부터 결과표 앞에 줄을 서 있었는데
+  // 선물 함만 끼어든 것이다. 같은 줄에 세운다.
+  function giftStep(why, after) {
+    var go = after || function () {};
+    if (!adsLeft()) return go();
     var st = adState(); st.n++; adSave(st); drawAd();
     logEv("T", (why || "gift") + st.n);
     var n = st.n;
@@ -5096,14 +5122,15 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 일곱 걸음의 상. 지금은 보물함이고, 바꿀 자리는 여기 한 곳이다.
     if (n === AD_CHEST_EVERY) {
       toast("완전 격파 일곱 번 · 보물함이 열립니다");
-      openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_BOSS, 0.8);
+      openChest(topMountain(), function () { drawAd(); go(); },
+                adCap(), GEAR_BOSS, 0.8);
       return;
     }
     if (n % AD_GEM_EVERY === 0) {                // 세 걸음 — 옥 한 알
       gem++; saveS(); drawStatsOnly();
       if (window.SFX) SFX.up();
       toast("완전 격파 " + n + "번째 · 옥 한 알");
-      return;
+      return go();
     }
     if (n % AD_SMALL === 0) {                    // 두 걸음 — 보급품
       var g = chestFloor(0.6), sc = 100 / CHEST_SUM, roll = Math.random() * 100,
@@ -5117,9 +5144,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       saveS(); drawStatsOnly(); drawTrain();
       if (window.SFX) SFX.up();
       toast("보급품 · " + got.t + " · 냥 +" + coinGot.toLocaleString());
-      return;
+      return go();
     }
     toast("완전 격파 " + n + " / " + AD_CHEST_EVERY + " · 일곱 번이면 보물함");
+    go();
   }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
   // '지금 이 회차에서 올라 있는 산'이다. 회차가 바뀌면 다시 북한산부터다 —
@@ -6183,13 +6211,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     if (timerId) { clearInterval(timerId); timerId = null; }
     r.leftAtEnd = Math.max(0, r.left);
     run = null;
+    // 줄은 하나다 — 수호신 함 · 선물 걸음 · 결과표.
+    var card = function () { result(r, true); };
+    var gift = function () {
+      if (r.perfect) giftStep("perf", card); else card();
+    };
     if (r.b.boss) {
       var mt = Math.floor((r.b.no - 1) / 10);
       // 백두산 수호신은 한 회차의 끝이다. 여기서만 장비가 확정으로 나온다.
-      openChest(mt, function () { result(r, true); },
+      openChest(mt, gift,
                 Math.min(6, tierCap(mt) + cycle()), mt === 9 ? 100 : GEAR_BOSS);
     }
-    else result(r, true);
+    else gift();
   }
 
   var lastBoard = null;          // 진 판 — 광고로 같은 판을 다시 칠 때 쓴다
@@ -6520,6 +6553,12 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     lead.textContent = "채운 낱말 " + n + " / " + run.ans.length + "개";
     card.appendChild(lead);
 
+    if (run.dayPay) {
+      var dp = document.createElement("p"); dp.className = "lead pay";
+      dp.textContent = run.dayPay.toLocaleString() + "냥";
+      card.appendChild(dp);
+    }
+
     var grid = document.createElement("div"); grid.className = "sgrid";
     dailyRows().forEach(function (r) {
       var line = document.createElement("div"); line.className = "sline";
@@ -6575,13 +6614,30 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 그 사이 어디서든 손이 멈추면 공유는 안 일어난다. 폰에는 공유 시트가
     // 있어서 단추 하나로 「어디에 보낼까」까지 간다. 그걸 먼저 쓰고,
     // 안 되는 기기에서만 복사로 내려간다.
+    // 이 게임이 마케팅비 없이 퍼지는 길은 이 단추 하나다. 그런데 누를
+    // 까닭이 자존심뿐이었다. 옥 한 알을 얹는다 — 하루 수입의 5%라 셈을
+    // 흔들지 않지만, "공유하면 옥을 준다"는 사실 자체가 손을 움직인다.
+    //
+    // 공유 시트를 열고 취소해도 주게 된다. 복사 쪽은 가릴 길이 아예 없다.
+    // 하루 한 번이라 속여서 얻는 것이 옥 한 알뿐이니, 막는 값이 막아서
+    // 아끼는 것보다 비싸다. 안 막는다.
+    var shrKey = "nathero-shr-" + todayKey();
+    var shrLeft = kGet(shrKey, 0) === 0;
+    function shrPay() {
+      if (!shrLeft || kGet(shrKey, 0)) return;
+      kSet(shrKey, 1); gem += 1;
+      saveS(); drawStatsOnly(); drawTray();
+      if (window.SFX) SFX.up();
+      toast("나눠 주셔서 고맙습니다 · 옥 한 알");
+    }
     var canShare = !!(navigator.share);
     var cp = document.createElement("button"); cp.className = "btn go";
-    cp.textContent = canShare ? "카톡으로 보내기" : "결과 복사하기";
+    cp.innerHTML = (canShare ? "카톡으로 보내기" : "결과 복사하기")
+      + (shrLeft ? "<small>오늘 처음 나누시면 옥 한 알</small>" : "");
     function fallbackCopy(t) {
       try {
         navigator.clipboard.writeText(t).then(
-          function () { cp.textContent = "복사됨 · 카톡에 붙여넣으세요"; },
+          function () { shrPay(); cp.textContent = "복사됨 · 카톡에 붙여넣으세요"; },
           function () {
             var r = document.createRange(); r.selectNodeContents(sh);
             var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
@@ -6595,7 +6651,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       if (!canShare) return fallbackCopy(t);
       // 글 안에 이미 링크가 있다. url 을 따로 주면 기기에 따라 링크만
       // 보내고 글을 버리는 수가 있어서, 글 한 덩이로만 넘긴다.
-      navigator.share({ text: t })["catch"](function (e) {
+      navigator.share({ text: t }).then(shrPay, function (e) {
         // 사람이 공유 시트를 닫은 것은 실패가 아니다. 그때는 가만히 둔다.
         if (e && e.name === "AbortError") return;
         fallbackCopy(t);
