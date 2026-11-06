@@ -51,6 +51,11 @@
   src:url("font/NotoSansKR-700.woff2") format("woff2")}
 @font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;
   src:url("font/IBMPlexMono-500.woff2") format("woff2")}
+
+/* 승단 칸의 표 줄. 끝말잇기와 나눔, 두 길이 여기로 모인다는 것을
+   한 줄로 보인다. 작게, 그러나 받은 것은 금빛으로 눈에 들어오게. */
+.extk{display:block;margin-top:3px;opacity:.78;font-size:.84em;letter-spacing:.01em}
+.extk b{color:var(--gold,#9A7B16);font-weight:700;opacity:1}
 </style>
 <style>
 /* 안전영역 — 삼성 폰 아래의 「‖ ○ ‹」줄이 게임을 먹던 자리.
@@ -1684,6 +1689,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <div>
         <b id="examHead">승단 시험</b>
         <small id="examSub"></small>
+        <small id="examTk" class="extk" hidden></small>
       </div>
       <button id="btnExamX" hidden>옥 3 · 한 번 더</button>
       <button id="btnExam">시험 보기</button>
@@ -1782,7 +1788,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <p>친구에게 부르는 줄을 보내시고, 그분이 <b>한 판</b>을 마치시면
          <b>두 분 모두 옥 열 알</b>을 받으십니다.</p>
       <p>온 분은 <b>로그인하시는 그 자리에서</b> 바로 받으십니다.
-         부르시는 쪽은 <b>열 분까지</b> 받으실 수 있습니다.</p>
+         부르시는 쪽은 <b>스무 분까지</b> 받으실 수 있습니다.</p>
     </div>
     <p class="cite" id="invNote"></p>
     <div class="trow" style="margin-top:9px" id="invAct" hidden>
@@ -1876,19 +1882,23 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <p>옥 하나로 <b>힌트</b> — 뜻풀이 한 줄입니다.</p>
       <p>판에 지면 그 판은 거기서 끝입니다. <b>옥 둘</b>을 들이면
          <b>그 판을 다시</b> 칩니다 — <b>판마다 다섯 번</b>까지.</p>
-      <p>세 판을 다 물리치면 <b>승단 시험 표 한 장</b>.
+      <p>세 판을 다 물리치면 <b>승단 시험 표 한 장</b>. 오늘의 낱말을
+         나누고 받는 표와 자리가 달라, 둘 다 벌면 두 판을 옥 없이 보십니다.
          오늘 시험 한 판을 <b>옥 없이</b> 보십니다. 하루 한 장입니다.</p>
     </div>
 
     <p class="subh">승단 시험</p>
     <div class="lines">
-      <p>하루 <b>세 판</b>까지입니다. <b>세 판 모두 같은 값</b>이고,
+      <p>하루 <b>네 판</b>까지이고, 그 중 <b>옥으로 치르는 것은 세 판</b>입니다 —
+         돈으로는 넷째 판이 없고, <b>표를 벌어야</b> 열립니다.
+         <b>값은 모두 같고</b>,
          값은 <b>다섯 단마다</b> 한 칸씩 오릅니다 —
          1~5단 <b>옥 5</b> · 6~10단 <b>7</b> · 11~15단 <b>10</b> ·
          16~20단 <b>15</b> · 21~25단 <b>22</b> · 26~30단 <b>30</b>.</p>
-      <p>돈을 부어도 <b>하루 넷째 판은 없습니다.</b>
-         옥이 없으셔도 <b>끝말잇기 표</b>로 한 판을 보실 수 있습니다 —
-         그 길은 맨손입니다.</p>
+      <p class="pivot">표는 <b>두 장</b>이고, 둘 다 맨손으로 법니다 —
+         <b>끝말잇기 세 판</b>을 다 물리치면 한 장,
+         <b>오늘의 낱말을 나누면</b> 한 장.
+         두 장을 다 벌면 그날 <b>네 판</b>을 보시고, 옥은 두 판치만 듭니다.</p>
       <p class="pivot"><b>붙으면 다음 한 판은 공짜</b>입니다 —
          한 판을 치르고 잘하면 <b>하루에 두 단</b>이 오릅니다.</p>
       <p>떨어져도 <b>단은 그대로</b>입니다. 다만 치른 옥은 돌아오지 않습니다.</p>
@@ -2140,7 +2150,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
    "invNote","invAct","btnInvShare","btnInvCopy","invBox",
-   "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -2319,7 +2329,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-06-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3686,7 +3696,20 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 세 판 모두 같은 값이다. 둘째·셋째를 더 받으면 값이 두 겹으로
   // 올라 외울 수가 없어진다.
-  var EXAM_DAY_MAX = 3;         // 하루 최대 — 돈으로도 못 넘는다
+  // 하루 상한이 둘이다.
+  //
+  // 전에는 하나였다 — 하루 세 판, 그 셋을 옥으로 치른다. 그런데 표가
+  // 두 장(끝말잇기·나눔) 생기면서 셈이 어그러졌다. 표를 셋 안에 넣으면
+  // 열심인 사람일수록 옥을 안 쓰게 되고, 셋 위에 얹으면 돈으로 살 수
+  // 있는 판수까지 같이 오른다. 둘 다 틀렸다.
+  //
+  // 그래서 가른다 — 하루 네 판, 그 중 옥으로 치를 수 있는 것은 세 판.
+  // 아무것도 못 번 사람은 전과 똑같이 세 판이고, 표를 번 사람만 한 판을
+  // 더 받는다. 돈으로는 여전히 넷째 판이 없다.
+  //
+  //   돈으로는 세 판, 꾸준함으로는 네 판.
+  var EXAM_DAY_MAX = 4;         // 하루 최대 — 표까지 번 날
+  var EXAM_GEM_MAX = 3;         // 그 중 옥으로 치를 수 있는 판
   function examFree() { return 0; }   // 공짜 몫은 없다. 첫 단부터 값이 붙는다.
   function examKey() { return "nathero-exam-" + todayKey(); }
   function examUsed() {
@@ -3696,7 +3719,14 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   function examBump() {
     try { localStorage.setItem(examKey(), String(examUsed() + 1)); } catch (e) {}
   }
-  function examLeft() { return Math.max(0, EXAM_DAY_MAX - examUsed()); }
+  function exGemKey()  { return "nathero-exgem-" + todayKey(); }
+  function exGemUsed() { return kGet(exGemKey(), 0); }
+  function examLeft() {
+    var tot = Math.max(0, EXAM_DAY_MAX - examUsed());
+    // 표나 연승으로 치르는 판은 총량만 본다. 옥으로 치르는 판만 세 판에 막힌다.
+    if (examCostWhy() !== "gem") return tot;
+    return Math.min(tot, Math.max(0, EXAM_GEM_MAX - exGemUsed()));
+  }
 
   // 값은 다섯 단마다 한 칸씩 오른다.
   //
@@ -3732,6 +3762,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   function examCostWhy() {
     if (examFreeNext() === 1) return "streak";       // 방금 붙어서 얹어 준 판
     if (kTicket() === 1) return "ticket";            // 끝말잇기로 얻은 표
+    if (shrTicket() === 1) return "share";           // 나눠 주고 얻은 표
     return "gem";
   }
   function examNowCost() {
@@ -3785,13 +3816,17 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
           + "선물로 나옵니다");
         return;
       }
-      gem -= cost; saveS(); drawStatsOnly(); spent(0, cost);
+      gem -= cost; kSet(exGemKey(), exGemUsed() + 1);
+      saveS(); drawStatsOnly(); spent(0, cost);
     } else if (why === "streak") {
       kSet(exNextKey(), 2);                 // 썼다 — 그날 한 번뿐이다
       toast("연승 — 이 판은 공짜입니다");
     } else if (why === "ticket") {
       kSet(kTicketKey(), 2);                // 썼다 — 하루 한 장뿐이다
       toast("끝말잇기로 얻은 표로 봅니다");
+    } else if (why === "share") {
+      kSet(shrTicketKey(), 2);              // 썼다 — 하루 한 장뿐이다
+      toast("나눠 주셔서 받은 표로 봅니다");
     }
     examBump();
     var p = makeExam(d);
@@ -3902,6 +3937,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     var note = document.createElement("p"); note.className = "lead foot";
     note.innerHTML = !nextDan() ? "서른 단을 모두 지나셨습니다 · <b>용</b>"
       : !lf ? "오늘 시험은 여기까지입니다 · <b>내일 다시</b>"
+      : examCostWhy() === "ticket" ? "<b>끝말잇기 표</b>로 한 판 더 보실 수 있습니다"
+      : examCostWhy() === "share" ? "<b>나눔 표</b>로 한 판 더 보실 수 있습니다"
       : examNowCost()
         ? "오늘 " + (examUsed() + 1) + "판째 — <b>옥 " + examNowCost() + "</b>"
           + (gem < examNowCost() ? " · 지금 옥 " + gem : "")
@@ -4346,6 +4383,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   function kDead()   { return kGet(kDeadKey(), 0); }
   function kRetry()  { return kGet(kRetryKey(), 0); }
   function kTicket() { return kGet(kTicketKey(), 0); }
+  // 오늘의 낱말을 나눠 주고 받는 표. 끝말잇기 표와 자리가 다르므로,
+  // 둘 다 번 날은 두 판을 옥 없이 본다.
+  function shrTicketKey() { return "nathero-st-" + todayKey(); }
+  function shrTicket()    { return kGet(shrTicketKey(), 0); }
   function kRound()  { return Math.min(CHAIN_SEC.length, kWins() + 1); }   // 오늘 몇 판째인가
   function kSec()    { return CHAIN_SEC[Math.min(CHAIN_SEC.length - 1, kWins())]; }
   function kDone()   { return kWins() >= CHAIN_WIN_FOR_TICKET; }
@@ -6339,11 +6380,21 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         + "  ·  " + (!lf ? "내일 다시"
                     : examCostWhy() === "streak" ? "연승 — 이 판은 공짜"
                     : examCostWhy() === "ticket" ? "끝말잇기 표로 공짜"
+                    : examCostWhy() === "share" ? "나눔 표로 공짜"
                     : "오늘 " + (examUsed() + 1) + "판째 · 옥 " + cost
                       + (gem < cost ? " (지금 " + gem + ")" : ""))
       : "더 오를 단이 없습니다";
+    // 세 길이 한자리에 보여야 "다 승단으로 모인다"가 읽힌다.
+    // 흩어 놓으면 설계는 맞는데 아무도 모른다.
+    if (el.examTk) {
+      var mk = function (v) { return v === 1 ? "\u2713" : v === 2 ? "씀" : "\u2014"; };
+      el.examTk.hidden = !d;
+      el.examTk.innerHTML = "오늘 표 · 끝말 <b>" + mk(kTicket())
+        + "</b> · 나눔 <b>" + mk(shrTicket()) + "</b>";
+    }
     el.btnExam.disabled = !d || !lf;
-    var byTicket = cost === 0 && examUsed() >= examFree() && kTicket() === 1;
+    var byTicket = cost === 0 && examUsed() >= examFree()
+      && (kTicket() === 1 || shrTicket() === 1);
     var poor = cost > 0 && gem < cost;
     el.btnExam.dataset.buy = poor ? "1" : "";
     el.btnExam.textContent = !d ? "끝"
@@ -6897,10 +6948,26 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     var shrLeft = kGet(shrKey, 0) === 0;
     function shrPay() {
       if (!shrLeft || kGet(shrKey, 0)) return;
-      kSet(shrKey, 1); gem += 1;
-      saveS(); drawStatsOnly(); drawTray();
+      kSet(shrKey, 1);
+      // 옥 한 알은 백십 원어치다. 이 게임이 마케팅비 없이 퍼지는 길이
+      // 이 단추 하나인데, 그 값으로는 손이 안 움직인다. 이 게임에서 가장
+      // 귀한 것 — 승단 시험 한 판 — 으로 바꾼다. 그러면 세 놀이가
+      // 하나로 모인다: 끝말잇기도, 오늘의 낱말도, 나눔도 호로 간다.
+      //
+      // 서른 단을 다 지난 분께는 표가 쓸모없다. 가장 열심인 분이 나눌
+      // 까닭을 잃으면 안 되므로, 그때는 옥 한 알로 돌린다.
+      // 오늘 네 판을 이미 다 본 분께 표를 드리면 쓸 데가 없다.
+      // 받은 보람이 없는 자리라 옥으로 돌린다. 총량만 본다 — 옥 세 판을
+      // 다 쓰셨어도 넷째 판이 남아 있으면 그 표가 바로 그 판을 연다.
+      if (nextDan() && examUsed() < EXAM_DAY_MAX) {
+        kSet(shrTicketKey(), 1);
+        toast("나눠 주셔서 고맙습니다 · 승단 시험 표 한 장");
+      } else {
+        gem += 1;
+        toast("나눠 주셔서 고맙습니다 · 옥 한 알");
+      }
+      saveS(); drawStatsOnly(); drawTray(); drawExam();
       if (window.SFX) SFX.up();
-      toast("나눠 주셔서 고맙습니다 · 옥 한 알");
       // 이미 받았는데 단추는 여전히 「오늘 처음 나누시면 옥 한 알」을
       // 적고 있었다. 눈앞에서 거짓말이 된다.
       try { cp.textContent = "카톡으로 보내기"; } catch (e) {}
@@ -6908,7 +6975,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
     var cp = document.createElement("button"); cp.className = "btn go";
     cp.innerHTML = "카톡으로 보내기"
-      + (shrLeft ? "<small>오늘 처음 나누시면 옥 한 알</small>" : "");
+      + (shrLeft ? ("<small>오늘 처음 나누시면 "
+          + (nextDan() ? "승단 시험 표 한 장" : "옥 한 알") + "</small>") : "");
     function fallbackCopy(t) {
       try {
         navigator.clipboard.writeText(t).then(
@@ -7669,8 +7737,11 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       return;
     }
     el.invAct.hidden = false;
-    el.invNote.textContent = "부르는 줄을 받아 오는 중입니다…";
-    sb().then(function (c) { return c.rpc("my_code"); })
+    if (!myCode) el.invNote.textContent = "부르는 줄을 받아 오는 중입니다…";
+    // 패는 한 번 받으면 변하지 않는다. 그릴 때마다 다시 물으면
+    // 한 판에 세 번씩 묻게 된다 — 셌은 그때마다 달라지므로 그것만 다시 묻는다.
+    (myCode ? Promise.resolve({ data: myCode })
+            : sb().then(function (c) { return c.rpc("my_code"); }))
       .then(function (r) {
         if (!r || !r.data) throw new Error("패가 없습니다");
         myCode = r.data;
@@ -8156,9 +8227,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 처음 깐 사람은 4.4초 전체를, 그 뒤로는 1.9초짜리를 본다.
   // 매번 보이되 매번 기다리게 하지는 않는다 — 둘은 같은 말이 아니다.
   var first = !tut.opened;
-  // 잠깐 나갔다 돌아온 것이라면 다시 틀지 않는다. 몇 초 사이에 두 번 보면
-  // 여는 영상이 아니라 같은 장면이 되풀이되는 것으로만 보인다.
-  if (Date.now() - (tut.openAt || 0) < 90000) {
+  // 새로고침을 연달아 눌렀을 때만 막는다. 90초로 두었더니 앱을 껐다
+  // 다시 켜는 보통의 걸음에서도 영상이 안 떴다. 15초면 되풀이만 걸린다.
+  if (Date.now() - (tut.openAt || 0) < 15000) {
     showGate(afterGate);
   } else {
     if (first) tut.opened = 1;
@@ -8358,7 +8429,16 @@ if ("serviceWorker" in navigator &&
     (location.protocol === "https:" || location.hostname === "localhost")) {
   // 고친 것이 폰에 안 닿으면 고친 보람이 없다. 새 판이 올라오면
   // 스스로 갈아타고 한 번만 새로 그린다.
-  var swSwapped = false;
+  //
+  // 다만 「처음 오신 분」은 빼야 한다.
+  //
+  // 처음 열면 일꾼이 그 자리에서 깔리고 clients.claim() 을 하는데, 그
+  // 갈아탐도 controllerchange 로 똑같이 온다. 그래서 처음 오신 분은
+  // 판이 뜨자마자 한 번 다시 그려졌다 — 카톡 카드를 눌러 들어온 사람의
+  // 첫인상이 깜빡임으로 시작한 것이다. 들어오는 길이 그것뿐인데.
+  //
+  // 이미 일꾼이 있던 사람만 다시 그린다. 그때가 진짜 「새 판이 왔다」이다.
+  var swSwapped = !navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", function () {
     if (swSwapped) return;
     swSwapped = true;
