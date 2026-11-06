@@ -2190,7 +2190,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-05-q";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6237,30 +6237,69 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       card.appendChild(fw);
     }
     // 단계를 넘기기 전이 수련하기 제일 좋은 때다. 방금 받은 냥이 손에 있고,
-    // 다음 판은 「시작」을 누를 때까지 기다려 준다.
-    // 졌을 때만, 다음 한 판을 수월하게 해 주는 길을 연다.
-    if (!won) {
-      var brow = document.createElement("div"); brow.className = "trow";
+    // 진 판을 다시 치는 길을 세 단으로 연다.
+    //
+    // 전에는 「기세 -20%(냥)」·「시간 +20초(광고 한 편)」가 한 줄에 있고,
+    // 「광고 보고 이 판 다시」가 그 아래 따로 있었다. 셋이 겹친다는 것을
+    // 화면이 말하지 않아 "둘 중 하나"로 읽혔고, 광고를 한 편 더 볼 까닭도
+    // 생기지 않았다.
+    //
+    // 받는 것을 앞에 적고 값을 뒤에 적어 한 줄씩 세운다. 아래로 갈수록
+    // 광고가 늘고 받는 것도 늘어, "한 편 더 보면 뭐가 더 붙나"가 눈에
+    // 보인다. 광고를 볼 까닭이 여기서 가장 커진다 — 못 깬 그 판을,
+    // 아까 안 떠오르던 낱말이 아직 머리에 남아 있을 때 치는 자리다.
+    //
+    //   광고 1편   같은 판 다시
+    //   광고 2편   같은 판 + 시간 +20초
+    //   광고 4편   같은 판 + 시간 +20초 + 기세 -20%
+    //
+    // 초는 「약」을 붙여 적는다. 광고 길이는 우리가 정하는 것이 아니라
+    // 그때 붙는 광고가 정한다 — 15초라 적어 놓고 30초가 나오면 속은 것이 된다.
+    var TIERS = [
+      { ads: 1, sec: 0,  hp: 0,    t: "이 판 다시",                 s: "약 15초" },
+      { ads: 2, sec: 20, hp: 0,    t: "이 판 다시 · 시간 +20초",      s: "약 30초" },
+      { ads: 4, sec: 20, hp: 0.20, t: "이 판 다시 · 시간 +20초 · 기세 -20%", s: "약 60초" }
+    ];
+    if (canRetry) {
+      TIERS.forEach(function (T) {
+        var b = document.createElement("button");
+        b.className = T.ads === 1 ? "btn go" : "btn";
+        b.innerHTML = T.t + "<small>광고 " + T.ads + "편 · " + T.s + "</small>";
+        // 오늘 남은 광고로 못 채우는 단은 잠근다
+        b.disabled = adsLeft() < T.ads;
+        if (b.disabled) b.innerHTML = T.t + "<small>오늘 광고가 "
+          + T.ads + "편 더 있어야 합니다</small>";
+        b.addEventListener("click", function () {
+          if (adsLeft() < T.ads) return;
+          var st = adState(); st.n += T.ads; adSave(st);
+          logEv("T", "adretry" + T.ads);
+          boost.sec = T.sec; boost.hp = T.hp;
+          var kb = lastBoard; lastBoard = null;
+          ov.remove();
+          el.portrait.classList.remove("down");
+          drawAd(); drawTray();
+          toast("같은 글자판으로 다시 들어갑니다"
+            + (T.sec ? " · 시간 +" + T.sec + "초" : "")
+            + (T.hp ? " · 기세 -" + Math.round(T.hp * 100) + "%" : ""));
+          start(true, kb);
+        });
+        card.appendChild(b);
+      });
+    }
+    // 광고를 다 보신 날에는 냥으로 가는 길 하나를 남긴다. 그날 도움이
+    // 아예 없으면 진 자리가 벌이 된다.
+    if (!won && !canRetry) {
       var rc = retryCost();
       var bg = document.createElement("button"); bg.className = "btn ghost";
-      bg.innerHTML = "기세 -20%<small>냥 " + rc.toLocaleString() + "</small>";
+      bg.innerHTML = "다음 판 기세 -20%<small>냥 " + rc.toLocaleString() + "</small>";
       bg.disabled = gold < rc;
       bg.addEventListener("click", function () {
         if (gold < rc) return;
         gold -= rc; boost.hp = 0.20; saveS(); drawStatsOnly();
-        bg.disabled = true; ba.disabled = true;
+        bg.disabled = true;
         toast("다음 한 판은 수호신의 기세가 20% 낮습니다");
       });
-      var ba = document.createElement("button"); ba.className = "btn ghost";
-      ba.innerHTML = "시간 +20초<small>광고 한 편</small>";
-      ba.addEventListener("click", function () {
-        boost.sec = 20;
-        bumpAd();                       // 광고 사다리에도 한 칸 얹는다
-        bg.disabled = true; ba.disabled = true;
-        toast("다음 한 판은 제한시간이 20초 깁니다");
-      });
-      brow.appendChild(bg); brow.appendChild(ba);
-      card.appendChild(brow);
+      card.appendChild(bg);
     }
 
     var row = document.createElement("div"); row.className = "trow";
@@ -6271,29 +6310,6 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.portrait.classList.remove("down");
       start(true);                       // 바로 들어간다
     });
-    // 광고에 할 일을 준다.
-    //
-    // 전에는 광고가 보급품과 보물함만 줬다. 그건 판과 아무 상관이 없어서
-    // "지금 이걸 왜 봐야 하지"가 안 생긴다. 못 깬 그 판을 다시 치는 자리에
-    // 두면 다르다 — 아까 안 떠오르던 낱말이 머리에 남아 있을 때니까.
-    //
-    // 새 글자판을 주면 그건 "다시"가 아니라 그냥 다음 판이다. 같은 판을
-    // 그대로 돌려준다. 목숨을 빼앗았다가 광고로 파는 것이 아니라,
-    // 안 해도 그만인 자리에 한 번 더를 얹어 주는 것이다.
-    if (canRetry) {
-      var ad = document.createElement("button"); ad.className = "btn go";
-      ad.innerHTML = "광고 보고 이 판 다시<small>같은 글자판 · 기세도 처음부터</small>";
-      ad.addEventListener("click", function () {
-        var st = adState(); st.n++; adSave(st); logEv("T", "adretry" + st.n);
-        var kb = lastBoard; lastBoard = null;
-        ov.remove();
-        el.portrait.classList.remove("down");
-        drawAd(); drawTray();
-        toast("같은 글자판으로 다시 들어갑니다");
-        start(true, kb);
-      });
-      card.appendChild(ad);
-    }
     var b2 = document.createElement("button"); b2.className = "btn";
     b2.innerHTML = "수련하기<small id=\"resGold\">냥 " + gold.toLocaleString() + "</small>";
     b2.addEventListener("click", function () {
