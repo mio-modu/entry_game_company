@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <meta charset="utf-8">
 <title>낱말산</title>
 <!-- 이게 없으면 크롬은 980픽셀짜리 화면인 줄 알고 통째로 줄여 그린다.
@@ -1715,7 +1716,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   </div>
 
   <div class="panel tlog" id="pLog">
-    <h2>시험판 기록 <small id="buildTag"></small></h2>
+    <h2>무슨 일이 있었는지 <small id="buildTag"></small></h2>
     <p id="logSum">아직 기록이 없습니다.</p>
     <div class="trow">
       <button class="btn" id="btnLog">기록 복사</button>
@@ -1776,6 +1777,21 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <pre class="diag" id="diagBox" hidden></pre>
     </div>
 
+    <p class="subh">친구 부르기</p>
+    <div class="lines">
+      <p>친구에게 부르는 줄을 보내시고, 그분이 <b>한 판</b>을 마치시면
+         <b>두 분 모두 옥 열 알</b>을 받으십니다.</p>
+      <p>온 분은 <b>로그인하시는 그 자리에서</b> 바로 받으십니다.
+         부르시는 쪽은 <b>열 분까지</b> 받으실 수 있습니다.</p>
+    </div>
+    <p class="cite" id="invNote"></p>
+    <div class="trow" style="margin-top:9px" id="invAct" hidden>
+      <button class="btn" id="btnInvShare">부르는 줄 보내기</button>
+      <button class="btn ghost" id="btnInvCopy">주소 복사</button>
+    </div>
+    <textarea id="invBox" class="codebox" hidden rows="2" readonly
+              spellcheck="false" autocomplete="off"></textarea>
+
     <p class="subh">기록 코드 — 로그인 없이 옮기기</p>
     <div class="lines">
       <p>로그인이 내키지 않으시면 이 방법도 있습니다. 기록을 <b>글 한 줄</b>로
@@ -1798,22 +1814,24 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <button class="btn ghost" id="btnCodeShare">다른 앱으로 보내기</button>
     </div>
     <p class="cite" id="codeNote" hidden></p>
-    <p class="subh">만든 이에게</p>
-    <div class="trow">
-      <button class="btn ghost" id="btnLogOpen">시험판 기록 보기</button>
-      <button class="btn ghost" id="btnRuleOpen">규칙 다시 보기</button>
-    </div>
+
     <!-- 전자상거래법은 파는 사람이 누구인지, 어떤 약속으로 파는지를
          사는 자리에서 닿을 수 있게 두라고 한다. 확률형 아이템 정보공개
          의무도 같은 자리에 둔다 — 보물함 확률은 살 때가 아니라 사기
          전에 볼 수 있어야 한다. -->
     <p class="subh">안내</p>
     <div class="trow">
+      <button class="btn ghost" id="btnRuleOpen">규칙 다시 보기</button>
       <button class="btn ghost" id="btnOdds">보물함 확률</button>
-      <button class="btn ghost" id="btnTerms">이용약관</button>
     </div>
     <div class="trow">
+      <button class="btn ghost" id="btnTerms">이용약관</button>
       <button class="btn ghost" id="btnPrivacy">개인정보 처리방침</button>
+    </div>
+
+    <p class="subh">잘 안 될 때</p>
+    <div class="trow">
+      <button class="btn ghost" id="btnLogOpen">만든 사람에게 알리기</button>
       <button class="btn ghost" id="btnErase">계정 지우기</button>
     </div>
   </div>
@@ -2121,6 +2139,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
+   "invNote","invAct","btnInvShare","btnInvCopy","invBox",
    "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -2299,7 +2318,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-j";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  try { document.documentElement.lang = "ko"; } catch (e) {}
+  var BUILD = "2026-11-06-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -4025,6 +4045,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       saveS(); drawStatsOnly(); drawTray();
     }
     dailySave(got, run.score);
+    inviteDone();                         // 부른 사람 몫은 여기서 나간다
     logEv("Z", got.length + "/" + run.ans.length);
     drawLog();
     if (window.SFX) { got.length >= run.ans.length ? SFX.win() : SFX.lose(); }
@@ -6880,6 +6901,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       saveS(); drawStatsOnly(); drawTray();
       if (window.SFX) SFX.up();
       toast("나눠 주셔서 고맙습니다 · 옥 한 알");
+      // 이미 받았는데 단추는 여전히 「오늘 처음 나누시면 옥 한 알」을
+      // 적고 있었다. 눈앞에서 거짓말이 된다.
+      try { cp.textContent = "카톡으로 보내기"; } catch (e) {}
     }
 
     var cp = document.createElement("button"); cp.className = "btn go";
@@ -6925,6 +6949,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       kakaoReady().then(function (K) {
         // 도메인이 안 맞으면 여기서 바로 틀어진다. 그 말을 그대로 받아 적는다.
         kkSend(K).sendDefault(kakaoCard());
+        // 옥 한 알은 공유 시트쪽에만 붙어 있었다. 정작 다들 누르는
+        // 주력은 이 카드 길인데, 여기로 보낸 사람만 빈손이었다.
+        shrPay();
       })["catch"](fell);
     });
     card.appendChild(cp);
@@ -7325,6 +7352,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 다만 서버가 빈손이거나 이쪽이 분명히 앞서 있으면 묻지 않고 올린다.
   function cloudSync() {
     if (!me) return;
+    // 불려 왔다고 아뢰고, 받아 갈 것이 있으면 받아 온다. 둘 다 서버가
+    // 아니라고 하면 아무 일도 안 일어난다.
+    inviteClaim().then(takeGrants);
+    drawInvite();
     cloudFetch().then(function (row) {
       var here = cloudRow();
       if (!row) { cloudPush(0); el.cloudNote.textContent = "이 폰의 기록을 서버에 올려 두었습니다"; return; }
@@ -7410,6 +7441,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     var inOut = !!me;
     el.cloudOut.hidden = inOut; el.cloudBtns.hidden = inOut;
     el.cloudWho.hidden = !inOut; el.cloudIn.hidden = !inOut; el.cloudIn2.hidden = !inOut;
+    drawInvite();
     if (inOut) {
       el.cloudWho.innerHTML = "<b>로그인되어 있습니다</b>"
         + (me.by === "kakao" ? "카카오" : "구글") + " 계정 · 저장할 때마다 자동으로 올라갑니다"
@@ -7556,6 +7588,113 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       });
   }
 
+  // ── 친구 부르기 ──────────────────────────────────────────────────
+  //
+  // 옥은 돈으로 사는 것이다. 폰이 "나 불러왔어요" 하는 말을 믿고 주면
+  // 그 말은 창 하나로 누구나 할 수 있다. 그래서 여기 있는 것은 아뢰는
+  // 일뿐이고, 줄지 말지는 서버만 정한다 (supabase/0002_invite.sql).
+  //
+  // 온 사람은 로그인하는 그 자리에서 받는다 — 받는 느낌이 없으면
+  // 로그인까지 가지 않는다. 부른 사람은 그이가 한 판을 끝내야 받는다 —
+  // 가짜 계정으로 캐내려면 매번 한 판씩 풀어야 해서 값이 안 맞는다.
+  var INV_CODE = "nathero-inv-code";   // 불려 온 사람이 들고 온 패
+  var INV_DONE = "nathero-inv-done";   // 한 판 아뢰기를 마쳤는가
+  var myCode = null;
+
+  // 주소에 붙어 온 패를 먼저 챙기고 주소는 지운다. 남겨 두면 새로고침마다
+  // 같은 패를 또 들고 오고, 사람 눈에도 지저분하다.
+  (function grabCode() {
+    try {
+      var m = (location.search || "").match(/[?&]r=([A-Za-z0-9]{8})(&|$)/);
+      if (!m) return;
+      if (!localStorage.getItem(INV_CODE)) {
+        localStorage.setItem(INV_CODE, m[1].toUpperCase());
+      }
+      history.replaceState(null, "", location.pathname + (location.hash || ""));
+    } catch (e) {}
+  })();
+
+  // 서버가 쌓아 둔 것을 받아 온다. 받는 것과 찍는 것이 서버 한 문장에
+  // 묶여 있어서 두 번 받아 갈 틈이 없다.
+  function takeGrants() {
+    if (!me) return Promise.resolve(0);
+    return sb().then(function (c) { return c.rpc("take_grants"); })
+      .then(function (r) {
+        var rows = (r && r.data) || [], n = 0;
+        for (var i = 0; i < rows.length; i++) n += rows[i].gem || 0;
+        if (!n) return 0;
+        gem += n; saveS(); drawStatsOnly(); drawTray();
+        if (window.SFX) SFX.up();
+        toast("친구 부르기 · 옥 " + n + "알이 들어왔습니다");
+        return n;
+      })["catch"](function () { return 0; });
+  }
+
+  function inviteClaim() {
+    var code = null;
+    try { code = localStorage.getItem(INV_CODE); } catch (e) {}
+    if (!me || !code) return Promise.resolve();
+    return sb().then(function (c) {
+      return c.rpc("claim_invite", { p_code: code });
+    }).then(function (r) {
+      // 서버가 무어라도 답했으면 다시 물을 일이 없다. 답이 없었으면
+      // (인터넷이 끊겼으면) 패를 그대로 두고 다음에 다시 묻는다.
+      if (!r || typeof r.data !== "string") return;
+      try { localStorage.removeItem(INV_CODE); } catch (e) {}
+      if (r.data === "ok") return takeGrants();
+    })["catch"](function () {});
+  }
+
+  function inviteDone() {
+    if (!me) return;
+    try { if (localStorage.getItem(INV_DONE)) return; } catch (e) {}
+    sb().then(function (c) { return c.rpc("invite_done"); })
+      .then(function (r) {
+        var v = r && r.data;
+        // "none" 은 아직 불려 온 적이 없다는 뜻이다. 나중에 불려 올 수도
+        // 있으므로 표를 찍지 않는다. 끝난 것은 ok 와 capped 뿐이다.
+        if (v === "ok" || v === "capped") {
+          try { localStorage.setItem(INV_DONE, "1"); } catch (e) {}
+        }
+      })["catch"](function () {});
+  }
+
+  // 설정의 「친구 부르기」 칸.
+  function drawInvite() {
+    if (!el.invNote) return;
+    if (!cloudOn()) { el.invNote.textContent = "아직 준비 중입니다"; return; }
+    if (!me) {
+      el.invAct.hidden = true; el.invBox.hidden = true;
+      el.invNote.textContent = "로그인하시면 부르는 줄이 생깁니다";
+      return;
+    }
+    el.invAct.hidden = false;
+    el.invNote.textContent = "부르는 줄을 받아 오는 중입니다…";
+    sb().then(function (c) { return c.rpc("my_code"); })
+      .then(function (r) {
+        if (!r || !r.data) throw new Error("패가 없습니다");
+        myCode = r.data;
+        el.invBox.value = inviteUrl();
+        el.invBox.hidden = false;
+        return sb().then(function (c) { return c.rpc("invite_count"); });
+      })
+      .then(function (r) {
+        var row = r && r.data && r.data[0];
+        var came = (row && row.came) || 0, played = (row && row.played) || 0;
+        el.invNote.textContent = came
+          ? came + "분이 오셨고, 그 가운데 " + played + "분이 한 판을 마치셨습니다"
+          : "아직 오신 분이 없습니다";
+      })["catch"](function (e) {
+        el.invNote.textContent = "부르는 줄을 받지 못했습니다 — 잠시 뒤 다시";
+      });
+  }
+  function inviteUrl() { return SITE + "?r=" + myCode; }
+  function inviteText() {
+    return "낱말산 — 빈칸에 들어갈 낱말을 찾는 게임입니다.\n"
+         + "이 줄로 들어가 한 판 하시면 두 분 모두 옥 열 알을 받습니다.\n"
+         + inviteUrl();
+  }
+
   // ── 기록 옮기기 ───────────────────────────────────────────────
   //
   // 결제에는 로그인이 필요 없다. Play 가 신원도 결제도 맡으므로 우리는
@@ -7627,6 +7766,42 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   });
 
   el.btnDiag.addEventListener("click", diag);
+
+  // 부르는 줄 보내기. 카톡 카드가 되면 카드로, 안 되면 공유 시트로,
+  // 그것도 안 되면 글을 눈앞에 펼친다 — 어디서 멈추든 보낼 길이 남는다.
+  if (el.btnInvShare) el.btnInvShare.addEventListener("click", function () {
+    if (!myCode) { toast("부르는 줄이 아직 없습니다"); return; }
+    var t = inviteText(), u = inviteUrl();
+    var NSi = window.NativeShare && window.NativeShare.ok() ? window.NativeShare : null;
+    kakaoReady().then(function (K) {
+      kkSend(K).sendDefault({
+        objectType: "feed",
+        content: {
+          title: "낱말산 · 같이 하실래요?",
+          description: "빈칸에 들어갈 낱말을 찾는 게임입니다.\n"
+                     + "한 판 하시면 두 분 모두 옥 열 알을 받습니다.",
+          imageUrl: SITE + "art/og.jpg",
+          imageWidth: 1200, imageHeight: 630,
+          link: { mobileWebUrl: u, webUrl: u }
+        },
+        buttonTitle: "낱말산 열어보기"
+      });
+    })["catch"](function () {
+      if (NSi) return NSi.send(t, "낱말산")["catch"](function () { el.invBox.hidden = false; });
+      if (navigator.share) return navigator.share({ text: t })["catch"](function () {});
+      el.invBox.hidden = false;
+      toast("위 주소를 복사해 보내세요");
+    });
+  });
+  if (el.btnInvCopy) el.btnInvCopy.addEventListener("click", function () {
+    if (!myCode) { toast("부르는 줄이 아직 없습니다"); return; }
+    el.invBox.hidden = false;
+    try {
+      navigator.clipboard.writeText(inviteUrl()).then(
+        function () { toast("주소를 복사했습니다"); },
+        function () { el.invBox.select(); });
+    } catch (e) { el.invBox.select(); }
+  });
   // 크롬에서 로그인을 마치고 앱으로 돌아오면 코드 한 장을 들고 온다.
   // 그 코드를 세션으로 바꾸는 것이 마지막 한 걸음이다.
   if (window.NativeAuth) {
