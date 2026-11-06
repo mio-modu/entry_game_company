@@ -2178,7 +2178,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-e";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2413,6 +2413,13 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     if (c < 0xAC00 || c > 0xD7A3) return "을";
     return ((c - 0xAC00) % 28) ? "을" : "를";
   }
+  // 받침을 보고 이/가를 고른다. 「선물이」 · 「광고가」.
+  function josaI(w) {
+    var c = w.charCodeAt(w.length - 1);
+    if (c < 0xAC00 || c > 0xD7A3) return "이";
+    return ((c - 0xAC00) % 28) ? "이" : "가";
+  }
+
   function josaEun(n) {
     var c = n.charCodeAt(n.length - 1);
     if (c < 0xAC00 || c > 0xD7A3) return "은";
@@ -6278,9 +6285,18 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       { ads: 2, sec: 20, hp: 0,    t: "이 판 다시 · 시간 +20초",      s: "약 30초" },
       { ads: 4, sec: 20, hp: 0.20, t: "이 판 다시 · 시간 +20초 · 기세 -20%", s: "약 60초" }
     ];
-    // 초는 광고 길이를 가리키는 말이다. 광고가 없을 때는 적을 까닭이 없다.
+    // 이 줄은 「값」을 적는 자리다.
+    //
+    // 광고가 있을 때는 「광고 1편」이 그대로 값으로 읽힌다 — 한 편 보고
+    // 받는 것이니까. 그런데 광고를 「선물」로 바꾸고 나니 「선물 1번」이
+    // 받는 것으로 읽혔다. 값을 적는 자리에 상을 적은 꼴이다.
+    //
+    // 광고가 없을 때 실제로 치르는 것은 하루 열 번뿐인 그 몫이다.
+    // 그러니 그대로 적는다 — 「오늘 몫에서 1번」.
     function tierCost(T) {
-      return AD_T.w + " " + T.ads + AD_T.u + (AD_T.sec ? " · " + T.s : "");
+      return AD_T.sec
+        ? AD_T.w + " " + T.ads + AD_T.u + " · " + T.s
+        : "오늘 몫에서 " + T.ads + AD_T.u;
     }
     if (canRetry) {
       TIERS.forEach(function (T) {
@@ -6289,8 +6305,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         b.innerHTML = T.t + "<small>" + tierCost(T) + "</small>";
         // 오늘 남은 몫으로 못 채우는 단은 잠근다
         b.disabled = adsLeft() < T.ads;
-        if (b.disabled) b.innerHTML = T.t + "<small>오늘 " + AD_T.w + "가 "
-          + T.ads + AD_T.u + " 더 있어야 합니다</small>";
+        if (b.disabled) b.innerHTML = T.t + "<small>오늘 " + AD_T.w
+          + josaI(AD_T.w) + " " + T.ads + AD_T.u + " 더 있어야 합니다</small>";
         b.addEventListener("click", function () {
           if (adsLeft() < T.ads) return;
           var st = adState(); st.n += T.ads; adSave(st);
