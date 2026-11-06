@@ -1548,28 +1548,16 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
          것인데, 횟수가 하루 단위라고 해서 사는 일이 하는 일이 되지는 않는다. -->
     <p class="subh">냥을 옥으로</p>
     <div id="exchange"></div>
-    <p class="subh">광고</p>
+    <p class="subh" id="adHead"></p>
     <div class="up">
       <div>
-        <div class="t">광고 일곱 편에 보물함 하나</div>
+        <div class="t" id="adTitle"></div>
         <div class="d" id="adWhat"></div>
         <div class="addots" id="adDots"></div>
       </div>
-      <button id="btnAd">광고 보기</button>
+      <button id="btnAd"></button>
     </div>
-    <div class="lines">
-      <p>보물함은 <b>열 판</b>을 깨야 하나 나옵니다.</p>
-      <p>광고로 그만큼을 채우려면 <b>스무 편</b>이 넘습니다.</p>
-      <p class="pivot">그래서 광고는 <b>다른 것</b>을 줍니다.</p>
-      <p><b>두 편</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>
-      <p class="pivot"><b>세 편</b>마다 <b>옥 한 알</b>.
-         옥은 <b>승단 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고,
-         <b>냥으로는 살 수 없습니다.</b></p>
-      <p><b>일곱 편</b>이면 보물함 하나. 여기엔 장비도 들어 있습니다.</p>
-      <p>다만 등급은 <b>지금 오른 산까지</b>입니다 — 더 좋은 것은
-         <b>산을 올라야</b> 나옵니다.</p>
-      <p>이미 가진 장비가 나와도 버려지지 않습니다 — <b>겹쳐져 더 세집니다.</b></p>
-    </div>
+    <div class="lines" id="adLines"></div>
   </div>
 
   <div class="panel" id="pToday">
@@ -2001,7 +1989,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   var el = {};
   ["gold","stageNo","mtName","timer","portrait","pimg","bossName","bossHint","hp","hpNow",
    "hpMax","floaters","gFound","gTotal","gNote","slots","hints","slot","ruleNote","tiles","btnClear","btnHint",
-   "adSub","adWhat","adDots","btnAd","gemShop","gemNote","ho","danBadge","guide","btnIntro","btnOpening",
+   "adSub","adWhat","adDots","btnAd","adHead","adTitle","adLines","gemShop","gemNote","ho","danBadge","guide","btnIntro","btnOpening",
    "btnCodeMake","btnCodeUse","btnCodeCopy","btnCodeLoad","codeBox","codeAct","codeNote",
    "codeAct2","btnCodeFile","btnCodeShare",
    "cloudBox","cloudOut","cloudBtns","cloudWho","cloudIn","cloudIn2","cloudNote",
@@ -2190,7 +2178,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2328,6 +2316,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   // 광고를 붙이는 날 함께 연다. 그날 값과 기간을 같이 정해야 한다 —
   // 한 번 내고 영영 받는 꼴로는 어떤 값을 매겨도 맞지 않는다.
   var ADS_LIVE = 0;
+
+  // 광고가 붙기 전까지 이 자리를 뭐라 부를 것인가.
+  //
+  // 자리와 보상은 그대로 두고 말만 바꾼다. 「광고 보기」라고 적어 놓고
+  // 광고를 안 틀면 적힌 것과 하는 일이 다르다 — 심사에서 「기능
+  // 오작동·오해를 부르는 설명」으로 걸리는 자리고, 걸리면 재심사에
+  // 며칠이 날아간다. 굳이 질 까닭이 없는 판이다.
+  //
+  // ADS_LIVE 를 1로 올리면 말이 통째로 광고로 돌아온다. 보상도 밸런스도
+  // 건드리지 않으므로, 나중에 붙일 때 고칠 곳은 이 한 줄과 adBreak 호출뿐이다.
+  var AD_T = ADS_LIVE
+    ? { w: "광고", u: "편", btn: "광고 보기", none: "광고 없음", sec: 1 }
+    : { w: "선물", u: "번", btn: "오늘의 선물", none: "선물 없음", sec: 0 };
   var stage = 0, gold = 0, gem = 5, bag = { brush: 0, ink: 0, charm: 0 }, run = null, picked = [], timerId = null, toastT = null;
 
   // ── 시험판 기록 ─────────────────────────────────────────────────────
@@ -3574,7 +3575,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     var why = examCostWhy(), cost = examNowCost();
     if (cost) {
       if (gem < cost) {
-        toast("옥 " + cost + josaGa(cost) + " 있어야 봅니다 · 수호신·완전 격파·광고로 나옵니다");
+        toast("옥 " + cost + josaGa(cost) + " 있어야 봅니다 · 수호신·완전 격파·"
+          + AD_T.w + "로 나옵니다");
         return;
       }
       gem -= cost; saveS(); drawStatsOnly(); spent(0, cost);
@@ -5725,7 +5727,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     });
     el.gemNote.textContent = inApp()
       ? (firstBuy ? "" : "첫 구매는 옥을 곱절로 드립니다")
-      : "옥은 앱에서만 사실 수 있습니다 · 수호신·완전 격파·광고로도 나옵니다";
+      : "옥은 앱에서만 사실 수 있습니다 · 수호신·완전 격파·"
+        + AD_T.w + "로도 나옵니다";
   }
 
   // 광고를 없앤 사람에게는 광고로 받던 몫을 그냥 준다.
@@ -5745,8 +5748,23 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     drawHo();
     drawTray();
     var n = adState().n, left = adsLeft(), cap = adCap();
-    el.adSub.textContent = noAds ? "광고 없음"
-      : left ? "오늘 " + n + " / " + AD_DAY + "편" : "오늘 몫을 다 봤습니다";
+    var W = AD_T.w, U = AD_T.u;
+    el.adHead.textContent = W;
+    el.adTitle.textContent = W + " 일곱 " + U + "에 보물함 하나";
+    el.adLines.innerHTML =
+        "<p>보물함은 <b>열 판</b>을 깨야 하나 나옵니다.</p>"
+      + "<p>" + W + "로 그만큼을 채우려면 <b>스무 " + U + "</b>이 넘습니다.</p>"
+      + "<p class=\"pivot\">그래서 " + W + josaEun(W) + " <b>다른 것</b>을 줍니다.</p>"
+      + "<p><b>두 " + U + "</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>"
+      + "<p class=\"pivot\"><b>세 " + U + "</b>마다 <b>옥 한 알</b>. "
+      + "옥은 <b>승단 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고, "
+      + "<b>냥으로는 살 수 없습니다.</b></p>"
+      + "<p><b>일곱 " + U + "</b>이면 보물함 하나. 여기엔 장비도 들어 있습니다.</p>"
+      + "<p>다만 등급은 <b>지금 오른 산까지</b>입니다 — 더 좋은 것은 "
+      + "<b>산을 올라야</b> 나옵니다.</p>"
+      + "<p>이미 가진 장비가 나와도 버려지지 않습니다 — <b>겹쳐져 더 세집니다.</b></p>";
+    el.adSub.textContent = noAds ? AD_T.none
+      : left ? "오늘 " + n + " / " + AD_DAY + U : "오늘 몫을 다 받으셨습니다";
     // 점 열 개로 어디까지 왔는지 보여 준다. 일곱째가 함이다.
     var dots = "";
     for (var i = 1; i <= AD_DAY; i++) {
@@ -5754,12 +5772,12 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         + (i === AD_CHEST_EVERY ? "big" : i % AD_SMALL === 0 ? "mid" : "") + '"></i>';
     }
     el.adDots.innerHTML = dots;
-    el.adWhat.textContent = !left ? "내일 다시 열 편"
-      : n === AD_CHEST_EVERY - 1 ? "한 편만 더 보시면 보물함이 열립니다"
-      : "두 편마다 보급품 · 세 편마다 옥 · 일곱 편이면 보물함 ("
+    el.adWhat.textContent = !left ? "내일 다시 열 " + U
+      : n === AD_CHEST_EVERY - 1 ? "한 " + U + "만 더 받으시면 보물함이 열립니다"
+      : "두 " + U + "마다 보급품 · 세 " + U + "마다 옥 · 일곱 " + U + "이면 보물함 ("
         + TIER[cap] + "까지)";
     el.btnAd.disabled = !left;
-    el.btnAd.textContent = left ? "광고 보기" : "내일";
+    el.btnAd.textContent = left ? AD_T.btn : "내일";
   }
 
   function drawTrain() {
@@ -6260,15 +6278,19 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       { ads: 2, sec: 20, hp: 0,    t: "이 판 다시 · 시간 +20초",      s: "약 30초" },
       { ads: 4, sec: 20, hp: 0.20, t: "이 판 다시 · 시간 +20초 · 기세 -20%", s: "약 60초" }
     ];
+    // 초는 광고 길이를 가리키는 말이다. 광고가 없을 때는 적을 까닭이 없다.
+    function tierCost(T) {
+      return AD_T.w + " " + T.ads + AD_T.u + (AD_T.sec ? " · " + T.s : "");
+    }
     if (canRetry) {
       TIERS.forEach(function (T) {
         var b = document.createElement("button");
         b.className = T.ads === 1 ? "btn go" : "btn";
-        b.innerHTML = T.t + "<small>광고 " + T.ads + "편 · " + T.s + "</small>";
-        // 오늘 남은 광고로 못 채우는 단은 잠근다
+        b.innerHTML = T.t + "<small>" + tierCost(T) + "</small>";
+        // 오늘 남은 몫으로 못 채우는 단은 잠근다
         b.disabled = adsLeft() < T.ads;
-        if (b.disabled) b.innerHTML = T.t + "<small>오늘 광고가 "
-          + T.ads + "편 더 있어야 합니다</small>";
+        if (b.disabled) b.innerHTML = T.t + "<small>오늘 " + AD_T.w + "가 "
+          + T.ads + AD_T.u + " 더 있어야 합니다</small>";
         b.addEventListener("click", function () {
           if (adsLeft() < T.ads) return;
           var st = adState(); st.n += T.ads; adSave(st);
@@ -6676,14 +6698,14 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     logEv("T", "ad" + st.n);
 
     if (st.n === AD_CHEST_EVERY) {               // 일곱 편 — 진짜 함
-      toast("시험판에서는 광고 없이 바로 열립니다");
+      toast("시험판에서는 기다림 없이 바로 열립니다");
       openChest(topMountain(), function () { drawAd(); }, adCap(), GEAR_BOSS, 0.8);
       return;
     }
     if (st.n % AD_GEM_EVERY === 0) {             // 세 편 — 옥 한 알
       gem++; saveS(); drawStatsOnly();
       if (window.SFX) SFX.up();
-      toast("광고 " + st.n + " / " + AD_DAY + " · 옥 한 알을 받았습니다");
+      toast(AD_T.w + " " + st.n + " / " + AD_DAY + " · 옥 한 알을 받았습니다");
       return;
     }
     if (st.n % AD_SMALL === 0) {                 // 두 편 — 보급품
@@ -6698,7 +6720,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       toast("보급품 · " + got.t + " · 냥 +" + coinGot.toLocaleString());
       return;
     }
-    toast("광고 " + st.n + " / " + AD_DAY + " · 두 편마다 보급품, 일곱 편이면 보물함");
+    toast(AD_T.w + " " + st.n + " / " + AD_DAY + " · 두 " + AD_T.u
+      + "마다 보급품, 일곱 " + AD_T.u + "이면 보물함");
   });
 
   el.btnIntro.addEventListener("click", function () { showIntro(true); });
