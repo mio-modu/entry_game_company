@@ -236,6 +236,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   font-size: 10px; font-weight: 700; white-space: nowrap;
   background: var(--jade); color: #06201B; border-radius: 20px; padding: 2px 8px;
 }
+/* 「첫 구매 곱절」은 금빛으로. 사는 자리에서 가장 센 말이라 색도 가장 세다. */
+.gempack .flag.gold { background: var(--gold); color: #1A1206; }
 /* 내 물건. 소모품이 장터 줄 귀퉁이에 "1개"로만 적혀 있어서, 내가 무엇을
    몇 개 쥐고 있는지 한 번에 볼 자리가 없었다. */
 /* 보는 곳. 숫자가 자랑이 되게 큼직하게 적는다. */
@@ -2178,7 +2180,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
     return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
   }
 
-  var BUILD = "2026-11-06-e";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-06-f";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2262,7 +2264,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       localStorage.setItem(SKEY, JSON.stringify(
         { gold: gold, gem: gem, stage: stage, bag: bag, up: up, fails: fails,
           gear: gear, steps: steps, forge: forge, dan: dan,
-          noAds: noAds, firstBuy: firstBuy, gran: 3 }));
+          noAds: noAds, bought: bought, gran: 3 }));
     } catch (e) {}
     cloudLater();          // 이어 두셨으면 한 숨 뒤에 서버로도 간다
     idbLater();            // 그리고 이 기기 안에서도 한 벌 더
@@ -2276,7 +2278,11 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       stage = v.stage || 0;
       dan = v.dan || 0;
       noAds = v.noAds || 0;
-      firstBuy = v.firstBuy || 0;
+      // 옛 기록에는 firstBuy 한 칸뿐이다. 어느 꾸러미를 샀는지는 안 남겼으므로
+      // 가장 작은 것을 썼다고 본다 — 남은 둘은 아직 곱절이다. 먼저 와 주신
+      // 분에게서 거두는 쪽보다 얹어 드리는 쪽이 맞다.
+      bought = (v.bought && typeof v.bought === "object") ? v.bought
+             : (v.firstBuy ? { gem_10: 1 } : {});
       function fold(dst, src) {
         if (!src) return dst;
         for (var k in dst) if (src[k] != null) dst[k] = src[k];
@@ -2303,7 +2309,24 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
 
   var dan = 0;                      // 승단 시험으로 받은 단
-  var noAds = 0, firstBuy = 0;      // 광고 없애기 · 첫 구매를 썼는가
+  var noAds = 0;                    // 광고 없애기를 샀는가
+
+  // 「첫 구매 곱절」을 사람 단위에서 꾸러미 단위로 옮긴다.
+  //
+  // 전에는 firstBuy 한 칸이라, 한 줌(10알)을 한 번 사면 그걸로 끝이었다.
+  // 한 자루와 한 궤는 영영 제값이다. 그런데 처음 사는 사람은 작은 것부터
+  // 집어 보는 법이라, 곱절이 가장 작은 꾸러미에서 한 번 쓰이고 사라졌다.
+  // 큰 꾸러미로 올라갈 까닭이 거기서 없어진다.
+  //
+  // 꾸러미마다 한 번씩 둔다. 한 줌을 사 본 사람에게 한 자루는 아직
+  // 곱절이고, 한 자루를 사 본 사람에게 한 궤가 아직 곱절이다. 올라갈수록
+  // 한 번 더 좋은 일이 있으니 올라가 볼 까닭이 선다.
+  var bought = {};                  // { gem_10: 1, gem_55: 1, ... }
+  function paidEver() {
+    if (noAds) return 1;
+    for (var k in bought) if (bought[k]) return 1;
+    return 0;
+  }
 
   // 광고 사업자의 코드가 아직 안 들어 있다. 「광고 보기」는 광고를 띄우지
   // 않고 보상만 준다. 그런데 장터에서는 「광고 없애기」를 팔고 있었다 —
@@ -3184,7 +3207,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       toast("광고가 사라졌습니다 · 옥은 하루 세 알씩 그냥 들어옵니다");
     } else {
       var n = x.n;
-      if (!firstBuy) { firstBuy = 1; n *= 2; toast("첫 구매 · 옥을 곱절로 드립니다"); }
+      if (!bought[x.id]) {
+        bought[x.id] = 1; n *= 2;
+        toast(x.t + " 첫 구매 · 옥을 곱절로 드립니다");
+      }
       gem += n;
       toast(x.t + " · 옥 +" + n);
     }
@@ -5701,7 +5727,10 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
         + '<b class="n">옥 ' + x.n + '</b>'
         + '<span class="nm">' + x.t.replace("옥 ", "") + '</span>'
         + '<span class="pz">' + (skuPrice[x.id] || (inApp() ? "…" : "앱에서")) + '</span>';
-      if (x.best) html = '<span class="flag">많이 고름</span>' + html;
+      // 뱃지는 한 자리뿐이다. 「첫 구매 곱절」이 「많이 고름」보다 센 말이라
+      // 아직 안 사신 꾸러미에는 그쪽을 먼저 보여 준다.
+      if (!bought[x.id]) html = '<span class="flag gold">첫 구매 옥 2배</span>' + html;
+      else if (x.best) html = '<span class="flag">많이 고름</span>' + html;
       c.innerHTML = html;
       // 수묵 그림이 들어와 있으면 조용히 갈아 끼운다. 없으면 붓그림 그대로다.
       // 소모품과 같은 길이라 셋을 한꺼번에 넣지 않아도 어긋나지 않는다.
@@ -5732,8 +5761,9 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       row.appendChild(L); row.appendChild(b);
       el.gemShop.appendChild(row);
     });
+    var left2 = SKUS.filter(function (x) { return !x.once && !bought[x.id]; }).length;
     el.gemNote.textContent = inApp()
-      ? (firstBuy ? "" : "첫 구매는 옥을 곱절로 드립니다")
+      ? (left2 ? "금빛이 붙은 꾸러미는 처음 사실 때 옥이 곱절입니다" : "")
       : "옥은 앱에서만 사실 수 있습니다 · 수호신·완전 격파·"
         + AD_T.w + "로도 나옵니다";
   }
@@ -6938,7 +6968,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
   }
   function drawSaveBar() {
     if (!el.saveBar) return;
-    var worth = stage >= 5 || firstBuy || gem >= 20;
+    var worth = stage >= 5 || paidEver() || gem >= 20;
     // 「시작」 띠가 떠 있는 동안은 비켜 준다. 띠 둘이 한꺼번에 서면
     // 글자판이 화면 밖으로 밀린다 — 한 화면에 담기로 한 약속이 먼저다.
     el.saveBar.hidden = !(cloudOn() && !me && worth && !saveHushed());
@@ -6948,7 +6978,7 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
       el.tSet.classList.toggle("lit", !!ask);
     }
     if (!el.saveBar.hidden) {
-      el.saveSub.textContent = firstBuy ? "사신 옥도 사라집니다"
+      el.saveSub.textContent = paidEver() ? "사신 옥도 사라집니다"
                                         : (stage + 1) + "단계가 사라집니다";
     }
   }
