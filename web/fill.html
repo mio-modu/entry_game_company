@@ -31,10 +31,42 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="낱말산">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400..700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<!-- 글꼴을 품고 다닌다.
+     전에는 매번 구글에서 받아 왔다. 웹에서는 탈이 없었지만 앱에서는
+     인터넷이 없는 첫 실행에 기본 글꼴로 떨어졌다 — 「인터넷이 없어도
+     열립니다」라고 적어 놓고 생김새가 통째로 달라졌다.
+
+     통짜 다섯 벌은 22MB 다. 이 게임이 쓰는 글자는 2,434 자뿐이라
+     그만큼만 잘라 담으니 651KB 가 됐다. 사전에 없는 글자는 애초에
+     화면에 뜨지 않으므로 잘라도 빈칸이 생기지 않는다. -->
 <style>
+@font-face{font-family:"Gowun Batang";font-style:normal;font-weight:400;font-display:swap;
+  src:url("font/GowunBatang-400.woff2") format("woff2")}
+@font-face{font-family:"Gowun Batang";font-style:normal;font-weight:700;font-display:swap;
+  src:url("font/GowunBatang-700.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans KR";font-style:normal;font-weight:400;font-display:swap;
+  src:url("font/NotoSansKR-400.woff2") format("woff2")}
+@font-face{font-family:"Noto Sans KR";font-style:normal;font-weight:700;font-display:swap;
+  src:url("font/NotoSansKR-700.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-style:normal;font-weight:500;font-display:swap;
+  src:url("font/IBMPlexMono-500.woff2") format("woff2")}
+</style>
+<style>
+/* 안전영역 — 삼성 폰 아래의 「‖ ○ ‹」줄이 게임을 먹던 자리.
+ *
+ * 큰 판에서는 env(safe-area-inset-*) 가 제값을 주지만, 안드로이드
+ * 웹뷰 140판 아래에서는 0 을 준다. 그 때 Capacitor 가 대신
+ * --safe-area-inset-* 라는 변수에 값을 넣어 준다
+ * (SystemBars.java · injectSafeAreaCSS). 우리는 env() 만 보고 있었고,
+ * 그래서 아래 메뉴줄과 「닫기」가 폰 단추줄 밑으로 깔렸다.
+ *
+ * 둘 다 본다. 변수가 있으면 그걸, 없으면 env(), 그리고 0.
+ * 여기서 한 번만 정해 두고 밖에서는 --sa-* 만 쓴다. */
 :root {
+  --sa-t: var(--safe-area-inset-top,    env(safe-area-inset-top,    0px));
+  --sa-r: var(--safe-area-inset-right,  env(safe-area-inset-right,  0px));
+  --sa-b: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --sa-l: var(--safe-area-inset-left,   env(safe-area-inset-left,   0px));
   --bg: #11131A; --surface: #1A1D27; --surface-2: #242838; --line: #333950;
   --fg: #ECEAE3; --fg-dim: #969BB3; --fg-faint: #656B85;
   --accent: #D6453A; --gold: #C9A227; --jade: #4A9E8F; --danger: #E0683C;
@@ -324,10 +356,10 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
 .sizer button:nth-child(3) { font-size: 19px; }
 .wrap { max-width: 460px; margin: 0 auto; display: flex;
   flex-direction: column; gap: 9px;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-  padding-block: calc(9px + env(safe-area-inset-top, 0px))
-                 calc(11px + env(safe-area-inset-bottom, 0px)); }
+  padding-left: max(14px, var(--sa-l));
+  padding-right: max(14px, var(--sa-r));
+  padding-block: calc(9px + var(--sa-t))
+                 calc(11px + var(--sa-b)); }
 h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 700; }
 p { margin: 0; }
 button { font-family: inherit; cursor: pointer; border: 0; }
@@ -730,7 +762,7 @@ body.quake { animation: shake .42s ease-out; }
    크게 잘려 나가 무슨 장면인지 알 수 없게 된다 — 거기서는 전부 보인다. */
 @media (min-aspect-ratio: 3/4) { .opening video { object-fit: contain; } }
 .opening .oskip {
-  position: absolute; right: 16px; bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  position: absolute; right: 16px; bottom: calc(22px + var(--sa-b));
   background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
   color: var(--fg); font-family: inherit; font-size: 13px; letter-spacing: .5px;
   padding: 9px 16px; border-radius: 999px; cursor: pointer;
@@ -1037,7 +1069,8 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
    넘칠 때는 잘라 먹지 않고 굴러가도록 safe center 로 둔다. */
 .ov { position: fixed; inset: 0; z-index: 30; background: rgba(8,9,13,.92);
   display: grid; justify-items: center; align-content: safe center;
-  overflow-y: auto; padding: 16px; }
+  overflow-y: auto;
+  padding: 16px max(16px, var(--sa-r)) calc(16px + var(--sa-b)) max(16px, var(--sa-l)); }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 22px; max-width: 360px; width: 100%; display: flex; flex-direction: column;
   gap: 13px; text-align: center; }
@@ -1312,22 +1345,63 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 .ov .card table.odds + .lead{margin-top:14px}
 
 /* 광고 진행. 열째 점이 보물함이다. */
-.addots { display: flex; gap: 5px; align-items: center; margin-top: 8px; }
+/* 걸음표.
+   점 크기와 색만으로는 무엇이 오는지 안 읽혔다. 그림과 숫자를 함께
+   세운다 — 지난 걸음은 또렷하고 앞으로 올 걸음은 흐리다.
+
+   흐리기를 너무 세게 잡으면 아직 한 걸음도 안 걸은 날에 열 자리가
+   다 사라져 무엇을 받게 되는지 보이지 않는다. 받침을 깔아 자리를
+   잡아 주고, 흐린 쪽도 알아볼 만큼은 남긴다. */
+.addots { display: flex; gap: 3px; align-items: flex-end; margin-top: 11px; }
 .addots i {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--line); flex: none;
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
 }
-.addots i.mid { width: 9px; height: 9px; }
-/* 누를 것이 아니라 차는 것이라 단추 자리에 숫자만 선다. */
-.adnow { flex: none; text-align: center; font-family: var(--font-display);
-  font-size: 19px; font-weight: 700; color: var(--gold); white-space: nowrap; }
-.adnow small { display: block; font-family: var(--font-body); font-size: 10.5px;
-  font-weight: 400; color: var(--fg-dim); margin-top: 1px; }
-.addots i.big { width: 13px; height: 13px; margin-left: 3px; box-shadow: 0 0 0 1px var(--line); }
-.addots i.on { background: var(--gold); }
-.addots i.big.on { background: var(--gold); box-shadow: 0 0 10px rgba(201,162,39,.8); }
+.addots i em {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; aspect-ratio: 1; max-width: 30px; border-radius: 9px;
+  background: #20242F; border: 1px solid #2E3344;
+}
+.addots i svg { width: 21px; height: 21px; opacity: .5; }
+.addots i.on em { background: #2B3142; border-color: #3E465C; }
+.addots i.on svg { opacity: 1; }
+.addots i.big em { background: #2A2416; border-color: #4A3F1E; }
+.addots i.big svg { width: 24px; height: 24px; }
+.addots i.big.on em { background: #3A301A; border-color: var(--gold);
+  box-shadow: 0 0 9px rgba(201,162,39,.45); }
+/* 아무것도 없는 걸음 */
+.addots i s { display: block; width: 7px; height: 7px; border-radius: 50%;
+  background: #3A4054; }
+.addots i.on s { background: var(--fg-faint); }
+.addots i b { font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
+  color: var(--fg-faint); line-height: 1; }
+.addots i.on b { color: var(--gold); }
+
+/* 오른쪽에 선 숫자. 스타일이 없어 「0 / 7완전 격파」로 붙어 있었다. */
+.adnow { flex: 0 0 auto; text-align: center; min-width: 58px;
+  font-family: var(--font-display); font-size: 19px; font-weight: 700;
+  color: var(--gold); white-space: nowrap; line-height: 1.15; }
+.adnow small { display: block; font-family: var(--font-body); font-size: 10px;
+  font-weight: 400; color: var(--fg-dim); margin-top: 2px; }
 
 .tray {
   display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 18px;
+}
+
+/* 짧은 화면에서는 숨통을 줄인다.
+ *
+ * 360×740 에서 41px 가 넘쳤다. 그만큼 아래 메뉴줄이 폰 단추줄
+ * 밑으로 내려가 「상점·설정」이 안 보였다. 쓸어올리면 보이긴
+ * 하지만, 매일 드나드는 자리를 매일 쓸어올리게 놓으면 그만큼 안 누른다.
+ *
+ * 글씨나 그림은 건드리지 않는다 — 사이만 줄인다.
+ * 넓은 폰에서는 아무것도 달라지지 않는다. */
+@media (max-height: 800px) {
+  .wrap { gap: 6px;
+    padding-block: calc(6px + var(--sa-t)) calc(8px + var(--sa-b)); }
+  .tray { margin-top: 8px; }
+  .tbtn { padding: 7px 4px 6px; }
+  .modes .mode { padding: 6px 7px; }
 }
 .tbtn {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -1356,7 +1430,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 }
 .card.sheet .shut {
   flex: none; margin: 0; border-radius: 0; border: 0; border-top: 1px solid var(--line);
-  background: var(--surface-2); padding: 14px 8px; font-size: 15px;
+  background: var(--surface-2); font-size: 15px;
+  /* 아래쪽은 폰 단추줄만큼 더 놓는다. 삼성 폰에서
+     「닫기」 글자를 ○ 단추가 밟고 서 있었다. */
+  padding: 14px 8px calc(14px + var(--sa-b));
 }
 /* 지갑.
    값을 치르는 자리에서 가진 것이 안 보이면, 살 수 있는지 없는지를
@@ -1432,6 +1509,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     <circle cx="12" cy="12" r="10.5" fill="none" stroke="#1D4433" stroke-width="2"/>
     <ellipse cx="8.6" cy="8.2" rx="3.4" ry="2.2" fill="#FFFFFF" opacity=".6"
              transform="rotate(-32 8.6 8.2)"/>
+  </symbol>
+  <!-- 보물함. 뚜껑과 몸을 가르는 띠와 가운데 장석 하나. 작게 줄여도
+       「함」으로 읽히는 것은 그 둘뿐이라 나머지는 넣지 않는다. -->
+  <symbol id="i-chest" viewBox="0 0 24 24">
+    <path d="M3.4 9.6c0-3 3.9-5 8.6-5s8.6 2 8.6 5v2.2H3.4z"
+          fill="#B08A52" stroke="#4B3A1F" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M3.4 11.8h17.2v6.4a1.4 1.4 0 0 1-1.4 1.4H4.8a1.4 1.4 0 0 1-1.4-1.4z"
+          fill="#A3814C" stroke="#4B3A1F" stroke-width="1.8" stroke-linejoin="round"/>
+    <rect x="3.4" y="11.3" width="17.2" height="1.9" fill="#7E6134"
+          stroke="#4B3A1F" stroke-width="1.2"/>
+    <rect x="10.1" y="12.9" width="3.8" height="4.2" rx="0.8"
+          fill="#D9B35B" stroke="#4B3A1F" stroke-width="1.4"/>
   </symbol>
 </defs></svg>
 
@@ -2064,6 +2153,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 가장 작은 단위(힌트 한 걸음 = 옥 1)를 기준으로 나머지를 다시 맞춘다.
   var BOSS_GEM = 3, PERFECT_GEM = 1, AD_GEM_EVERY = 3;
+  // PERFECT_GEM 과 PERFECT_GEM_DAY 는 지금 쓰이지 않는다. 완전 격파의 상을
+  // 걸음표 하나로 모았기 때문이다. 지우지 않고 둔다 — 광고가 붙는 날
+  // 걸음은 광고가 채우게 되므로, 그때 「맨손으로 깬 판」의 몫을 여기서
+  // 다시 낼 자리다.
   // 완전 격파의 옥은 두 가지 조건을 단다.
   //
   // 첫째, 맨손이어야 한다. 옥으로 빈칸을 열어 완전 격파를 하면 그 옥이
@@ -2387,6 +2480,13 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 서버를 두지 않는다. 계정이 있어야 쓸 수 있는 저장소는 지인 열 명에게
   // 통하지 않는다. 기기 안에만 쌓고, 본인이 단추를 눌렀을 때만 글로 바꿔 준다.
+  // 남에게 건네는 주소.
+  //
+  // location.href 를 쓰면 안 된다. 앱 안에서는 그게 https://localhost 라,
+  // 받은 사람이 눌러도 아무 데도 닿지 않는다. 공유는 광고비 없이 퍼지는
+  // 유일한 길인데 거기가 통째로 끊겨 있었다. 집 주소는 하나다.
+  var SITE = "https://wordgamebest.vercel.app/";
+
   var LKEY = "nathero-test-log";
   var LOG = { id: "", t0: 0, at: 0, n: 0, best: 1, ev: [], hint: 0, end: 0, bonus: 0, secs: [], src: "" };
 
@@ -3962,23 +4062,161 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 답은 한 글자도 안 나간다. 길이별로 몇 개를 채웠는지만 나가므로,
   // 받은 사람이 이 글로 오늘 낱말을 알아낼 길이 없다.
+  /* ── 카톡 카드 ──────────────────────────────────────
+   *
+   * 공유 시트로 보내면 카톡에는 글자만 남는다. 사각형 그림도,
+   * 누를 단추도, 제목도 없다 — 받는 사람 눈에는 긴 글덩어리 하나다.
+   * 그걸 누를 사람은 없다. 카카오가 주는 카드를 쓰면 그림과 제목과
+   * 단추가 한 틀로 간다. 거기서 공유가 살아난다.
+   *
+   * SDK 는 밖에서 받아온다. 비행기 모드면 못 받으므로, 못 받았을
+   * 때는 지금까지 쓰던 공유 시트로 조용히 내려앉는다. 주소를 여럿 두는
+   * 것은 판이 올라가면 지나간 주소가 사라지기 때문이다.
+   */
+  var KAKAO_KEY = "a9d68af55f351e0c34baa8773301f1b5";
+  // 주소를 여럿 둔다. 판이 올라가면 지나간 주소가 사라지고, 밖에서 받아오는
+  // 것은 여기서 두드려 볼 수가 없다 — 하나씩 무너지면 다음 것을 두드린다.
+  var KK_SRC = [
+    "https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js",
+    "https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js",
+    "https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js",
+    "https://t1.kakaocdn.net/kakao_js_sdk/2.6.0/kakao.min.js",
+    "https://developers.kakao.com/sdk/js/kakao.js",
+    "https://t1.kakaocdn.net/kakao_js_sdk/v1/kakao.min.js"
+  ];
+  // 지난번에 왜 카드를 못 썼는지. 짐작으로 고치지 않기 위해 적어 둔다.
+  var kkWhy = "";      // 왜 못 썼는지
+  var kkFrom = "";     // 어느 주소에서 받았는지
+  var kkKeys = "";     // 받아온 Kakao 안에 무엇이 들었는지
+  var kkLog = [];      // 주소마다 어떻게 됐는지 — 밖에서 볼 수 있게
+  var kkWait = null;
+  // v2 는 Kakao.Share, v1 은 Kakao.Link 다. 어느 판이 와도 그대로 쓴다.
+  function kkSend(K) { return K && (K.Share || K.Link); }
+  function kkTag(u) {
+    return u.replace(/^https?:\/\//, "")
+            .replace("t1.kakaocdn.net/kakao_js_sdk/", "")
+            .replace("/kakao.min.js", "").replace("developers.kakao.com", "developers");
+  }
+  function kakaoReady() {
+    if (kkWait) return kkWait;
+    kkWait = new Promise(function (ok, no) {
+      function bad(e) { kkWhy = String((e && e.message) || e).slice(0, 80); no(e); }
+
+      // 받아온 판을 켜 보고, 보낼 자리가 생겼는지 본다.
+      //
+      // 켜기(init) 전에는 보내는 자리가 아예 안 보이는 판이 있다. 전에는
+      // 켜 보지도 않고 「SDK 아님」으로 덮어 버려서, 여섯 주소가 모두
+      // 같은 말로 돌아왔다 — 「없다」와 「아직 안 켰다」를 가르지 못한 것이
+      // 까닭이지 주소 탓이 아니었다.
+      function tryUse(tag) {
+        var K = window.Kakao;
+        if (!K) { kkLog.push("… " + tag + " 받았으나 Kakao 가 안 생김"); return false; }
+        if (!kkKeys) {
+          try { kkKeys = Object.keys(K).slice(0, 12).join(" "); } catch (e) { kkKeys = "(못 읽음)"; }
+        }
+        try {
+          if (!K.isInitialized || !K.isInitialized()) K.init(KAKAO_KEY);
+        } catch (e) {
+          kkLog.push("… " + tag + " 켜다 막힘 — " + String((e && e.message) || e).slice(0, 44));
+          return false;
+        }
+        if (!kkSend(K)) { kkLog.push("… " + tag + " 켰는데도 보낼 자리 없음"); return false; }
+        kkLog.push("✓ " + tag); kkFrom = tag; kkWhy = ""; ok(K); return true;
+      }
+
+      if (window.Kakao && tryUse("이미 있음")) return;
+      var i = 0;
+      (function next() {
+        if (i >= KK_SRC.length) {
+          return bad(new Error("쓸 수 있는 SDK 가 없음" + (kkKeys ? " · 안에 든 것 " + kkKeys : "")));
+        }
+        var u = KK_SRC[i++], tag = kkTag(u);
+        var sc = document.createElement("script");
+        sc.src = u; sc.async = true;
+        // 묶음 꾸러미(UMD)는 define/module 이 보이면 거기로 들어가 버리고
+        // window.Kakao 를 만들지 않는다. 받는 동안만 둘을 가려 둔다.
+        var hadD = window.define, hadM = window.module;
+        function unmask() {
+          if (hadD !== undefined) window.define = hadD;
+          if (hadM !== undefined) window.module = hadM;
+        }
+        try { if (hadD !== undefined) window.define = undefined;
+              if (hadM !== undefined) window.module = undefined; } catch (e) {}
+        function drop() { if (sc.parentNode) sc.parentNode.removeChild(sc); }
+        sc.onload = function () {
+          unmask();
+          if (tryUse(tag)) return;
+          drop(); next();
+        };
+        sc.onerror = function () {
+          unmask();
+          kkLog.push("✗ " + tag + " 못 받음"); drop(); next();
+        };
+        document.head.appendChild(sc);
+      })();
+    });
+    return kkWait;
+  }
+
+  // 카드 한 장. 제목에 날짜와 점수를 넣는다 — 방 목록에서는 제목
+  // 한 줄만 보이므로, 그 한 줄이 다 말해야 한다.
+  function kakaoCard() {
+    var d = new Date();
+    var n = run.ans.filter(function (w) { return run.got[w]; }).length;
+    var tot = run.ans.length;
+    var ratio = tot ? n / tot : 0;
+    var st = dailyStreak(), cyc = rankName();
+    var ho = dan ? danName() + " " + dan + "단" : "";
+    var badge = [ho, cyc, st > 1 ? st + "일 연속" : ""].filter(Boolean).join(" · ");
+    var url = SITE + "#daily";
+    var lnk = { mobileWebUrl: url, webUrl: url };
+    return {
+      objectType: "feed",
+      content: {
+        title: (d.getMonth() + 1) + "월 " + d.getDate() + "일 오늘의 낱말 · "
+               + n + " / " + tot + " 채움",
+        // 카톡은 설명을 두 줄까지만 보여 준다.
+        //
+        // 세 줄을 넣었더니 「오늘은 모두 같은 글자판입니다 · 몇 개
+        // 찾으시겠어요?」가 통째로 잘렸다. 부르는 말이 안 보이면 카드를
+        // 예쁘게 만든 보람이 없다. 두 줄로 줄이고, 둘째 줄에 부르는 말을 둔다.
+        description: run.score.toLocaleString() + "점 · " + rank(ratio)
+               + (badge ? " · " + badge : "")
+               + "\n모두 같은 글자판입니다. 몇 개 찾으시겠어요?",
+        imageUrl: SITE + "art/og.jpg",
+        imageWidth: 1200, imageHeight: 630,
+        link: lnk
+      },
+      // buttons 로 넣었더니 단추가 아예 안 떴다. buttonTitle 은 카드가
+      // 이미 아는 주소를 그대로 쓰므로 어긋날 일이 적다.
+      buttonTitle: "나도 오늘 판 풀기"
+    };
+  }
+
   function dailyShare() {
+    // 받는 사람이 세 줄 안에 알아야 하는 것 — 오늘 것이구나, 저 사람이
+    // 몇 개 찾았구나, 나도 같은 글자판이구나. 그 셋만 남기고 깎는다.
+    //
+    // 앞에 「낱말산」을 적지 않는다. 공유 시트가 제목을 따로 붙여 주므로
+    // 「낱말산 - 낱말산 …」으로 겹쳐 보였다.
     var d = new Date();
     var n = run.ans.filter(function (w) { return run.got[w]; }).length;
     var ratio = run.ans.length ? n / run.ans.length : 0;
     var st = dailyStreak(), cyc = rankName();
     var ho = dan ? danName() + " " + dan + "단" : "";
-    return "낱말산 · " + (d.getMonth() + 1) + "월 " + d.getDate() + "일\n"
-      + rank(ratio) + " · " + n + "/" + run.ans.length + " 채움 · "
-      + run.score.toLocaleString() + "점\n\n"
+    var badge = [ho, cyc, st > 1 ? st + "일 연속" : ""].filter(Boolean).join(" · ");
+
+    return (d.getMonth() + 1) + "월 " + d.getDate() + "일 오늘의 낱말\n"
+      + "\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n"
       + dailyRows().map(function (r) {
-          return r.len + "글자 " + r.blocks + "  " + r.got + "/" + r.all;
+          return r.len + "자 " + r.blocks;
         }).join("\n")
-      + (ho || cyc || st > 1
-          ? "\n\n\ud83c\udfc5 " + [ho, cyc, st > 1 ? st + "일 연속" : ""]
-              .filter(Boolean).join(" \u00b7 ")
-          : "")
-      + "\n\n오늘의 낱말, 같이 풀어요\n" + location.href.split("#")[0] + "#daily";
+      + "\n\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\n"
+      + n + " / " + run.ans.length + " 채움 \u00b7 " + run.score.toLocaleString() + "점 \u00b7 "
+      + rank(ratio)
+      + (badge ? "\n\ud83c\udfc5 " + badge : "")
+      + "\n\n오늘은 모두 같은 글자판입니다.\n몇 개 찾으시겠어요?\n"
+      + SITE + "#daily";
   }
 
   // ── 끝말잇기 도전 ──────────────────────────────────────────────────
@@ -4546,8 +4784,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     el.gTotal.textContent = run.ans.length;
     el.gNote.textContent = run.phase === "bonus" ? "마무리 · 남은 시간만큼 냥"
       : left === 1 ? "하나 남았습니다 · 완전 격파!"
-      : run.aided || !perfGemLeft() ? "다 채우면 완전 격파"
-      : "맨손으로 다 채우면 옥 한 알";
+      : "다 채우면 완전 격파 · 선물이 한 걸음";
     el.hpNow.parentNode.title = run.b.need + "개를 채우면 쓰러집니다";
     el.timer.textContent = run.left;
     el.timer.classList.toggle("low", run.left <= 10);
@@ -5121,18 +5358,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
     // 일곱 걸음의 상. 지금은 보물함이고, 바꿀 자리는 여기 한 곳이다.
     if (n === AD_CHEST_EVERY) {
-      toast("완전 격파 일곱 번 · 보물함이 열립니다");
+      toast("완전 격파 일곱 걸음 · 보물함이 열립니다 · 오늘 하나뿐입니다");
       openChest(topMountain(), function () { drawAd(); go(); },
                 adCap(), GEAR_BOSS, 0.8);
       return;
     }
-    if (n % AD_GEM_EVERY === 0) {                // 세 걸음 — 옥 한 알
+    if (n % 2 === 1) {                           // 홀수 걸음 — 옥 한 알
       gem++; saveS(); drawStatsOnly();
       if (window.SFX) SFX.up();
-      toast("완전 격파 " + n + "번째 · 옥 한 알");
+      toast("완전 격파 " + n + "걸음째 · 옥 한 알");
       return go();
     }
-    if (n % AD_SMALL === 0) {                    // 두 걸음 — 보급품
+    if (n % 2 === 0) {                           // 짝수 걸음 — 보급품
       var g = chestFloor(0.6), sc = 100 / CHEST_SUM, roll = Math.random() * 100,
           acc = 0, got = CHEST[0];
       for (var i = 0; i < CHEST.length; i++) {
@@ -5146,7 +5383,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       toast("보급품 · " + got.t + " · 냥 +" + coinGot.toLocaleString());
       return go();
     }
-    toast("완전 격파 " + n + " / " + AD_CHEST_EVERY + " · 일곱 번이면 보물함");
+    toast("완전 격파 " + n + " / " + AD_CHEST_EVERY + " · 일곱 걸음이면 보물함");
     go();
   }
   // 깬 가장 높은 산. stage는 '다음에 칠 단계'라 하나를 뺀다.
@@ -5910,26 +6147,39 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     el.adLines.innerHTML =
         "<p><b>완전 격파</b> — 빈칸을 하나도 안 남기고 다 채운 판입니다. "
       + "그 판마다 한 걸음씩 찹니다.</p>"
-      + "<p><b>두 걸음</b>마다 보급품 — 냥·옥·소모품입니다. 장비는 없습니다.</p>"
-      + "<p class=\"pivot\"><b>세 걸음</b>마다 <b>옥 한 알</b>. "
-      + "옥은 <b>승단 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고, "
+      + "<p><b>홀수 걸음</b>마다 <b>옥 한 알</b>. 옥은 "
+      + "<b>승단 시험 · 끝말잇기 재도전 · 힌트</b>에 쓰고, "
       + "<b>냥으로는 살 수 없습니다.</b></p>"
-      + "<p class=\"pivot\"><b>일곱 걸음</b>이면 <b>보물함 하나</b>. "
-      + "여기엔 장비도 들어 있습니다.</p>"
+      + "<p><b>짝수 걸음</b>마다 보급품 — 냥과 소모품입니다. 장비는 없습니다.</p>"
+      + "<p class=\"pivot\"><b>일곱째 걸음</b>이면 <b>보물함 하나</b> — "
+      + "<b>하루에 한 번</b>입니다. 여기엔 장비도 들어 있습니다.</p>"
       + "<p>다만 등급은 <b>지금 오른 산까지</b>입니다 — 더 좋은 것은 "
-      + "<b>산을 올라야</b> 나옵니다.</p>";
-    el.adSub.textContent = left ? "오늘 " + n + " / " + AD_DAY + "번"
+      + "<b>산을 올라야</b> 나옵니다.</p>"
+      + "<p><b>일곱 걸음 뒤에도 끝이 아닙니다</b> — 여덟·열째에 보급품, "
+      + "아홉째에 옥이 더 옵니다. 하루 열 걸음까지입니다.</p>";
+    el.adSub.textContent = left ? "오늘 " + n + " / " + AD_DAY + " 걸음"
                                 : "오늘 몫을 다 받으셨습니다";
     // 점 열 개로 어디까지 왔는지 보여 준다. 일곱째가 함이다.
+    // 점은 보는 그림이 아니라 읽는 표다. 주는 코드와 같은 차례로 갈라야
+    // 「세 걸음째가 왜 빈 점이지」가 생기지 않는다.
+    // 걸음표는 보는 그림이 아니라 읽는 표다. 주는 코드와 같은 차례로
+    // 갈라야 「세 걸음째가 왜 빈자리지」가 생기지 않는다.
+    var MARK = { chest: "i-chest", gem: "i-ok", sup: "i-nyang" };
     var dots = "";
     for (var i = 1; i <= AD_DAY; i++) {
-      dots += '<i class="' + (i <= n ? "on " : "")
-        + (i === AD_CHEST_EVERY ? "big" : i % AD_SMALL === 0 ? "mid" : "") + '"></i>';
+      var kind = i === AD_CHEST_EVERY ? "chest"
+               : i % 2 === 1 ? "gem" : "sup";
+      dots += '<i class="' + (i <= n ? "on " : "") + (kind === "chest" ? "big" : kind) + '">'
+        + '<em>' + (kind ? '<svg><use href="#' + MARK[kind] + '"/></svg>' : '<s></s>') + '</em>'
+        + '<b>' + i + '</b></i>';
     }
     el.adDots.innerHTML = dots;
-    el.adWhat.textContent = !left ? "내일 다시 열 번"
-      : n === AD_CHEST_EVERY - 1 ? "한 번만 더 완전 격파하시면 보물함이 열립니다"
-      : "두 번마다 보급품 · 세 번마다 옥 · 일곱 번이면 보물함 (" + TIER[cap] + "까지)";
+    el.adWhat.textContent = !left
+        ? "내일 다시 열 걸음 — 일곱째에 보물함"
+      : n === AD_CHEST_EVERY - 1 ? "한 걸음만 더 걸으시면 보물함이 열립니다"
+      : n >= AD_CHEST_EVERY ? "오늘 보물함은 받으셨습니다 · 남은 걸음은 보급품과 옥입니다"
+      : "두 걸음마다 보급품 · 세 걸음마다 옥 · 일곱 걸음이면 보물함 ("
+        + TIER[cap] + "까지)";
     el.adNow.innerHTML = left
       ? Math.min(n, AD_CHEST_EVERY) + " / " + AD_CHEST_EVERY + "<small>완전 격파</small>"
       : "내일<small>다시</small>";
@@ -6262,11 +6512,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 채우고 싶은 그 마음이 옥을 쓰게 만들고, 옥을 쓰면 다 채워지고,
     // 다 채우면 옥이 다시 들어온다. 잘하는 사람은 돌고, 막힌 사람은 산다 —
     // 그 자리가 과금이 설 유일하게 떳떳한 자리다.
-    var perfGem = 0;
-    if (won && r.perfect && !r.aided && perfGemLeft()) {
-      perfGem = PERFECT_GEM; dSet("pg", dGet("pg", 0) + 1);
-    }
-    bossGem += perfGem;
+    // 완전 격파의 상은 걸음표 하나로 모았다. 전에는 여기서도 옥을 따로
+    // 줬는데, 같은 한 판에 두 군데서 상이 나오니 「왜 셋째부터는 안
+    // 나오지」가 설명되지 않았다. giftStep("perf") 이 그 일을 맡는다.
     if (bossGem) gem += bossGem;
     var firstWin = 0;
     if (won && !tut.done) {
@@ -6329,12 +6577,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       sum.appendChild(sa); sum.appendChild(sb); tbl.appendChild(sum);
       card.appendChild(tbl);
       // 왜 옥이 안 들어왔는지는 적어 준다. 말없이 빠지면 버그로 읽힌다.
-      if (won && r.perfect && !perfGem) {
+      if (won && r.perfect) {
         var nt = document.createElement("p"); nt.className = "lead";
-        nt.innerHTML = r.aided
-          ? "완전 격파 — 다만 <b>도움을 쓴 판</b>이라 옥은 들어오지 않습니다"
-          : "완전 격파 — <b>오늘 맨손 몫 옥 " + PERFECT_GEM_DAY
-            + "알</b>을 다 받으셨습니다";
+        nt.innerHTML = "완전 격파 — <b>오늘의 선물</b>이 한 걸음 찼습니다";
         card.appendChild(nt);
       }
       // 옥은 냥과 셈이 다르다. 합계에 섞지 않고 따로 적는다.
@@ -6342,7 +6587,6 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         var gm = document.createElement("p"); gm.className = "lead gemline";
         var why = [];
         if (r.b.boss) why.push("수호신");
-        if (perfGem) why.push("맨손 완전 격파");
         gm.innerHTML = why.join(" · ") + ' <b>옥 +' + bossGem + '</b>'
           + '<span>승단 시험 · 끝말잇기 재도전 · 힌트에 쓰입니다</span>';
         card.appendChild(gm);
@@ -6367,9 +6611,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         });
         card.appendChild(ml);
         var mn = document.createElement("p"); mn.className = "lead foot";
-        mn.innerHTML = r.aided
-          ? "다 채웠으면 <b>완전 격파</b>였습니다"
-          : "맨손으로 다 채웠으면 <b>완전 격파 · 옥 +" + PERFECT_GEM + "</b> 이었습니다";
+        mn.innerHTML = "다 채웠으면 <b>완전 격파</b> — 선물이 한 걸음 찼을 것입니다";
         card.appendChild(mn);
       }
     }
@@ -6614,13 +6856,22 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 그 사이 어디서든 손이 멈추면 공유는 안 일어난다. 폰에는 공유 시트가
     // 있어서 단추 하나로 「어디에 보낼까」까지 간다. 그걸 먼저 쓰고,
     // 안 되는 기기에서만 복사로 내려간다.
+    // 앱에서는 안드로이드의 진짜 공유 시트를 연다. 웹뷰에는
+    // navigator.share 가 없어 전에는 「복사하기」로 내려앉았다.
+    var NS = window.NativeShare && window.NativeShare.ok() ? window.NativeShare : null;
+    var canShare = !!(NS || navigator.share);
+
+    // 누르기 전에 미리 받아 둔다. 누른 뒤에 받으면 그만큼 달려서,
+    // 브라우저가 「손짓은 이미 썼다」고 보고 창을 막는 수가 있다.
+    kakaoReady()["catch"](function () {});
+
     // 이 게임이 마케팅비 없이 퍼지는 길은 이 단추 하나다. 그런데 누를
     // 까닭이 자존심뿐이었다. 옥 한 알을 얹는다 — 하루 수입의 5%라 셈을
-    // 흔들지 않지만, "공유하면 옥을 준다"는 사실 자체가 손을 움직인다.
+    // 흔들지 않지만, "나누면 옥을 준다"는 사실 자체가 손을 움직인다.
     //
-    // 공유 시트를 열고 취소해도 주게 된다. 복사 쪽은 가릴 길이 아예 없다.
-    // 하루 한 번이라 속여서 얻는 것이 옥 한 알뿐이니, 막는 값이 막아서
-    // 아끼는 것보다 비싸다. 안 막는다.
+    // 보낸 것을 끝까지 확인할 길은 없다. 시트를 열고 취소해도, 복사만
+    // 하고 안 보내도 가릴 수가 없다. 하루 한 번이라 속여서 얻는 것이
+    // 옥 한 알뿐이니, 막는 값이 막아서 아끼는 것보다 비싸다. 안 막는다.
     var shrKey = "nathero-shr-" + todayKey();
     var shrLeft = kGet(shrKey, 0) === 0;
     function shrPay() {
@@ -6630,9 +6881,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       if (window.SFX) SFX.up();
       toast("나눠 주셔서 고맙습니다 · 옥 한 알");
     }
-    var canShare = !!(navigator.share);
+
     var cp = document.createElement("button"); cp.className = "btn go";
-    cp.innerHTML = (canShare ? "카톡으로 보내기" : "결과 복사하기")
+    cp.innerHTML = "카톡으로 보내기"
       + (shrLeft ? "<small>오늘 처음 나누시면 옥 한 알</small>" : "");
     function fallbackCopy(t) {
       try {
@@ -6645,19 +6896,44 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
           });
       } catch (e) { det.open = true; cp.textContent = "위 글을 직접 복사해 주세요"; }
     }
-    cp.addEventListener("click", function () {
+    // 글 한 덩이로 보내는 길 — 카카오 카드가 안 될 때 내려앉는 자리고,
+    // 「다른 곳으로」 단추가 쓰는 길이기도 하다.
+    function sheet() {
       var t = dailyShare();
-      logEv("C");
       if (!canShare) return fallbackCopy(t);
       // 글 안에 이미 링크가 있다. url 을 따로 주면 기기에 따라 링크만
       // 보내고 글을 버리는 수가 있어서, 글 한 덩이로만 넘긴다.
+      if (NS) return NS.send(t, "오늘의 낱말").then(shrPay, function () { fallbackCopy(t); });
       navigator.share({ text: t }).then(shrPay, function (e) {
         // 사람이 공유 시트를 닫은 것은 실패가 아니다. 그때는 가만히 둔다.
         if (e && e.name === "AbortError") return;
         fallbackCopy(t);
       });
+    }
+    // 알림줄. 카드를 못 썼을 때만 조용히 나타난다.
+    var why = document.createElement("p"); why.className = "lead foot";
+    why.hidden = true; why.style.fontSize = "12px"; why.style.opacity = ".65";
+    function fell(e) {
+      var m = kkWhy || String((e && e.message) || e || "").slice(0, 80);
+      why.textContent = "카드는 못 보냈습니다 · " + (m || "까닭 모름") + " — 글로 보냅니다";
+      why.hidden = false;
+      sheet();
+    }
+    cp.addEventListener("click", function () {
+      logEv("C");
+      why.hidden = true;
+      kakaoReady().then(function (K) {
+        // 도메인이 안 맞으면 여기서 바로 틀어진다. 그 말을 그대로 받아 적는다.
+        kkSend(K).sendDefault(kakaoCard());
+      })["catch"](fell);
     });
     card.appendChild(cp);
+
+    var other = document.createElement("button"); other.className = "btn ghost";
+    other.textContent = canShare ? "다른 곳으로 보내기" : "결과 복사하기";
+    other.addEventListener("click", function () { logEv("C"); sheet(); });
+    card.appendChild(other);
+    card.appendChild(why);
 
     var back = document.createElement("button"); back.className = "btn";
     back.textContent = "산 오르기로";
@@ -6967,9 +7243,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
   function cloudLogin(provider) {
     if (!cloudOn()) { toast("아직 준비 중입니다"); return; }
-    el.cloudNote.textContent = "창을 여는 중입니다…";
+    // cloudNote 는 설정 패널 안에 있다. 게이트에서 누른 사람에게는 그 글이
+    // 어디에도 안 보여, 실패해도 「아무 일도 안 일어난다」로 읽힌다.
+    // 같은 말을 토스트로도 낸다.
+    function say(t) { if (el.cloudNote) el.cloudNote.textContent = t; toast(t); }
+    say("창을 여는 중입니다…");
     sb().then(function (c) {
-      var opt = { redirectTo: location.origin + location.pathname };
+      // 앱 안에서는 돌아올 주소가 다르다. https://localhost 는 앱 밖에서는
+      // 아무 데도 아니라, 크롬이 로그인을 마치고 그리로 보내면 「연결이
+      // 거부되었습니다」에서 끝난다. 안드로이드가 우리 앱으로 되돌려 줄
+      // 수 있는 주소를 쓴다 — NativeAuth 가 그 자리를 안다.
+      var na = window.NativeAuth;
+      var opt = { redirectTo: na ? na.back : location.origin + location.pathname };
+      if (na) opt.skipBrowserRedirect = true;
       // 카카오는 supabase-js 의 scopes 옵션이 제 기본값 뒤에 덧붙기만 해서
       // 듣지 않는다. 날것의 scope 를 직접 넘겨야 원하는 조합이 그대로 간다.
       //
@@ -6983,15 +7269,22 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       return c.auth.signInWithOAuth({ provider: provider, options: opt });
     }).then(function (r) {
       if (!r || r.error) {
-        el.cloudNote.textContent = "열지 못했습니다 — " + ((r && r.error && r.error.message) || "잠시 뒤 다시");
+        say("열지 못했습니다 — " + ((r && r.error && r.error.message) || "잠시 뒤 다시"));
         return;
       }
       // supabase-js 가 제 손으로 옮겨 주기도 하지만, 그 전에 await 가 여러 번
       // 끼면 브라우저가 「누른 손짓은 이미 썼다」고 보고 조용히 무시한다.
       // 받은 주소로 한 번 더, 분명하게 옮긴다.
-      if (r.data && r.data.url) location.href = r.data.url;
-    })["catch"](function () {
-      el.cloudNote.textContent = "열지 못했습니다 — 인터넷을 확인해 주십시오";
+      if (!r.data || !r.data.url) { say("주소를 받지 못했습니다"); return; }
+      // 구글은 웹뷰 안의 로그인을 막는다. 앱에서는 진짜 크롬 창을 띄운다.
+      if (window.NativeAuth) {
+        window.NativeAuth.open(r.data.url)["catch"](function (e) {
+          say("창을 열지 못했습니다 — " + String(e && e.message || e).slice(0, 40));
+          location.href = r.data.url;          // 그래도 한 번은 가 본다
+        });
+      } else location.href = r.data.url;
+    })["catch"](function (e) {
+      say("열지 못했습니다 — " + String(e && e.message || e).slice(0, 50));
     });
   }
 
@@ -7052,9 +7345,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       var b = document.createElement("b"); b.textContent = v;
       r.appendChild(a); r.appendChild(b); tbl.appendChild(r);
     }
-    var sv = row.data || {};
-    line("이 폰", (here.stage + 1) + "단계");
-    line("서버", (row.stage + 1) + "단계 · 옥 " + (sv.gem == null ? 5 : sv.gem));
+    // 두 줄을 같은 생김새로 적는다.
+    //
+    // 전에는 서버 줄에만 옥을 적었다. 고르는 사람은 제 옥이 몇
+    // 개인지 모르는 채로 「사라지는 쪽」을 골랐다 — 7,932를 두고
+    // 5를 고르게 만드는 창이었다. 개수를 양쪽 다 보여 줄 때만
+    // 고를지 말지가 고를 수 있다.
+    var sv = row.data || {}, hv = here.data || {};
+    function gemOf(o) { return o.gem == null ? 5 : o.gem; }
+    line("이 폰", (here.stage + 1) + "단계 · 옥 " + gemOf(hv).toLocaleString());
+    line("서버", (row.stage + 1) + "단계 · 옥 " + gemOf(sv).toLocaleString());
     var brow = document.createElement("div"); brow.className = "trow";
     var keep = document.createElement("button"); keep.className = "btn ghost";
     keep.innerHTML = "이 폰 것으로<small>서버를 덮어씁니다</small>";
@@ -7131,6 +7431,33 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     }
   });
 
+  // 받아 온 사람을 화면이 아는 모습으로 바꾼다.
+  //
+  // 이 몇 줄이 cloudBoot 안에만 있어서, 앱에서 크롬을 거쳐 돌아온 길에는
+  // 세션은 생겼는데 me 가 끝내 비어 있었다. 화면은 「아직 이으신 데가
+  // 없어」를 그대로 들고 있고, me 를 보는 cloudPush·cloudSync 는 첫 줄에서
+  // 돌아 나간다 — 로그인은 됐는데 아무것도 안 되는, 가장 알아채기 어려운
+  // 꼴이다. 길이 둘이면 손질하는 자리도 하나여야 한다.
+  function adoptUser(u) {
+    if (!u) return false;
+    // 화면에 보여 줄 이름. 이메일이 있으면 이메일, 없으면 닉네임이다.
+    // 카카오는 이메일을 아예 안 주고(개인 개발자 앱), 준다 해도 Supabase 가
+    // 계정 칸을 비워 두는 일이 있어서 연결된 신원 쪽도 함께 뒤진다.
+    var md = u.user_metadata || {};
+    var mail = u.email || "";
+    if (!mail && u.identities) {
+      for (var i = 0; i < u.identities.length; i++) {
+        var dd = u.identities[i].identity_data || {};
+        if (dd.email) { mail = dd.email; break; }
+      }
+    }
+    var who = mail || md.name || md.full_name || md.nickname
+              || md.preferred_username || md.user_name || "";
+    me = { id: u.id, who: who,
+           by: (u.app_metadata && u.app_metadata.provider) || "google" };
+    return true;
+  }
+
   function cloudBoot() {
     // 지우기 전에 읽는다. 이 한 줄의 순서가 뒤바뀌어 있어서, 첫 로그인은
     // 어떤 설정으로도 성공할 수 없었다 — 돌아온 ?code= 를 먼저 지워 버리니
@@ -7154,21 +7481,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         }
         return;
       }
-      // 화면에 보여 줄 이름. 이메일이 있으면 이메일, 없으면 닉네임이다.
-      // 카카오는 이메일을 아예 안 주고(개인 개발자 앱), 준다 해도 Supabase 가
-      // 계정 칸을 비워 두는 일이 있어서 연결된 신원 쪽도 함께 뒤진다.
-      var md = u.user_metadata || {};
-      var mail = u.email || "";
-      if (!mail && u.identities) {
-        for (var i = 0; i < u.identities.length; i++) {
-          var dd = u.identities[i].identity_data || {};
-          if (dd.email) { mail = dd.email; break; }
-        }
-      }
-      var who = mail || md.name || md.full_name || md.nickname
-                || md.preferred_username || md.user_name || "";
-      me = { id: u.id, who: who,
-             by: (u.app_metadata && u.app_metadata.provider) || "google" };
+      adoptUser(u);
       drawCloud(); cloudSync();
       if (back) toast("로그인됐습니다 · 이제 기록이 자동으로 저장됩니다");
     })["catch"](function (e) {
@@ -7208,12 +7521,29 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         var ses = r && r.data && r.data.session;
         put(!!ses, ses ? "로그인됨" : "로그인된 적 없음");
         if (backErr) out.push("<u>지난 까닭</u> " + backErr);
+        // 카톡 카드도 여기서 묻는다. 공유해 보지 않고도 될지 안 될지를 안다.
+        el.diagBox.innerHTML = out.join("\n") + "\n· 카톡 카드 살펴보는 중…";
+        function kkLines() {
+          for (var i = 0; i < kkLog.length; i++) out.push("    " + kkLog[i]);
+        }
+        return kakaoReady().then(
+          function () { put(true, "카톡 카드 준비됨 · " + (kkFrom || "?")); kkLines(); },
+          function (e) {
+            put(false, "카톡 카드 — " + (kkWhy || (e && e.message) || "까닭 모름"));
+            kkLines();
+            if (kkKeys) out.push("    Kakao 안 — " + kkKeys);
+          });
+      })
+      .then(function () {
         out.push("");
         out.push("안 되면 Supabase에서 이 넷을 보십시오");
         out.push("  1 URL Configuration → Site URL 이");
         out.push("    " + location.origin);
         out.push("  2 Redirect URLs 에");
         out.push("    " + location.origin + "/**");
+        if (window.NativeAuth) {
+          out.push("    " + window.NativeAuth.back + "   ← 앱은 이 자리로 돌아옵니다");
+        }
         out.push("  3 Providers → Kakao → Allow users");
         out.push("    without an email  켜기");
         out.push("  4 두 제공자의 Client ID·Secret");
@@ -7297,6 +7627,54 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   });
 
   el.btnDiag.addEventListener("click", diag);
+  // 크롬에서 로그인을 마치고 앱으로 돌아오면 코드 한 장을 들고 온다.
+  // 그 코드를 세션으로 바꾸는 것이 마지막 한 걸음이다.
+  if (window.NativeAuth) {
+    // 설정 패널의 한 줄과 토스트를 함께 쓴다. 토스트는 사라지지만 한 줄은
+    // 남아, 나중에 열어 본 사람도 무슨 일이 있었는지 읽을 수 있다.
+    function note(t, bad) {
+      if (el.cloudNote) {
+        el.cloudNote.style.color = bad ? "var(--danger)" : "";
+        el.cloudNote.textContent = t;
+      }
+      if (t) toast(t);
+    }
+    // 크롬 창을 그냥 닫고 돌아오면 아무 소식도 오지 않는다. 그때 「창을
+    // 여는 중입니다…」가 영영 남아, 열리지도 않은 것처럼 읽힌다.
+    // 돌아온 뒤 잠깐 기다려 보고, 끝내 조용하면 한 줄을 고쳐 놓는다.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible") return;
+      setTimeout(function () {
+        if (me || !el.cloudNote) return;
+        if (el.cloudNote.textContent.indexOf("창을 여는 중") !== 0) return;
+        note("로그인 창이 닫혔습니다 · 다시 누르셔도 됩니다", 1);
+      }, 1500);
+    });
+    window.NativeAuth.onCode(function (code, err) {
+      if (err || !code) {
+        note(err ? "로그인을 마치지 못했습니다" : "로그인이 취소되었습니다", 1);
+        return;
+      }
+      note("잇는 중입니다…");
+      sb().then(function (c) {
+        return c.auth.exchangeCodeForSession(code).then(function (r) {
+          if (r && r.error) throw r.error;
+          // 교환이 주는 user 가 비어 올 때가 있다. 그러면 한 번 더 묻는다.
+          var u = r && r.data && r.data.user;
+          return u ? { data: { user: u } } : c.auth.getUser();
+        });
+      }).then(function (r) {
+        var u = r && r.data && r.data.user;
+        if (!adoptUser(u)) { note("잇지 못했습니다 — 다시 해 보십시오", 1); return; }
+        note("");
+        drawCloud(); cloudSync();
+        toast("기록이 이어졌습니다");
+      })["catch"](function (e) {
+        note("잇지 못했습니다 — " + ((e && e.message) || "잠시 뒤 다시"), 1);
+      });
+    });
+  }
+
   el.btnKakao.addEventListener("click", function () { cloudLogin("kakao"); });
   el.btnGoogle.addEventListener("click", function () { cloudLogin("google"); });
   el.btnPush.addEventListener("click", function () { cloudPush(1); });
@@ -7353,9 +7731,24 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 파일로 내려 두면 앱을 지우든 주소가 바뀌든 남는다. 로그인하지 않은
   // 분에게는 이것이 가장 든든한 길이다 — 기기 안의 창고가 아니라
   // 사람이 지닌 것이 되기 때문이다.
+  // 앱 안에서는 a.download 가 아무 일도 하지 않는다. 그런데 예외가 나지
+  // 않아 catch 에도 안 걸리고, 「내려받았습니다」만 떴다. 사용자는 받은
+  // 줄 알고 앱을 지운다. 기록을 지키라고 만든 단추가 기록을 잃게 했다.
+  //
+  // 앱에서는 받는 대신 내보낸다 — 공유 시트로 보내면 카톡 나와의 채팅,
+  // 드라이브, 메모 어디에든 본인이 고른 자리에 남는다.
+  if (window.NativeShare && window.NativeShare.ok()) {
+    el.btnCodeFile.textContent = "다른 곳에 보관하기";
+  }
   el.btnCodeFile.addEventListener("click", function () {
     var v = el.codeBox.value;
     if (!v) { toast("먼저 코드를 만드십시오"); return; }
+    var NS3 = window.NativeShare && window.NativeShare.ok() ? window.NativeShare : null;
+    if (NS3) {
+      NS3.send(v, "낱말산 기록 코드 · " + todayKey())
+        ["catch"](function () { toast("보내지 못했습니다 · 코드를 복사해 두십시오"); });
+      return;
+    }
     try {
       var blob = new Blob([v], { type: "text/plain" });
       var a = document.createElement("a");
@@ -7369,6 +7762,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   el.btnCodeShare.addEventListener("click", function () {
     var v = el.codeBox.value;
     if (!v) { toast("먼저 코드를 만드십시오"); return; }
+    var NS2 = window.NativeShare && window.NativeShare.ok() ? window.NativeShare : null;
+    if (NS2) { NS2.send(v, "낱말산 기록 코드")["catch"](function () {}); return; }
     if (navigator.share) {
       navigator.share({ title: "낱말산 기록 코드", text: v })["catch"](function () {});
     } else { el.btnCodeCopy.click(); }
@@ -7673,16 +8068,40 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     if (fitting || !wrapEl) return;
     fitting = true;
     var vh = window.innerHeight;
-    for (var i = 0; i < 6; i++) {
+    // 「줄였다 늘렸다」를 영원히 되풀이하던 자리다.
+    //
+    //   0.930 → 판 812px → 넘친다 → 0.890 으로 줄인다
+    //   0.890 → 판 746px → 남는다 → 0.930 으로 늘린다  ← 다시 처음
+    //
+    // 판이 조금만 커져도 글자판 한 줄이 더 생겨 66px 이 한꺼번에 불어나므로,
+    // 「딱 맞는 값」이 아예 없다. 그런 자리에서 비율로만 밀면 두 값을 오간다.
+    // 여섯 바퀴를 돌고 넘치는 쪽에서 멈추면 그대로 남는다 — 운이었다.
+    //
+    // 그래서 오가지 않고 좁혀 간다. 넘친 값과 들어간 값을 적어 두고 그
+    // 사이를 반씩 줄인다. 그리고 끝에는 반드시 「들어간 줄 아는 값」으로
+    // 돌아간다 — 넘치는 쪽에서 끝나지 않게.
+    var ok = fitFloor();      // 들어가는 줄 아는 가장 큰 값
+    var bad = Infinity;       // 넘치는 줄 아는 가장 작은 값
+    for (var i = 0; i < 8; i++) {
       var h = wrapEl.getBoundingClientRect().height;
       if (!h || !vh) break;
-      var want = zFit;
-      if (h > vh) want = zFit * (vh / h) * 0.996;          // 넘친다 — 살짝 넉넉히 되민다
-      else if (zFit < 1 && h < vh - 20) want = zFit * (vh / h);  // 자리가 남았다 — 되돌린다
+      var want;
+      if (h > vh) {
+        bad = Math.min(bad, zFit);
+        want = zFit * (vh / h) * 0.996;                    // 넘친다 — 되민다
+      } else {
+        ok = Math.max(ok, zFit);
+        if (zFit < 1 && h < vh - 20) want = zFit * (vh / h);  // 자리가 남았다 — 되돌린다
+        else break;                                        // 알맞다
+      }
+      if (bad < Infinity) want = Math.min(want, (ok + bad) / 2);  // 사이를 반으로
       want = Math.min(1, Math.max(fitFloor(), want));
-      if (Math.abs(want - zFit) < 0.005) break;            // 더 움직일 게 없다
+      if (Math.abs(want - zFit) < 0.004) break;            // 더 움직일 게 없다
       zFit = want; applyZ();
     }
+    // 마지막이 넘치는 값이면 되돌린다. 바닥(fitFloor)에서도 넘치는 화면은
+    // 그냥 넘치게 둔다 — 크게 고른 사람은 읽히는 쪽을 고른 것이다.
+    if (bad < Infinity && zFit > ok) { zFit = ok; applyZ(); }
     fitting = false;
     if (el.hpLine) { el.hpLine.fitKey = null; el.hpLine.style.fontSize = ""; }
     fitLine(el.hpLine);
@@ -7712,6 +8131,20 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   });
 
   window.addEventListener("resize", reFit);
+  // 한 번 재고 말면 늦게 오는 것들을 놓친다.
+  //
+  // 수호신 그림은 재고 난 뒤에 뜨고, 글자판은 단계마다 줄 수가
+  // 달라지고, 덧붙는 칸도 있다. 그때마다 판이 자라는데 다시 재지를
+  // 않으니, 처음 한 번 재 값이 그대로 남아 아래 메뉴줄이 화면 밖으로
+  // 밀려났다. 판이 자라면 다시 재게 한다.
+  //
+  // 되밀기가 또 크기를 바꾸므로 돌고 도는 수가 있다. fitScreen 은
+  // 더 움직일 게 없으면 제자리에 멈추므로(0.005) 한 바퀴 돌고 선다.
+  if (window.ResizeObserver && wrapEl) {
+    try {
+      new ResizeObserver(function () { if (!fitting) reFit(); }).observe(wrapEl);
+    } catch (e) {}
+  }
   window.addEventListener("orientationchange", reFit);
   if (window.ResizeObserver) { try { new ResizeObserver(reFit).observe(wrapEl); } catch (e) {} }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reFit);
