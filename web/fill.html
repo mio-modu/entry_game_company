@@ -360,6 +360,16 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
 .sizer button:nth-child(1) { font-size: 13px; }
 .sizer button:nth-child(2) { font-size: 16px; }
 .sizer button:nth-child(3) { font-size: 19px; }
+/* 곡 고르는 칸. 여섯이 한 줄에 서면 글자가 뭉개지므로 두 칸씩 접는다.
+   고른 것만 금빛으로 서고, 아직 없는 곡은 눌리지 않게 흐려 둔다. */
+.picks { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 0 6px; }
+.picks button {
+  padding: 10px 8px; border-radius: 10px; background: var(--surface-2);
+  border: 1px solid var(--line); color: var(--fg-dim); font: inherit;
+  font-size: 14px; text-align: center;
+}
+.picks button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.picks button.none { opacity: .4; }
 .wrap { max-width: 460px; margin: 0 auto; display: flex;
   flex-direction: column; gap: 9px;
   padding-left: max(14px, var(--sa-l));
@@ -946,8 +956,27 @@ body.ready .tiles, body.ready .acts, body.ready #slot { opacity: .3; pointer-eve
 body.ready #guide { display: none; }   /* 아직 누를 수 없는데 누르라고 적혀 있었다 */
 /* 시작 전에 글자판이 보이면 공짜로 미리 읽는 셈이다. 생각할 틈이 아니라
    그냥 시간이 더 생긴 것. 누르기 전에는 가려 둔다. */
-body.ready .grid, body.ready .tiles, body.ready #slot,
-body.ready .acts, body.ready #ruleNote { visibility: hidden; }
+/* 「시작」을 기다리는 동안.
+ *
+ * 자리를 접지 않고 속만 가린다. display:none 으로 접으면 「시작」을 누르는
+ * 순간 판이 그만큼 자라고, 화면 맞춤이 다시 돌면서 전체가 한 번 출렁인다.
+ * 글자판이 설 자리는 미리 비워 두는 쪽이 맞다.
+ *
+ * 다만 비워 둔 자리가 정말 비어 보였다. 판을 깨고 다음으로 넘어갈 때마다
+ * 화면 가운데가 통째로 검게 남아, 고장난 줄 알았다는 말을 들었다.
+ * 틀은 세워 두고 속만 가린 뒤, 그 자리에 무엇을 기다리는지 한 줄 적는다. */
+body.ready #ruleNote { visibility: hidden; }
+body.ready .grid > *, body.ready #slot > * { visibility: hidden; }
+/* 글자는 가리되 틀은 세워 둔다. 몇 글자가 깔리는지는 산마다 정해진 것이라
+   미리 보여도 아무것도 새지 않고, 그 틀이 있어야 「판이 설 자리」로 읽힌다. */
+body.ready .tiles .tile { color: transparent; }
+body.ready .grid { position: relative; }
+body.ready .grid::after {
+  content: "시작을 누르면 글자판이 섭니다";
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--fg-faint); font-size: 14px; text-align: center;
+  padding: 0 14px;
+}
 .bonusbar button {
   flex: none; background: var(--gold); color: #1A1206; border-radius: 9px;
   padding: 9px 13px; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -1786,6 +1815,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     </div>
     <p class="cite" style="margin-top:6px">크게 고르시면 한 화면을 넘칠 수 있습니다 —
       그때는 <b>쓸어올려</b> 보십시오.</p>
+
+    <p class="muted" style="margin:11px 0 6px">음악</p>
+    <div class="picks" id="bgmPick"></div>
+    <p class="cite" id="bgmNote" style="margin-top:0"></p>
     <div class="trow" style="margin-bottom:11px">
       <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
       <button class="btn ghost" id="btnOpening">여는 영상 다시 보기</button>
@@ -2188,7 +2221,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "logSum","btnLog","btnLogClear","buildTag",
    "fbKinds","fbBody","btnFbSend","btnFbShow","fbNote","fbWhat","mQuest","mDaily","stageUnit","gem","lv","ups",
    "invNote","invAct","btnInvShare","btnInvCopy","invBox",
-   "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "btnBuzzTest","bgmPick","bgmNote","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -2367,7 +2400,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -8532,6 +8565,117 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     showOpening(first ? "media/opening.mp4" : "media/opening-short.mp4",
                 function () { showGate(afterGate); });
   }
+
+  // ── 음악 ──────────────────────────────────────────────
+  //
+  // 치는 내내 깔린다. 효과음과는 다른 물건이다 — 효과음은 일이 생겼을 때
+  // 한 번 울리고 말지만, 이것은 켜 두면 끌 때까지 흐른다.
+  //
+  // 곡은 media/bgm/ 에 둔다. 여기 줄을 한 줄 더하면 설정에 칸이 하나
+  // 더 선다. 이름은 「어떤 곡인가」가 두세 마디로 읽혀야 한다 — 들어
+  // 보기 전에 고르는 자리라, 파일 이름으로는 아무도 못 고른다.
+  var BGM = [
+    { f: "sansa.mp3",    t: "고요한 산사" },
+    { f: "sanjo.mp3",    t: "느릿한 산조" },
+    { f: "daegeum.mp3",  t: "바람 타는 대금" },
+    { f: "geomungo.mp3", t: "낮게 깔린 거문고" },
+    { f: "rain.mp3",     t: "맑은 빗소리" }
+  ];
+  var BGM_KEY = "nm.bgm";      // "" 면 끔. 없으면 첫 곡.
+  var BGM_VOL = 0.3;           // 낱말을 생각하는 게임이다. 깔리기만 하면 된다.
+  var bgmEl = null, bgmNow = "", bgmGone = Object.create(null), bgmArmed = 0;
+
+  function bgmWant() {
+    var v = null;
+    try { v = localStorage.getItem(BGM_KEY); } catch (e) {}
+    if (v === null) return BGM.length ? BGM[0].f : "";   // 처음 오신 분께는 첫 곡
+    return v;
+  }
+  function bgmStop() {
+    if (!bgmEl) return;
+    try { bgmEl.pause(); bgmEl.src = ""; } catch (e) {}
+    bgmEl = null; bgmNow = "";
+  }
+  // 갑자기 소리가 터지면 놀란다. 한 호흡에 걸쳐 올린다.
+  function bgmFade(a) {
+    var step = BGM_VOL / 24;
+    var t = setInterval(function () {
+      if (a !== bgmEl) { clearInterval(t); return; }
+      a.volume = Math.min(BGM_VOL, a.volume + step);
+      if (a.volume >= BGM_VOL - 0.001) clearInterval(t);
+    }, 50);
+  }
+  function bgmGo() {
+    var want = bgmWant();
+    if (!want || bgmGone[want]) { bgmStop(); return; }
+    if (bgmNow === want && bgmEl && !bgmEl.paused) return;
+    bgmStop();
+    bgmNow = want;
+    var a = new Audio("media/bgm/" + want);
+    a.loop = true; a.volume = 0; a.preload = "auto";
+    // 아직 안 만든 곡일 수 있다. 그때는 조용히 접고 설정에 「없음」으로 적는다 —
+    // 눌러도 아무 일 없는 단추를 그냥 두면 고장으로 읽힌다.
+    a.addEventListener("error", function () {
+      bgmGone[want] = 1;
+      if (bgmEl === a) { bgmEl = null; bgmNow = ""; }
+      drawBgm();
+    });
+    bgmEl = a;
+    var pr = a.play();
+    if (pr && pr.then) {
+      pr.then(function () { bgmFade(a); }, function () {
+        // 브라우저가 손짓을 기다린다. 다음 손짓에 다시 건다.
+        bgmArmed = 0;
+      });
+    } else {
+      bgmFade(a);
+    }
+  }
+  // 소리는 사람이 한 번 건드린 뒤에야 난다. 어느 손짓이든 첫 번째에 건다.
+  function bgmArm() {
+    if (bgmArmed) return;
+    // 여는 영상에도 소리가 있다. 건너뛰려고 누른 손짓에 음악까지 같이
+    // 올라오면 둘이 겹쳐 울린다. 영상이 걷힌 뒤에 건다.
+    if (document.querySelector(".opening")) return;
+    bgmArmed = 1; bgmGo();
+  }
+  document.addEventListener("pointerdown", function () { bgmArm(); });
+  // 다른 일을 보러 나가셨는데 음악만 흐르면 안 된다.
+  document.addEventListener("visibilitychange", function () {
+    if (!bgmEl) return;
+    if (document.visibilityState === "hidden") { try { bgmEl.pause(); } catch (e) {} }
+    else { try { bgmEl.play()["catch"](function () {}); } catch (e) {} }
+  });
+
+  function drawBgm() {
+    if (!el.bgmPick) return;
+    var want = bgmWant();
+    var html = '<button data-m="">소리 없음</button>';
+    BGM.forEach(function (x) {
+      html += '<button data-m="' + x.f + '"' + (bgmGone[x.f] ? ' class="none"' : '')
+            + '>' + x.t + (bgmGone[x.f] ? '<br><small>아직 없음</small>' : '') + '</button>';
+    });
+    el.bgmPick.innerHTML = html;
+    [].forEach.call(el.bgmPick.children, function (b) {
+      b.classList.toggle("on", b.dataset.m === want);
+    });
+    if (el.bgmNote) {
+      var gone = BGM.filter(function (x) { return bgmGone[x.f]; }).length;
+      el.bgmNote.textContent = !want ? "치는 동안 조용합니다."
+        : gone ? "고르신 곡이 아직 안 들어와 있으면 조용히 넘어갑니다."
+        : "치는 내내 낮게 깔립니다. 효과음은 따로입니다.";
+    }
+  }
+  if (el.bgmPick) el.bgmPick.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-m]");
+    if (!b) return;
+    try { localStorage.setItem(BGM_KEY, b.dataset.m); } catch (e2) {}
+    bgmArmed = 1;
+    if (b.dataset.m) { bgmGone[b.dataset.m] = 0; bgmGo(); } else bgmStop();
+    drawBgm();
+    toast(b.dataset.m ? "음악을 바꿨습니다" : "음악을 껐습니다");
+  });
+  drawBgm();
 
   // ── 글씨 크기 ─────────────────────────────────────────
   // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
