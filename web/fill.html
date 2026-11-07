@@ -2329,7 +2329,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-06-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6030,8 +6030,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     v.src = src;
     v.poster = "media/opening-poster.jpg";
     v.preload = "auto";
-    v.muted = true; v.defaultMuted = true; v.autoplay = true; v.playsInline = true;
-    v.setAttribute("muted", ""); v.setAttribute("autoplay", "");
+    v.playsInline = true; v.volume = 0.9;
     v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
     v.addEventListener("ended", go);
     v.addEventListener("error", go);
@@ -6053,8 +6052,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       var d = (isFinite(v.duration) && v.duration > 0) ? v.duration : 8;
       hard = setTimeout(go, (d - v.currentTime) * 1000 + 1500);
     });
-    var pr = v.play();
-    if (pr && pr["catch"]) pr["catch"](function () { go(); }); // 자동재생 막힘
+    // 여는 소리. 홈 화면에 더해 깔린 앱에서는 브라우저가 소리째 틀어 주지만,
+    // 웹에 처음 온 사람에게는 막는다. 막히면 조용히 다시 튼다 —
+    // 소리를 얻자고 영상을 잃는 것이 가장 나쁘다.
+    function run(silent) {
+      v.muted = silent; v.defaultMuted = silent;
+      if (silent) v.setAttribute("muted", ""); else v.removeAttribute("muted");
+      return v.play();
+    }
+    var pr = run(false);
+    if (pr && pr["catch"]) pr["catch"](function () {
+      var p2 = run(true);
+      if (p2 && p2["catch"]) p2["catch"](function () { go(); });
+    });
   }
 
   // 타이틀. 켤 때마다 선다 — 아이콘과 글자판을 잇는 자리이기도 하고,
