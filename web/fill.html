@@ -396,17 +396,24 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
  * 쉰 개 가까운 단추가 한 줄로 늘어서 있었다. 글씨 크기를 바꾸러 들어온
  * 분이 계정 지우기까지 지나쳐야 했고, 무엇이 어디 있는지 한눈에 안 들어왔다.
  * 일곱 줄로 접는다 — 들어오면 제목만 보이고, 누른 것만 펴진다. */
-.sec { border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
-  margin: 0 0 8px; overflow: hidden;
+.sec { border: 1px solid var(--edge); border-radius: 12px;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 3px 9px -5px #000;
+  margin: 0 0 9px; overflow: hidden;
   /* 설정 패널은 세로 flex 다. 그냥 두면 한 칸을 폈을 때 넘치는 만큼
      모든 칸이 눌려 찌그러진다 — 접힌 줄들이 글자 반만 남아 잘려 보였다.
      제 키를 지키게 하고, 넘치는 것은 패널이 쓸어내리게 둔다. */
   flex: none; }
+/* 글씨체는 다른 단추와 같은 고딕이다. 세계관 글씨(고운바탕)는 수호신
+   이름과 호가 지고, 누르는 것은 또렷한 쪽으로 간다.
+   왼쪽에서 시작한다 — 펴면 속이 왼쪽에서 시작하는데 제목만 가운데면
+   펴는 순간 글이 옆으로 튀는 것처럼 읽힌다. */
 .sec > summary {
   list-style: none; cursor: pointer; padding: 14px 15px;
-  display: flex; align-items: center; gap: 9px;
-  font-family: var(--font-display); font-weight: 700; font-size: 16.5px;
-  transition: background .12s ease;
+  display: flex; align-items: center; gap: 9px; text-align: left;
+  font-family: var(--font-body); font-weight: 700; font-size: 15.5px;
+  letter-spacing: -.01em;
+  color: var(--fg); border-radius: 11px;
 }
 .sec > summary::-webkit-details-marker { display: none; }
 /* 접힌 것과 펴진 것을 화살로 알린다 */
@@ -417,11 +424,23 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
 }
 .sec > summary .tag { margin-left: auto; font-family: var(--font-body);
   font-size: 13px; font-weight: 400; color: var(--fg-dim); }
+/* 아직 안 이으신 분께 거는 말 — 조용하되 눈에는 들어오게 */
+.sec > summary .tag.call {
+  color: var(--gold); font-weight: 700;
+  border: 1px solid rgba(201,162,39,.45); border-radius: 20px; padding: 2px 9px;
+}
 .sec > summary .tag + * { margin-left: 9px; }
 .sec > summary:has(.tag)::after { margin-left: 9px; }
 .sec[open] > summary::after { transform: rotate(-135deg) translate(-3px, -3px); }
-.sec[open] > summary { border-bottom: 1px solid var(--line); }
-.sec > summary:active { background: var(--surface-2); }
+/* 지금 펴 둔 칸은 금빛으로 두른다 — 어디를 보고 있는지 한눈에 남는다 */
+.sec[open] {
+  border-color: var(--gold); background: var(--surface);
+  box-shadow: inset 0 0 0 1px rgba(201,162,39,.2), 0 9px 22px -11px rgba(201,162,39,.55);
+}
+.sec[open] > summary {
+  border-bottom: 1px solid var(--edge); border-radius: 11px 11px 0 0;
+  color: var(--gold);
+}
 .sec .secbody { padding: 13px 15px 16px; }
 .sec .secbody > :first-child { margin-top: 0; }
 /* 속을 가두어 두었으므로(overflow:hidden) 마지막 칸의 아래 여백이 잘린다 */
@@ -932,14 +951,14 @@ body.quake { animation: shake .42s ease-out; }
 
    테두리는 차가운 회색(--line) 대신 금빛이 아주 옅게 섞인 --edge 를 쓴다.
    쟁반 칸이 이미 금빛이라, 거기에 나머지를 맞추는 것이다. */
-button:not(.tile):not(.skip), .tbtn {
+button:not(.tile):not(.skip), .tbtn, .sec > summary {
   transition: transform .1s ease, box-shadow .1s ease,
               border-color .1s ease, background .14s ease;
 }
-.btn, .tbtn, .modes .mode, .qrow .qb, .shoprow button, .sizer button {
+.btn, .tbtn, .modes .mode, .qrow .qb, .shoprow button, .sizer button, .sec > summary {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 2px 5px -3px #000;
 }
-button:not(.tile):not(.skip):active:not(:disabled), .tbtn:active {
+button:not(.tile):not(.skip):active:not(:disabled), .tbtn:active, .sec > summary:active {
   transform: translateY(-1px);
   border-color: var(--gold);
   box-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 6px 14px -7px var(--gold);
@@ -953,7 +972,7 @@ button:not(.tile):not(.skip):active:not(:disabled), .tbtn:active {
    누른 단추가 손을 떼도 올라온 채로 남는다. 그래서 진짜 마우스가
    있는 창에서만 켠다. */
 @media (hover: hover) and (pointer: fine) {
-  button:not(.tile):not(.skip):not([disabled]):hover, .tbtn:hover {
+  button:not(.tile):not(.skip):not([disabled]):hover, .tbtn:hover, .sec > summary:hover {
     transform: translateY(-1px);
     border-color: rgba(201, 162, 39, .62);
     background: var(--surface-2);
@@ -965,12 +984,13 @@ button:not(.tile):not(.skip):active:not(:disabled), .tbtn:active {
   .modes .mode.on:hover { background: #352A14; }
   .tile:not(:disabled):hover { border-color: rgba(201, 162, 39, .45); }
   /* 올라왔다가, 누르면 제자리로 내려앉는다 — 마우스에는 그게 「눌림」이다 */
-  button:not(.tile):not(.skip):not([disabled]):active, .tbtn:active {
+  button:not(.tile):not(.skip):not([disabled]):active, .tbtn:active,
+  .sec > summary:active {
     transform: translateY(0) scale(.985);
   }
 }
 /* 글쇠로 다니는 분에게도 같은 표시를 준다 */
-button:not(.tile):focus-visible, .tbtn:focus-visible {
+button:not(.tile):focus-visible, .tbtn:focus-visible, .sec > summary:focus-visible {
   outline: 2px solid var(--gold); outline-offset: 2px;
 }
 button[disabled], button[disabled]:active {
@@ -1897,7 +1917,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       </div>
     </details>
     <details class="sec" id="secCloud">
-      <summary>기록 지키기<span class="tag" id="cloudTag"></span></summary>
+      <summary>로그인 · 기록 지키기<span class="tag" id="cloudTag"></span></summary>
       <div class="secbody">
 <div id="cloudBox">
       <div class="lines" id="cloudOut">
@@ -1955,17 +1975,17 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       </div>
     </details>
     <details class="sec">
-      <summary>친구 부르기</summary>
+      <summary>친구 초대</summary>
       <div class="secbody">
 <div class="lines">
-      <p>친구에게 부르는 줄을 보내시고, 그분이 <b>한 판</b>을 마치시면
+      <p>친구를 초대하시고, 그분이 <b>한 판</b>을 마치시면
          <b>두 분 모두 옥 열 알</b>을 받으십니다.</p>
       <p>온 분은 <b>로그인하시는 그 자리에서</b> 바로 받으십니다.
-         부르시는 쪽은 <b>스무 분까지</b> 받으실 수 있습니다.</p>
+         초대하시는 쪽은 <b>스무 분까지</b> 받으실 수 있습니다.</p>
     </div>
     <p class="cite" id="invNote"></p>
     <div class="trow" style="margin-top:9px" id="invAct" hidden>
-      <button class="btn" id="btnInvShare">부르는 줄 보내기</button>
+      <button class="btn" id="btnInvShare">초대장 보내기</button>
       <button class="btn ghost" id="btnInvCopy">주소 복사</button>
     </div>
     <textarea id="invBox" class="codebox" hidden rows="2" readonly
@@ -1992,14 +2012,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <button class="btn ghost" id="btnTerms">이용약관</button>
       <button class="btn ghost" id="btnPrivacy">개인정보 처리방침</button>
     </div>
+
       </div>
     </details>
     <details class="sec">
-      <summary>잘 안 될 때</summary>
+      <summary>문의하기 · 계정 삭제</summary>
       <div class="secbody">
-<div class="trow">
-      <button class="btn ghost" id="btnLogOpen">만든 사람에게 알리기</button>
-      <button class="btn ghost" id="btnErase">계정 지우기</button>
+<p class="lines" style="margin-top:0">안 되는 것이 있거나, 이런 게 있었으면
+        싶은 것이 있으시면 적어 주십시오. 이름도 연락처도 받지 않습니다.<br>
+        계정을 지우시려면 <b>로그인 · 기록 지키기</b> 안에서 바로 하실 수 있고,
+        아래 단추는 그 안내를 엽니다.</p>
+      <div class="trow">
+        <button class="btn ghost" id="btnLogOpen">문의하기</button>
+        <button class="btn ghost" id="btnErase">계정 삭제 안내</button>
       </div>
     </details>
   </div>
@@ -2492,7 +2517,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-j";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-q";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -7912,7 +7937,12 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     if (sec) {
       sec.hidden = !on;
       var tag = document.getElementById("cloudTag");
-      if (tag) tag.textContent = !on ? "" : (me ? "이어짐" : "아직");
+      if (tag) {
+        tag.textContent = !on ? "" : (me ? "이어짐" : "로그인하기");
+        // 안 이으신 분께는 눈에 들어와야 한다. 못 찾아서 그냥 시작하신 분이
+        // 옥을 사면, 폰을 바꿀 때 그 옥이 사라진다.
+        tag.classList.toggle("call", !!on && !me);
+      }
     }
     drawSaveBar();
     if (!on) return;
@@ -8249,7 +8279,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         if (!n) return 0;
         gem += n; saveS(); drawStatsOnly(); drawTray();
         if (window.SFX) SFX.up();
-        toast("친구 부르기 · 옥 " + n + "알이 들어왔습니다");
+        toast("친구 초대 · 옥 " + n + "알이 들어왔습니다");
         return n;
       })["catch"](function () { return 0; });
   }
@@ -8289,11 +8319,11 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     if (!cloudOn()) { el.invNote.textContent = "아직 준비 중입니다"; return; }
     if (!me) {
       el.invAct.hidden = true; el.invBox.hidden = true;
-      el.invNote.textContent = "로그인하시면 부르는 줄이 생깁니다";
+      el.invNote.textContent = "로그인하시면 초대장이 생깁니다";
       return;
     }
     el.invAct.hidden = false;
-    if (!myCode) el.invNote.textContent = "부르는 줄을 받아 오는 중입니다…";
+    if (!myCode) el.invNote.textContent = "초대장을 받아 오는 중입니다…";
     // 패는 한 번 받으면 변하지 않는다. 그릴 때마다 다시 물으면
     // 한 판에 세 번씩 묻게 된다 — 셌은 그때마다 달라지므로 그것만 다시 묻는다.
     (myCode ? Promise.resolve({ data: myCode })
@@ -8312,7 +8342,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
           ? came + "분이 오셨고, 그 가운데 " + played + "분이 한 판을 마치셨습니다"
           : "아직 오신 분이 없습니다";
       })["catch"](function (e) {
-        el.invNote.textContent = "부르는 줄을 받지 못했습니다 — 잠시 뒤 다시";
+        el.invNote.textContent = "초대장을 받지 못했습니다 — 잠시 뒤 다시";
       });
   }
   function inviteUrl() { return SITE + "?r=" + myCode; }
@@ -8446,7 +8476,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 부르는 줄 보내기. 카톡 카드가 되면 카드로, 안 되면 공유 시트로,
   // 그것도 안 되면 글을 눈앞에 펼친다 — 어디서 멈추든 보낼 길이 남는다.
   if (el.btnInvShare) el.btnInvShare.addEventListener("click", function () {
-    if (!myCode) { toast("부르는 줄이 아직 없습니다"); return; }
+    if (!myCode) { toast("초대장이 아직 없습니다"); return; }
     var t = inviteText(), u = inviteUrl();
     var NSi = window.NativeShare && window.NativeShare.ok() ? window.NativeShare : null;
     kakaoReady().then(function (K) {
@@ -8470,7 +8500,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     });
   });
   if (el.btnInvCopy) el.btnInvCopy.addEventListener("click", function () {
-    if (!myCode) { toast("부르는 줄이 아직 없습니다"); return; }
+    if (!myCode) { toast("초대장이 아직 없습니다"); return; }
     el.invBox.hidden = false;
     try {
       navigator.clipboard.writeText(inviteUrl()).then(
