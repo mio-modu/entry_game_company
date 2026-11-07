@@ -3684,10 +3684,11 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 며칠이 곧 "이게 귀한 것이구나"를 가르친다 — 공짜로 받은 두 판은
   // 아무것도 안 가르친다.
   //
-  // 배우는 자리는 따로 있다. 산 오르기는 끝까지 공짜이고, 끝말잇기 표는
-  // 맨손으로 딸 수 있다. 옥 한 알 없이도 첫 시험에 닿는 길이 있다.
+  // 배우는 자리는 따로 있다. 산 오르기는 끝까지 공짜이고, 표 두 장은
+  // 맨손으로 딴다. 옥 한 알 없이도 첫 시험에 닿는 길이 있다.
   //
-  // 하루 세 판에서 멈춘다. 돈을 부어도 넷째 판은 없다.
+  // 옥으로는 하루 세 판에서 멈춘다. 돈을 부어도 넷째 판은 없다 —
+  // 그 판은 표를 벌어야 열린다.
   //
   // 두 판이던 때는 벽이 「횟수」 하나로 호를 지켰다. 이제 값이 함께
   // 지킨다 — 26단 위에서는 한 판이 옥 서른이라 세 판이면 아흔이다.
@@ -3753,7 +3754,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 셈이 뒤집힌다 — 한 판을 샀는데 잘하면 두 단이 오른다.
   //
   // 공짜로 주는 것이 헤픈 것도 아니다. 그 한 판을 받으려면 맨몸으로
-  // 한 단을 통과해야 하고, 하루 세 판이라는 벽은 그대로라 넷째 판은 없다.
+  // 한 단을 통과해야 하고, 하루 네 판이라는 벽은 그대로다.
   // 잘한 사람에게만, 그날 한 번만 열린다.
   function exNextKey() { return "nathero-exnext-" + todayKey(); }
   function examFreeNext() { return kGet(exNextKey(), 0); }
@@ -4330,8 +4331,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 한 판을 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진
   // 것을 실력으로 되찾는 길이 생긴다.
   //
-  // 하루 세 판이라는 벽은 그대로다. 표는 "한 판 더"가 아니라 "그 한 판의
-  // 값을 치러 주는 것"이다. 돈으로도 못 넘던 벽을 실력으로도 못 넘는다.
+  // 표는 옥으로 막힌 넷째 판을 연다. 돈으로는 못 넘는 자리를 실력으로
+  // 넘는 길이고, 하루 네 판이라는 벽은 표로도 못 넘는다.
   // 하루 세 판. 갈수록 어려워진다 — 어려워진다는 것은 생각할 틈이 준다는 뜻이다.
   //
   // 전에는 세 판이 똑같았다. 똑같으면 셋째 판이 그저 셋째일 뿐이라
@@ -4348,8 +4349,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 세 판을 다 물리치면 「표」 한 장. 그 표로 오늘 승단 시험 한 판을
   // 옥 없이 본다. 시험도 끝말잇기도 맨손이라, 실력으로 떨어진 것을
-  // 실력으로 되찾는 길이다. 하루 세 판이라는 벽은 그대로다 —
-  // 표는 "한 판 더"가 아니라 "그 한 판의 값을 치러 주는 것"이다.
+  // 실력으로 되찾는 길이다. 오늘의 낱말을 나누고 받는 표와 자리가 달라,
+  // 둘 다 번 날은 두 판을 옥 없이 본다. 하루 네 판이라는 벽은 그대로다.
   var CHAIN_SEC = [13, 11, 7];  // 판마다 한 턴에 주어지는 시간
   // 셋째 판이 이 놀이의 몸통이다. 7초는 직접 쳐 보니 맨손으로 꽤 어렵고,
   // 바로 그래서 "한 번만 더"가 나온다.
@@ -6042,10 +6043,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     ov.appendChild(v); ov.appendChild(skip);
     document.body.appendChild(ov);
 
-    var started = false;
-    v.addEventListener("playing", function () { started = true; });
-    setTimeout(function () { if (!started) go(); }, 2200);   // 안 틀리면 포기
-    setTimeout(go, 8000);                                     // 어떤 일이 있어도
+    // 느린 회선에서 받느라 늦는 것과, 아예 못 트는 것은 다르다.
+    // 늦는 쪽까지 건너뛰면 영상이 영영 안 보인다 — 못 트는 쪽만 건너뛴다.
+    // 강제 종료 시각도 "뜬 때"가 아니라 "틀린 때"에 맞춘다.
+    // 그러지 않으면 늦게 시작한 만큼 끝이 잘려 용 낙인을 못 본다.
+    var hard = setTimeout(go, 12000);                          // 끝내 아무 일도 없으면
+    v.addEventListener("playing", function () {
+      clearTimeout(hard);
+      var d = (isFinite(v.duration) && v.duration > 0) ? v.duration : 8;
+      hard = setTimeout(go, (d - v.currentTime) * 1000 + 1500);
+    });
     var pr = v.play();
     if (pr && pr["catch"]) pr["catch"](function () { go(); }); // 자동재생 막힘
   }
