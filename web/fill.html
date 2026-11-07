@@ -1048,6 +1048,17 @@ body.ready .acts, body.ready #ruleNote { visibility: hidden; }
 .up button[disabled] { opacity: .45; }
 .tlog { border-color: var(--gold); }
 .tlog h2 { color: var(--gold); }
+/* 갈래 고르기. 네 칸이라 .sizer 처럼 한 줄에 늘어놓으면 글자가 찌그러진다.
+   두 줄 두 칸으로 접는다 — 엄지로 누르는 자리가 넉넉해야 눌린다. */
+.kinds { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 0 0 9px; }
+.kinds button {
+  font-family: inherit; font-size: 13.5px; background: var(--surface-2); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 11px 8px;
+}
+.kinds button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+/* 글 쓰는 자리는 코드가 아니다. 고정폭으로 두면 한글이 성겨 보이고,
+   「여기에 글을 쓰라」는 느낌이 안 난다. */
+.fbbody { font-family: inherit; font-size: 14px; line-height: 1.7; word-break: normal; }
 .tlog p#logSum { font-family: var(--font-mono); font-size: 12px; color: var(--fg);
   line-height: 1.8; white-space: pre-wrap; }
 .trow { display: grid; grid-template-columns: 1.4fr 1fr; gap: 7px; }
@@ -1729,14 +1740,33 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   </div>
 
   <div class="panel tlog" id="pLog">
-    <h2>무슨 일이 있었는지 <small id="buildTag"></small></h2>
+    <h2>만든 사람에게 알리기 <small id="buildTag"></small></h2>
+    <p class="muted" style="margin-bottom:7px">어떤 말씀이신지 하나만 골라 주십시오</p>
+    <div class="kinds" id="fbKinds">
+      <button type="button" data-k="불만">잘 안 된다</button>
+      <button type="button" data-k="제안">이렇게 해 달라</button>
+      <button type="button" data-k="버그">고장났다</button>
+      <button type="button" data-k="그 밖">그 밖</button>
+    </div>
+    <textarea id="fbBody" class="codebox fbbody" rows="4" maxlength="2000"
+              spellcheck="false" autocomplete="off"
+              placeholder="무엇이 어떻게 안 되었는지 한 줄만이라도 적어 주십시오."></textarea>
+    <div class="trow" style="margin-top:8px">
+      <button class="btn" id="btnFbSend">보내기</button>
+      <button class="btn ghost" id="btnFbShow">함께 가는 것 보기</button>
+    </div>
+    <p class="cite" id="fbNote"><b>로그인은 안 하셔도 됩니다.</b> 누르시면 그대로 저에게 옵니다 —
+      어디로 옮겨 붙이실 것이 없습니다. 이름·전화·이메일은 <b>보낼 자리조차 없습니다.</b></p>
+    <pre class="diag" id="fbWhat" hidden></pre>
+
+    <p class="subh">이 기기에 쌓인 기록</p>
     <p id="logSum">아직 기록이 없습니다.</p>
     <div class="trow">
-      <button class="btn" id="btnLog">기록 복사</button>
+      <button class="btn ghost" id="btnLog">기록 복사</button>
       <button class="btn ghost" id="btnLogClear">기록 지우기</button>
     </div>
-    <p class="cite">기록은 <b>이 기기 안에만</b> 남습니다. 이름·연락처는 일절 담지 않고,
-      <b>「기록 복사」를 누르셨을 때만</b> 글로 만들어 드립니다.</p>
+    <p class="cite">위의 「보내기」가 안 될 때를 위한 길입니다. 이 기록은
+      <b>이 기기 안에만</b> 남고, 이름·연락처는 일절 담지 않습니다.</p>
   </div>
 
   <div class="panel" id="pSet">
@@ -2155,7 +2185,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "startBar","startHead","startSub","btnStart","hpLine",
    "pTrain","pChest","pRule","pLog",
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
-   "logSum","btnLog","btnLogClear","buildTag","mQuest","mDaily","stageUnit","gem","lv","ups",
+   "logSum","btnLog","btnLogClear","buildTag",
+   "fbKinds","fbBody","btnFbSend","btnFbShow","fbNote","fbWhat","mQuest","mDaily","stageUnit","gem","lv","ups",
    "invNote","invAct","btnInvShare","btnInvCopy","invBox",
    "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -2336,7 +2367,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-c";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6091,6 +6122,14 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 타이틀. 켤 때마다 선다 — 아이콘과 글자판을 잇는 자리이기도 하고,
   // 매일 오는 사람에게 "어디까지 왔는지" 한 줄로 보여 주는 자리이기도 하다.
   // 매번 보일 것이라면 볼 값어치가 있어야 하므로 단(段)을 같이 적는다.
+  // 타이틀이 떠 있는 동안에만 들어 있다.
+  //
+  // 앱에서는 로그인을 마치고 돌아와도 페이지가 새로 뜨지 않는다. 크롬 창만
+  // 닫히고 같은 화면으로 되돌아오는데, 그 화면을 아무도 안 고치면
+  // 「카카오로 잇고 시작하기」가 그대로 남는다. 서버에는 이미 이어졌는데
+  // 화면만 안 된 것처럼 보인다 — 실제로 그렇게 보였다.
+  var gateSay = null;
+
   function showGate(after) {
     var first = !tut.started;
     var g = document.createElement("div"); g.className = "gate";
@@ -6123,11 +6162,23 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     }
 
     function began() { if (!tut.started) { tut.started = 1; saveTut(); } }
-    go.addEventListener("click", function () { began(); g.remove(); if (after) after(); });
-    if (ka) ka.addEventListener("click", function () {
-      // 돌아오면 페이지가 새로 뜨고, 타이틀은 그때 다시 선다.
-      began(); cloudLogin("kakao");
-    });
+    function close() { gateSay = null; g.remove(); if (after) after(); }
+    go.addEventListener("click", function () { began(); close(); });
+    if (ka) ka.addEventListener("click", function () { began(); cloudLogin("kakao"); });
+
+    // 로그인이 어떻게 됐는지 이 자리에 적는다. 설정 안의 한 줄은 타이틀에
+    // 가려 안 보이므로, 여기 적지 않으면 아무 일도 안 난 것처럼 읽힌다.
+    gateSay = function (how, msg) {
+      if (!g.parentNode) { gateSay = null; return; }
+      sub.textContent = msg;
+      sub.style.color = how === "no" ? "var(--danger)" : "";
+      if (how !== "ok") return;
+      if (ka && ka.parentNode) ka.remove();
+      // 누르신 단추가 「잇고 시작하기」였다. 이었으면 시작까지 해 드린다 —
+      // 다만 이어진 것은 보고 가시도록 잠깐 둔다.
+      setTimeout(function () { if (g.parentNode) close(); }, 1100);
+    };
+
     document.body.appendChild(g);
     go.focus();
   }
@@ -7199,6 +7250,192 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     victory(run);
   });
 
+  // ── 만든 사람에게 알리기 ───────────────────────────────────────
+  //
+  // 전에는 글을 클립보드에 담고 "보내 주세요"로 끝났다. 거기서 끝난 것이
+  // 맞다 — 창을 닫고, 카톡을 열고, 나를 찾고, 붙여 넣고, 보내는 네 걸음이
+  // 남아 있었다. 그 네 걸음을 걷는 사람은 없다. 그래서 받은 말이 하나도
+  // 없었다. 불만이 없었던 것이 아니다.
+  //
+  // 한 번 누르면 그대로 서버로 간다. 로그인은 묻지 않는다 — 대부분
+  // 로그인을 안 하고, 할 말이 가장 많은 사람은 특히 안 한다.
+  //
+  // supabase-js 는 받아 오지 않는다. 137KB 를 받아야 할 까닭이 없다.
+  // 보내는 길은 한 줄의 fetch 다. 막는 것은 전부 서버에 있다
+  // (supabase/0003_feedback.sql — 갈래 검사 · 속도 제한 · 같은 글 묶기).
+  var FB = { kind: "", busy: false };
+
+  // 기기 정보. 어떤 폰에서 깨지는가를 알기 위한 것이다. 여기에 사람을
+  // 가리키는 것은 하나도 없다 — 이름도 번호도 자리가 없다.
+  function fbUA() {
+    var a = [];
+    try { a.push(navigator.userAgent || ""); } catch (e) {}
+    try {
+      a.push("화면 " + (screen.width || 0) + "x" + (screen.height || 0)
+             + "@" + (window.devicePixelRatio || 1));
+    } catch (e) {}
+    a.push(window.Capacitor ? "앱" : "웹");
+    return a.join(" · ");
+  }
+
+  // 함께 가는 것을 숨기지 않는다. 「무엇이 가는지 모르겠다」가
+  // 안 보내는 까닭 가운데 하나다. 눌러 보면 그대로 다 보인다.
+  function fbWhatText() {
+    return "갈래 " + (FB.kind || "(아직 안 고르셨습니다)") + "\n"
+      + "판 " + BUILD + " · 지금 " + ((stage || 0) + 1) + "단계\n"
+      + "기기 " + fbUA() + "\n"
+      + (me ? "로그인 하신 상태로 갑니다 (누구인지는 저도 번호로만 봅니다)\n"
+            : "로그인 안 하신 상태로 갑니다 (누구인지 아무 표시가 없습니다)\n")
+      + "\n" + logText();
+  }
+
+  function fbDraw() {
+    if (!el.fbKinds) return;
+    el.fbKinds.querySelectorAll("button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-k") === FB.kind);
+    });
+  }
+  function fbSay(t, bad) {
+    if (!el.fbNote) return;
+    el.fbNote.style.color = bad ? "var(--danger)" : "";
+    el.fbNote.textContent = t;
+  }
+
+  // 로그인하신 분이면 그분의 표로, 아니면 공개 열쇠로 보낸다. 공개 열쇠는
+  // 넣는 문 하나만 열고(함수 하나), 그 문으로는 아무것도 읽을 수 없다.
+  function fbToken() {
+    if (!SB || !me) return Promise.resolve(NM_CLOUD.key);
+    try {
+      return SB.auth.getSession().then(function (r) {
+        var t = r && r.data && r.data.session && r.data.session.access_token;
+        return t || NM_CLOUD.key;
+      }, function () { return NM_CLOUD.key; });
+    } catch (e) { return Promise.resolve(NM_CLOUD.key); }
+  }
+
+  // 서버가 돌려주는 말. 사람에게 보여 줄 글은 여기서 한자리에 둔다.
+  var FB_SAY = {
+    ok:    "보냈습니다 · 고맙습니다",
+    dup:   "보냈습니다 · 고맙습니다",          // 두 번 눌린 것은 두 말이 아니다
+    empty: "한 줄만이라도 적어 주십시오",
+    bad:   "갈래를 다시 골라 주십시오",
+    slow:  "조금 뒤에 다시 보내 주십시오 · 방금 여러 번 보내셨습니다",
+    busy:  "지금 한꺼번에 몰렸습니다 · 조금 뒤에 다시 보내 주십시오"
+  };
+
+  // 서버에 못 닿을 때. 적은 글을 잃게 하지 않는다 — 클립보드에 담아 주고
+  // 어디로 보내면 되는지까지 적어 준다. 이 길이 전에는 하나뿐이었다.
+  function fbFallback(why) {
+    var t = "[" + (FB.kind || "그 밖") + "] " + (el.fbBody.value || "").trim()
+          + "\n\n" + fbWhatText();
+    var sent = false;
+    try {
+      navigator.clipboard.writeText(t).then(function () {}, function () {});
+      sent = true;
+    } catch (e) {}
+    fbSay((sent ? "지금은 서버에 닿지 않아 글을 복사해 두었습니다. " : "지금은 서버에 닿지 않습니다. ")
+      + "잠시 뒤 다시 눌러 주시거나, 복사한 글을 보내 주십시오."
+      + (why ? " (" + why + ")" : ""), 1);
+  }
+
+  function fbSend() {
+    if (FB.busy) return;
+    var body = (el.fbBody.value || "").trim();
+    if (body.length < 2) {
+      fbSay(FB_SAY.empty, 1);
+      try { el.fbBody.focus(); } catch (e) {}
+      return;
+    }
+    // 갈래를 안 고르셨으면 막지 않는다. 막으면 그 자리에서 창을 닫는다.
+    // 한 번은 여쭙고, 그 사이 「그 밖」을 집어 둔다 — 다시 누르면 간다.
+    if (!FB.kind) {
+      FB.kind = "그 밖"; fbDraw();
+      fbSay("어떤 말씀이신지 골라 주십시오. 그냥 다시 누르시면 「그 밖」으로 갑니다.", 1);
+      return;
+    }
+    if (!cloudOn()) { fbFallback("아직 서버가 안 켜져 있습니다"); return; }
+
+    FB.busy = true;
+    el.btnFbSend.disabled = true;
+    el.btnFbSend.textContent = "보내는 중…";
+    fbSay("보내는 중입니다…");
+
+    // 통신이 영영 안 끝나는 것이 가장 나쁘다. 단추가 그대로 굳는다.
+    var died = false;
+    var bell = setTimeout(function () { died = true; fbDone(); fbFallback("너무 오래 걸립니다"); }, 12000);
+    function fbDone() {
+      clearTimeout(bell);
+      FB.busy = false;
+      el.btnFbSend.disabled = false;
+      el.btnFbSend.textContent = "보내기";
+    }
+
+    fbToken().then(function (tok) {
+      return fetch(NM_CLOUD.url + "/rest/v1/rpc/feedback_send", {
+        method: "POST",
+        headers: {
+          "apikey": NM_CLOUD.key,
+          "Authorization": "Bearer " + tok,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_kind:  FB.kind,
+          p_body:  body,
+          p_build: BUILD,
+          p_stage: (typeof stage === "number" && stage >= 0) ? stage : null,
+          p_ua:    fbUA(),
+          p_diag:  logText()
+        })
+      });
+    }).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.text();
+    }).then(function (txt) {
+      if (died) return;
+      var v = txt;
+      try { v = JSON.parse(txt); } catch (e) {}
+      fbDone();
+      if (v === "ok" || v === "dup") {
+        // 보낸 글은 치운다. 안 치우면 같은 글을 또 누르게 되고,
+        // 서버는 dup 으로 묶지만 사람은 「안 갔나」로 읽는다.
+        el.fbBody.value = "";
+        FB.kind = ""; fbDraw();
+        fbSay(FB_SAY.ok);
+        toast("보냈습니다 · 고맙습니다");
+        logEv("F");
+        return;
+      }
+      // 서버가 아는 말 가운데 하나가 아니면 — 손댄 적 없는 길이다.
+      // 그때 객체를 그대로 내보이면 "[object Object]" 가 찍힌다.
+      // 사람에게는 사람 말로, 까닭은 짧게만 적는다.
+      fbSay(FB_SAY[v] || ("보내지 못했습니다 · 잠시 뒤 다시 눌러 주십시오"
+            + (typeof v === "string" && v ? " (" + v.slice(0, 40) + ")" : "")), 1);
+    }).catch(function (e) {
+      if (died) return;
+      fbDone();
+      fbFallback(e && e.message ? e.message : "");
+    });
+  }
+
+  if (el.fbKinds) {
+    el.fbKinds.addEventListener("click", function (ev) {
+      var b = ev.target.closest ? ev.target.closest("button[data-k]") : null;
+      if (!b) return;
+      FB.kind = b.getAttribute("data-k");
+      fbDraw();
+      fbSay("");
+      if (el.fbWhat && !el.fbWhat.hidden) el.fbWhat.textContent = fbWhatText();
+    });
+  }
+  if (el.btnFbSend) el.btnFbSend.addEventListener("click", fbSend);
+  if (el.btnFbShow) el.btnFbShow.addEventListener("click", function () {
+    if (!el.fbWhat) return;
+    var show = el.fbWhat.hidden;
+    el.fbWhat.hidden = !show;
+    el.btnFbShow.textContent = show ? "접기" : "함께 가는 것 보기";
+    if (show) el.fbWhat.textContent = fbWhatText();
+  });
+
   // 기록 단추
   el.btnLog.addEventListener("click", function () {
     var t = logText();
@@ -7936,10 +8173,13 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     });
     window.NativeAuth.onCode(function (code, err) {
       if (err || !code) {
-        note(err ? "로그인을 마치지 못했습니다" : "로그인이 취소되었습니다", 1);
+        var why = err ? "로그인을 마치지 못했습니다" : "로그인이 취소되었습니다";
+        note(why, 1);
+        if (gateSay) gateSay("no", why + " · 그냥 시작하셔도 됩니다");
         return;
       }
       note("잇는 중입니다…");
+      if (gateSay) gateSay("wait", "잇는 중입니다…");
       sb().then(function (c) {
         return c.auth.exchangeCodeForSession(code).then(function (r) {
           if (r && r.error) throw r.error;
@@ -7949,12 +8189,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         });
       }).then(function (r) {
         var u = r && r.data && r.data.user;
-        if (!adoptUser(u)) { note("잇지 못했습니다 — 다시 해 보십시오", 1); return; }
+        if (!adoptUser(u)) {
+          note("잇지 못했습니다 — 다시 해 보십시오", 1);
+          if (gateSay) gateSay("no", "잇지 못했습니다 · 그냥 시작하셔도 됩니다");
+          return;
+        }
         note("");
         drawCloud(); cloudSync();
+        if (gateSay) gateSay("ok", "기록이 이어졌습니다");
         toast("기록이 이어졌습니다");
       })["catch"](function (e) {
         note("잇지 못했습니다 — " + ((e && e.message) || "잠시 뒤 다시"), 1);
+        if (gateSay) gateSay("no", "잇지 못했습니다 · 그냥 시작하셔도 됩니다");
       });
     });
   }
@@ -8244,7 +8490,17 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     openPanel(el.pRule);
   });
   el.tSet.addEventListener("click", function () { drawCloud(); openPanel(el.pSet); });
-  el.btnLogOpen.addEventListener("click", function () { drawLog(); openPanel(el.pLog); });
+  // 열 때마다 처음 모습으로 되돌린다. 전에 보낸 뒤의 "보냈습니다"가
+  // 그대로 남아 있으면, 다음에 여신 분은 또 보낸 줄 안다.
+  var FB_NOTE0 = el.fbNote ? el.fbNote.innerHTML : "";
+  el.btnLogOpen.addEventListener("click", function () {
+    drawLog();
+    if (el.fbNote) { el.fbNote.style.color = ""; el.fbNote.innerHTML = FB_NOTE0; }
+    if (el.fbWhat) { el.fbWhat.hidden = true; el.fbWhat.textContent = ""; }
+    if (el.btnFbShow) el.btnFbShow.textContent = "함께 가는 것 보기";
+    fbDraw();
+    openPanel(el.pLog);
+  });
   el.btnRuleOpen.addEventListener("click", function () { openPanel(el.pRule); });
 
   if (el.buildTag) el.buildTag.textContent = "판 " + BUILD;
