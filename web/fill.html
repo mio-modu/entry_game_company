@@ -357,6 +357,27 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
   border: 1px solid var(--line); color: var(--fg-dim); font: inherit;
 }
 .sizer button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+/* 음악 크기. 단추만 있는 설정 안에서 돌출리지 않게 같은 결로 둔다. */
+.volrow { display: flex; align-items: center; gap: 10px; margin: 0 0 13px;
+  font-size: 12px; color: var(--fg-faint); }
+.volrow input[type=range] {
+  flex: 1; min-width: 0; height: 26px; -webkit-appearance: none; appearance: none;
+  background: transparent; margin: 0;
+}
+.volrow input[type=range]::-webkit-slider-runnable-track {
+  height: 5px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--line);
+}
+.volrow input[type=range]::-moz-range-track {
+  height: 5px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--line);
+}
+.volrow input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin-top: -9px;
+  border-radius: 50%; background: var(--gold); border: 1px solid var(--line);
+}
+.volrow input[type=range]::-moz-range-thumb {
+  width: 22px; height: 22px; border: 1px solid var(--line);
+  border-radius: 50%; background: var(--gold);
+}
 .sizer button:nth-child(1) { font-size: 13px; }
 .sizer button:nth-child(2) { font-size: 16px; }
 .sizer button:nth-child(3) { font-size: 19px; }
@@ -370,6 +391,41 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
 }
 .picks button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
 .picks button.none { opacity: .4; }
+/* 설정은 한 번 열면 끝까지 쓸어내려야 하는 자리가 아니다.
+ *
+ * 쉰 개 가까운 단추가 한 줄로 늘어서 있었다. 글씨 크기를 바꾸러 들어온
+ * 분이 계정 지우기까지 지나쳐야 했고, 무엇이 어디 있는지 한눈에 안 들어왔다.
+ * 일곱 줄로 접는다 — 들어오면 제목만 보이고, 누른 것만 펴진다. */
+.sec { border: 1px solid var(--line); border-radius: 12px; background: var(--surface);
+  margin: 0 0 8px; overflow: hidden;
+  /* 설정 패널은 세로 flex 다. 그냥 두면 한 칸을 폈을 때 넘치는 만큼
+     모든 칸이 눌려 찌그러진다 — 접힌 줄들이 글자 반만 남아 잘려 보였다.
+     제 키를 지키게 하고, 넘치는 것은 패널이 쓸어내리게 둔다. */
+  flex: none; }
+.sec > summary {
+  list-style: none; cursor: pointer; padding: 14px 15px;
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--font-display); font-weight: 700; font-size: 16.5px;
+  transition: background .12s ease;
+}
+.sec > summary::-webkit-details-marker { display: none; }
+/* 접힌 것과 펴진 것을 화살로 알린다 */
+.sec > summary::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-left: auto;
+  border-right: 2px solid var(--fg-faint); border-bottom: 2px solid var(--fg-faint);
+  transform: rotate(45deg) translate(-2px, -2px); transition: transform .16s ease;
+}
+.sec > summary .tag { margin-left: auto; font-family: var(--font-body);
+  font-size: 13px; font-weight: 400; color: var(--fg-dim); }
+.sec > summary .tag + * { margin-left: 9px; }
+.sec > summary:has(.tag)::after { margin-left: 9px; }
+.sec[open] > summary::after { transform: rotate(-135deg) translate(-3px, -3px); }
+.sec[open] > summary { border-bottom: 1px solid var(--line); }
+.sec > summary:active { background: var(--surface-2); }
+.sec .secbody { padding: 13px 15px 16px; }
+.sec .secbody > :first-child { margin-top: 0; }
+/* 속을 가두어 두었으므로(overflow:hidden) 마지막 칸의 아래 여백이 잘린다 */
+.sec .secbody > :last-child { margin-bottom: 0; }
 .wrap { max-width: 460px; margin: 0 auto; display: flex;
   flex-direction: column; gap: 9px;
   padding-left: max(14px, var(--sa-l));
@@ -1800,13 +1856,36 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
   <div class="panel" id="pSet">
     <h2>설정</h2>
-    <p class="muted" style="margin-bottom:6px">글자를 누를 때</p>
+    <p class="cite" style="margin:0 0 11px">누르시면 펼쳐집니다.</p>
+    <details class="sec">
+      <summary>소리와 글씨</summary>
+      <div class="secbody">
+<p class="muted" style="margin-bottom:6px">글자를 누를 때</p>
     <div class="sizer" id="buzzer">
       <button data-b="1">누를 때 진동</button>
       <button data-b="0">진동 없이</button>
     </div>
     <button class="btn ghost" id="btnBuzzTest" style="margin-top:6px">진동 시험</button>
     <p class="cite" id="buzzNote" style="margin-top:6px"></p>
+    <p class="muted" style="margin:11px 0 6px">음악</p>
+    <div class="sizer" id="musPick">
+      <button data-mus="1">켜기</button>
+      <button data-mus="0">끄기</button>
+    </div>
+    <div class="volrow" id="musVolRow">
+      <span>작게</span>
+      <input type="range" id="musVol" min="0" max="100" step="5" aria-label="음악 크기">
+      <span>크게</span>
+    </div>
+    <p class="cite" style="margin-top:6px">산을 올라가시면 곡이 바뀝니다.</p>
+
+    <p class="muted" style="margin:11px 0 6px">효과음 <span style="opacity:.7">— 글자를 누를 때 나는 소리</span></p>
+    <div class="volrow" id="sfxVolRow">
+      <span>작게</span>
+      <input type="range" id="sfxVol" min="0" max="100" step="5" aria-label="효과음 크기">
+      <span>크게</span>
+    </div>
+
     <p class="muted" style="margin:11px 0 6px">글씨 크기</p>
     <div class="sizer" id="sizer">
       <button data-z="1">보통</button>
@@ -1815,17 +1894,12 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     </div>
     <p class="cite" style="margin-top:6px">크게 고르시면 한 화면을 넘칠 수 있습니다 —
       그때는 <b>쓸어올려</b> 보십시오.</p>
-
-    <p class="muted" style="margin:11px 0 6px">음악</p>
-    <div class="picks" id="bgmPick"></div>
-    <p class="cite" id="bgmNote" style="margin-top:0"></p>
-    <div class="trow" style="margin-bottom:11px">
-      <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
-      <button class="btn ghost" id="btnOpening">여는 영상 다시 보기</button>
-    </div>
-
-    <p class="subh">기록 지키기</p>
-    <div id="cloudBox">
+      </div>
+    </details>
+    <details class="sec" id="secCloud">
+      <summary>기록 지키기<span class="tag" id="cloudTag"></span></summary>
+      <div class="secbody">
+<div id="cloudBox">
       <div class="lines" id="cloudOut">
         <p><b>아직 이으신 데가 없어</b> 기록이 이 기기 안에만 있습니다.
            이대로 폰을 바꾸거나 앱을 지우면 <b>단계도 사신 옥도
@@ -1852,24 +1926,12 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       </div>
       <pre class="diag" id="diagBox" hidden></pre>
     </div>
-
-    <p class="subh">친구 부르기</p>
-    <div class="lines">
-      <p>친구에게 부르는 줄을 보내시고, 그분이 <b>한 판</b>을 마치시면
-         <b>두 분 모두 옥 열 알</b>을 받으십니다.</p>
-      <p>온 분은 <b>로그인하시는 그 자리에서</b> 바로 받으십니다.
-         부르시는 쪽은 <b>스무 분까지</b> 받으실 수 있습니다.</p>
-    </div>
-    <p class="cite" id="invNote"></p>
-    <div class="trow" style="margin-top:9px" id="invAct" hidden>
-      <button class="btn" id="btnInvShare">부르는 줄 보내기</button>
-      <button class="btn ghost" id="btnInvCopy">주소 복사</button>
-    </div>
-    <textarea id="invBox" class="codebox" hidden rows="2" readonly
-              spellcheck="false" autocomplete="off"></textarea>
-
-    <p class="subh">기록 코드 — 로그인 없이 옮기기</p>
-    <div class="lines">
+      </div>
+    </details>
+    <details class="sec">
+      <summary>기록 코드 — 로그인 없이 옮기기</summary>
+      <div class="secbody">
+<div class="lines">
       <p>로그인이 내키지 않으시면 이 방법도 있습니다. 기록을 <b>글 한 줄</b>로
          만들어 메모장에 두었다가, 새 폰에서 그 줄을 넣으시면 그대로 돌아옵니다.</p>
       <p>이 줄은 <b>화면에서만 만들어집니다</b> — 어디로도 보내지 않습니다.</p>
@@ -1890,13 +1952,39 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <button class="btn ghost" id="btnCodeShare">다른 앱으로 보내기</button>
     </div>
     <p class="cite" id="codeNote" hidden></p>
-
-    <!-- 전자상거래법은 파는 사람이 누구인지, 어떤 약속으로 파는지를
-         사는 자리에서 닿을 수 있게 두라고 한다. 확률형 아이템 정보공개
-         의무도 같은 자리에 둔다 — 보물함 확률은 살 때가 아니라 사기
-         전에 볼 수 있어야 한다. -->
-    <p class="subh">안내</p>
-    <div class="trow">
+      </div>
+    </details>
+    <details class="sec">
+      <summary>친구 부르기</summary>
+      <div class="secbody">
+<div class="lines">
+      <p>친구에게 부르는 줄을 보내시고, 그분이 <b>한 판</b>을 마치시면
+         <b>두 분 모두 옥 열 알</b>을 받으십니다.</p>
+      <p>온 분은 <b>로그인하시는 그 자리에서</b> 바로 받으십니다.
+         부르시는 쪽은 <b>스무 분까지</b> 받으실 수 있습니다.</p>
+    </div>
+    <p class="cite" id="invNote"></p>
+    <div class="trow" style="margin-top:9px" id="invAct" hidden>
+      <button class="btn" id="btnInvShare">부르는 줄 보내기</button>
+      <button class="btn ghost" id="btnInvCopy">주소 복사</button>
+    </div>
+    <textarea id="invBox" class="codebox" hidden rows="2" readonly
+              spellcheck="false" autocomplete="off"></textarea>
+      </div>
+    </details>
+    <details class="sec">
+      <summary>다시 보기</summary>
+      <div class="secbody">
+<div class="trow" style="margin-bottom:11px">
+      <button class="btn ghost" id="btnIntro">처음 오신 길 다시 보기</button>
+      <button class="btn ghost" id="btnOpening">여는 영상 다시 보기</button>
+    </div>
+      </div>
+    </details>
+    <details class="sec">
+      <summary>안내</summary>
+      <div class="secbody">
+<div class="trow">
       <button class="btn ghost" id="btnRuleOpen">규칙 다시 보기</button>
       <button class="btn ghost" id="btnOdds">보물함 확률</button>
     </div>
@@ -1904,15 +1992,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <button class="btn ghost" id="btnTerms">이용약관</button>
       <button class="btn ghost" id="btnPrivacy">개인정보 처리방침</button>
     </div>
-
-    <p class="subh">잘 안 될 때</p>
-    <div class="trow">
+      </div>
+    </details>
+    <details class="sec">
+      <summary>잘 안 될 때</summary>
+      <div class="secbody">
+<div class="trow">
       <button class="btn ghost" id="btnLogOpen">만든 사람에게 알리기</button>
       <button class="btn ghost" id="btnErase">계정 지우기</button>
-    </div>
+      </div>
+    </details>
   </div>
 
-  <div class="panel" id="pRule">
+<div class="panel" id="pRule">
     <h2>규칙</h2>
     <p class="subh">이기는 법</p>
     <div class="lines">
@@ -2220,8 +2312,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag",
    "fbKinds","fbBody","btnFbSend","btnFbShow","fbNote","fbWhat","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "invNote","invAct","btnInvShare","btnInvCopy","invBox",
-   "btnBuzzTest","bgmPick","bgmNote","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
+   "invNote","invAct","btnInvShare","btnInvCopy","invBox","musPick","musVol","musVolRow","sfxVol","sfxVolRow",
+   "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
   // 강화 세 축. 효과가 곱셈이라야 100단계를 버틴다. 덧셈이면 중반에 반드시
@@ -2400,7 +2492,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-d";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-j";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -3538,7 +3630,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       document.querySelectorAll(".ov").forEach(function (q) { q.remove(); });
       drawCloud(); openPanel(el.pSet);
       setTimeout(function () {
-        var bx = document.getElementById("cloudBox");
+        var bx = secOpen(document.getElementById("cloudBox"));
         if (bx) bx.scrollIntoView({ block: "center" });
       }, 60);
     });
@@ -4046,6 +4138,10 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     row.appendChild(back);
     card.appendChild(row);
     ov.appendChild(card); document.body.appendChild(ov); back.focus();
+    // 도장은 달린 바로 다음 내려오기 시작한다. 소리도 여기서 출발해야
+    // 0.9초 뒤 닿는 자리와 맞는다 — 눈과 귀가 한 박자라도 어긋나면
+    // 「찍혔다」가 아니라 「소리가 딴다」가 된다.
+    if (pass && window.SFX && SFX.seal) SFX.seal();
   }
 
   // ── 오늘의 낱말 ───────────────────────────────────────────────────
@@ -7810,8 +7906,14 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 나중에 켜도 머리글이 숨은 채로 남는다 — 늘 양쪽을 다 적는다.
     var on = cloudOn();
     el.cloudBox.hidden = !on;
-    var h2 = el.cloudBox.previousElementSibling;
-    if (h2 && h2.className === "subh") h2.hidden = !on;
+    // 설정을 접은 뒤로 머리글은 칸 자체가 쥐고 있다. 서버를 안 켠 판에서는
+    // 칸째 감춘다 — 눌러도 빈 속만 나오는 칸을 두면 고장으로 읽힌다.
+    var sec = document.getElementById("secCloud");
+    if (sec) {
+      sec.hidden = !on;
+      var tag = document.getElementById("cloudTag");
+      if (tag) tag.textContent = !on ? "" : (me ? "이어짐" : "아직");
+    }
     drawSaveBar();
     if (!on) return;
     var inOut = !!me;
@@ -7963,6 +8065,152 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         el.diagBox.innerHTML = out.join("\n");
       });
   }
+
+  /* ── 배경음악 ────────────────────────────────────────────────────
+   *
+   * 산을 오르면 곡이 바뀐다. 화면이 아니라 「올라감」에 묶여 있다 —
+   * 상점과 설정을 오가도 안 끊기고, 며칠에 한 번만 바뀐다.
+   * 바뀜을 아껴야 바뀌는 순간이 뜻을 가진다. 백두산에 올라선 그 한 번이
+   * 숫자로 알려 주는 것보다 세다.
+   *
+   *   1·2산  m1    7·8산  m4
+   *   3·4산  m2    9산    m5
+   *   5·6산  m3    10산   m6     승단 시험  mx
+   *
+   * 오늘의 낱말과 끝말잇기는 제 곡을 따로 두지 않는다. 지금 오른 산의
+   * 곡이 그대로 흐른다 — 모드마다 다른 곡을 두면 메뉴를 옮길 때마다
+   * 바뀌고, 그러면 바뀜이 아무 뜻도 없어진다.
+   *
+   * 브라우저는 사람이 한 번 건드리기 전에는 소리를 안 내준다. 첫 손짓을
+   * 기다렸다가 켜고, 켤 때는 2.5초에 걸쳐 올라온다 — 버스에서 앱을 열었는데
+   * 소리가 턱 터지면 설정을 찾기 전에 지운다.
+   */
+  var BGM = (function () {
+    var K_ON = "nm.bgm", K_VOL = "nm.bgmvol";
+    var on = true, vol = 0.35, armed = false, away = false;
+    var cur = null, now = "";
+    try {
+      var v = localStorage.getItem(K_ON); if (v != null) on = v !== "0";
+      var w = parseFloat(localStorage.getItem(K_VOL)); if (w >= 0 && w <= 1) vol = w;
+    } catch (e) {}
+
+    // 승단 시험은 여러 곡을 돌린다.
+    //
+    // 산은 한 번 넘으면 다시 안 넘지만 시험은 계속 본다. 매번 같은
+    // 곡이면 그 자리가 지루해진다. 판이 열릴 때 한 곡을 골라 그 판 내내
+    // 가져가고, 다음 판에서 다시 고른다 — 치는 중에 바뀜면 그것은
+    // 거슬림이지 새로움이 아니다.
+    var MX = 4, exNow = "", exLast = "";
+    function exPick() {
+      if (exNow) return exNow;
+      var n = "mx" + (1 + Math.floor(Math.random() * MX));
+      if (n === exLast && MX > 1) n = "mx" + (1 + ((+n.slice(2)) % MX));  // 바로 또 같은 곡은 피한다
+      exNow = n; exLast = n;
+      return n;
+    }
+    function which() {
+      if (typeof run !== "undefined" && run && run.exam) return exPick();
+      exNow = "";
+      var mt = Math.floor((typeof stage === "number" ? stage : 0) / 10) % 10;
+      return "m" + (mt + 1);                    // 산 하나에 곡 하나
+    }
+    // 서로 사라지고 나타나게 한다. 뚝 끊으면 바뀐 것이 아니라 끊긴 것으로 들린다.
+    function fade(a, to, ms, done) {
+      if (!a) return;
+      var from = a.volume, t0 = Date.now();
+      if (a._t) { clearInterval(a._t); a._t = 0; }
+      a._t = setInterval(function () {
+        var k = Math.min(1, (Date.now() - t0) / ms);
+        try { a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); } catch (e) {}
+        if (k >= 1) { clearInterval(a._t); a._t = 0; if (done) done(); }
+      }, 40);
+    }
+    // 곡 하나가 없을 때.
+    //
+    // 처음에는 없으면 조용히 둬 두었는데, 그러면 1.5초마다 다시 받으려
+    // 들어 영원히 두드린다. 한 번 없던 것은 적어 두고 다시 안 찾는다.
+    //
+    // 그리고 조용한 쪽보다 옆에 있는 곡이 낫다. 어느 산의 곡이 아직
+    // 없으면 그 옆 산의 곡이라도 흐르는 편이, 거기서만 소리가 뚝
+    // 끊기는 것보다 낫다.
+    var BAD = {}, FALL = { m1:"m2", m2:"m3", m3:"m4", m4:"m5", m5:"m6",
+                           m6:"m7", m7:"m8", m8:"m9", m9:"m10", m10:"m9",
+                           mx1:"mx2", mx2:"mx3", mx3:"mx4", mx4:"mx1" };
+    function pick(name) {
+      for (var i = 0; i < 12 && name; i++) {
+        if (!BAD[name]) return name;
+        name = FALL[name];
+      }
+      return "";
+    }
+    function go(want, ms) {
+      var name = pick(want);
+      if (!name || name === now) return;
+      var nx = document.createElement("audio");
+      nx.loop = true; nx.preload = "auto"; nx.volume = 0;
+      nx.style.display = "none";
+      nx.src = "media/bgm/" + name + ".m4a";
+      nx.addEventListener("error", function () {
+        BAD[name] = 1;
+        // 못 쓰게 된 것은 그 자리에서 치운다. 남겨 두면 죽은 요소가
+        // 쌓이고, 소리를 찾는 쪽에서도 죽은 것을 먼저 집는다.
+        try { nx.removeAttribute("src"); nx.load();
+              if (nx.parentNode) nx.parentNode.removeChild(nx); } catch (e) {}
+        if (cur === nx) { cur = null; now = ""; go(want, ms); }   // 옆엣것으로
+      });
+      document.body.appendChild(nx);
+      var p = nx.play(); if (p && p["catch"]) p["catch"](function () {});
+      var old = cur; cur = nx; now = name;
+      fade(nx, (on && !away) ? vol : 0, ms);
+      if (old) fade(old, 0, ms, function () {
+        try { old.pause(); old.removeAttribute("src"); old.load();
+              if (old.parentNode) old.parentNode.removeChild(old); } catch (e) {}
+      });
+    }
+    // 산이 바뀌었는지 이따금 들여다본다. 바뀌는 자리가 여럿이라
+    // 그 자리마다 부르는 것보다 한 곳에서 보는 쪽이 안 빠뜨린다.
+    function tick() {
+      if (!armed || !on) return;
+      var w = pick(which());
+      if (w && w !== now) go(w, 2500);
+    }
+    function arm() { if (armed) return; armed = true; if (on) tick(); }
+
+    document.addEventListener("visibilitychange", function () {
+      away = document.visibilityState === "hidden";
+      if (!cur) return;
+      if (away) fade(cur, 0, 400, function () { try { cur.pause(); } catch (e) {} });
+      else if (on) { try { cur.play(); } catch (e) {} fade(cur, vol, 800); }
+    });
+    ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+      document.addEventListener(ev, arm, { once: true, passive: true });
+    });
+    setInterval(tick, 1500);
+
+    return {
+      tick: tick,
+      now: function () { return now; },
+      at: function () { return cur ? cur.currentTime : 0; },
+      on: function () { return on; },
+      vol: function () { return vol; },
+      setOn: function (v) {
+        on = !!v;
+        try { localStorage.setItem(K_ON, on ? "1" : "0"); } catch (e) {}
+        if (!on) {
+          if (cur) fade(cur, 0, 500, function () {
+            try { cur.pause(); cur.removeAttribute("src"); cur.load(); } catch (e) {}
+            cur = null; now = "";
+          });
+        } else { armed = true; tick(); if (cur) fade(cur, vol, 500); }
+      },
+      setVol: function (v) {
+        vol = Math.max(0, Math.min(1, v));
+        try { localStorage.setItem(K_VOL, String(vol)); } catch (e) {}
+        if (cur && on && !away) { if (cur._t) { clearInterval(cur._t); cur._t = 0; }
+          try { cur.volume = vol; } catch (e) {} }
+      }
+    };
+  })();
 
   // ── 친구 부르기 ──────────────────────────────────────────────────
   //
@@ -8134,7 +8382,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   el.saveGo.addEventListener("click", function () {
     drawCloud(); openPanel(el.pSet);
     setTimeout(function () {
-      var b = document.getElementById("cloudBox");
+      var b = secOpen(document.getElementById("cloudBox"));
       if (b) b.scrollIntoView({ block: "center" });
     }, 60);
   });
@@ -8143,6 +8391,55 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     drawSaveBar();
     toast("「설정」에서 언제든 이으실 수 있습니다");
   });
+
+
+  // ── 소리 설정 잇기 ───────────────────────────────────────────────
+  //
+  // 미닫이는 0~100 으로 두고 안에서 셈으로 바꾼다. 사람에게 0.28 을
+  // 보여 줄 까닭이 없고, 꼭대기를 1.0 으로 두면 둘 다 너무 크다.
+  var MUS_TOP = 0.70, SFX_TOP = 0.60, SFX_KEY = "nm.sfxvol";
+  function drawSound() {
+    if (!el.musPick) return;
+    var on = BGM.on();
+    [].forEach.call(el.musPick.children, function (b) {
+      b.classList.toggle("on", (b.dataset.mus === "1") === on);
+    });
+    el.musVolRow.style.opacity = on ? "" : ".4";
+    el.musVol.disabled = !on;
+    el.musVol.value = Math.round(BGM.vol() / MUS_TOP * 100);
+    if (el.sfxVol && window.SFX && SFX.level) {
+      el.sfxVol.value = Math.round(SFX.level() / SFX_TOP * 100);
+    }
+  }
+  (function soundSetup() {
+    // 효과음 크기는 sfx.js 가 기억하지 않는다. 여기서 꺼내 먹인다.
+    try {
+      var sv = parseFloat(localStorage.getItem(SFX_KEY));
+      if (sv >= 0 && sv <= 100 && window.SFX && SFX.vol) SFX.vol(sv / 100 * SFX_TOP);
+    } catch (e) {}
+    if (!el.musPick) return;
+    el.musPick.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-mus]");
+      if (!b) return;
+      BGM.setOn(b.dataset.mus === "1");
+      drawSound();
+    });
+    el.musVol.addEventListener("input", function () {
+      BGM.setVol(this.value / 100 * MUS_TOP);
+    });
+    if (el.sfxVol) {
+      // 손을 떼는 자리에서 한 번 들려준다. 안 들려주면 어디까지 줄였는지 모른다.
+      el.sfxVol.addEventListener("input", function () {
+        var v = this.value / 100;
+        if (window.SFX && SFX.vol) SFX.vol(v * SFX_TOP);
+        try { localStorage.setItem(SFX_KEY, String(this.value)); } catch (e) {}
+      });
+      el.sfxVol.addEventListener("change", function () {
+        if (window.SFX && SFX.tap) SFX.tap();
+      });
+    }
+    drawSound();
+  })();
 
   el.btnDiag.addEventListener("click", diag);
 
@@ -8396,6 +8693,23 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
   // 서랍에서 패널을 꺼내 띄우고, 닫으면 제자리로 돌려놓는다.
   // 통째로 옮기므로 걸어 둔 손잡이와 el.* 참조가 그대로 산다.
+  // 한 번에 하나만 펴진다. 둘셋 펴 두면 접은 보람이 없다.
+  function secWire() {
+    var all = [].slice.call(document.querySelectorAll("#pSet .sec"));
+    all.forEach(function (d) {
+      d.addEventListener("toggle", function () {
+        if (!d.open) return;
+        all.forEach(function (o) { if (o !== d) o.open = false; });
+      });
+    });
+  }
+  // 바깥에서 설정 속 어딘가로 데려갈 때, 그 칸이 접혀 있으면 아무것도 안 보인다.
+  function secOpen(node) {
+    var d = node && node.closest ? node.closest("details.sec") : null;
+    if (d) d.open = true;
+    return node;
+  }
+
   function openPanel(node, onShut) {
     var mark = document.createComment("stash");
     node.parentNode.insertBefore(mark, node);
@@ -8540,6 +8854,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   loadS();
   keepPersist();
   keepCheck();
+  secWire();
   loadTut();
   restorePurchases();
   cloudBoot();
@@ -8565,117 +8880,6 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     showOpening(first ? "media/opening.mp4" : "media/opening-short.mp4",
                 function () { showGate(afterGate); });
   }
-
-  // ── 음악 ──────────────────────────────────────────────
-  //
-  // 치는 내내 깔린다. 효과음과는 다른 물건이다 — 효과음은 일이 생겼을 때
-  // 한 번 울리고 말지만, 이것은 켜 두면 끌 때까지 흐른다.
-  //
-  // 곡은 media/bgm/ 에 둔다. 여기 줄을 한 줄 더하면 설정에 칸이 하나
-  // 더 선다. 이름은 「어떤 곡인가」가 두세 마디로 읽혀야 한다 — 들어
-  // 보기 전에 고르는 자리라, 파일 이름으로는 아무도 못 고른다.
-  var BGM = [
-    { f: "sansa.mp3",    t: "고요한 산사" },
-    { f: "sanjo.mp3",    t: "느릿한 산조" },
-    { f: "daegeum.mp3",  t: "바람 타는 대금" },
-    { f: "geomungo.mp3", t: "낮게 깔린 거문고" },
-    { f: "rain.mp3",     t: "맑은 빗소리" }
-  ];
-  var BGM_KEY = "nm.bgm";      // "" 면 끔. 없으면 첫 곡.
-  var BGM_VOL = 0.3;           // 낱말을 생각하는 게임이다. 깔리기만 하면 된다.
-  var bgmEl = null, bgmNow = "", bgmGone = Object.create(null), bgmArmed = 0;
-
-  function bgmWant() {
-    var v = null;
-    try { v = localStorage.getItem(BGM_KEY); } catch (e) {}
-    if (v === null) return BGM.length ? BGM[0].f : "";   // 처음 오신 분께는 첫 곡
-    return v;
-  }
-  function bgmStop() {
-    if (!bgmEl) return;
-    try { bgmEl.pause(); bgmEl.src = ""; } catch (e) {}
-    bgmEl = null; bgmNow = "";
-  }
-  // 갑자기 소리가 터지면 놀란다. 한 호흡에 걸쳐 올린다.
-  function bgmFade(a) {
-    var step = BGM_VOL / 24;
-    var t = setInterval(function () {
-      if (a !== bgmEl) { clearInterval(t); return; }
-      a.volume = Math.min(BGM_VOL, a.volume + step);
-      if (a.volume >= BGM_VOL - 0.001) clearInterval(t);
-    }, 50);
-  }
-  function bgmGo() {
-    var want = bgmWant();
-    if (!want || bgmGone[want]) { bgmStop(); return; }
-    if (bgmNow === want && bgmEl && !bgmEl.paused) return;
-    bgmStop();
-    bgmNow = want;
-    var a = new Audio("media/bgm/" + want);
-    a.loop = true; a.volume = 0; a.preload = "auto";
-    // 아직 안 만든 곡일 수 있다. 그때는 조용히 접고 설정에 「없음」으로 적는다 —
-    // 눌러도 아무 일 없는 단추를 그냥 두면 고장으로 읽힌다.
-    a.addEventListener("error", function () {
-      bgmGone[want] = 1;
-      if (bgmEl === a) { bgmEl = null; bgmNow = ""; }
-      drawBgm();
-    });
-    bgmEl = a;
-    var pr = a.play();
-    if (pr && pr.then) {
-      pr.then(function () { bgmFade(a); }, function () {
-        // 브라우저가 손짓을 기다린다. 다음 손짓에 다시 건다.
-        bgmArmed = 0;
-      });
-    } else {
-      bgmFade(a);
-    }
-  }
-  // 소리는 사람이 한 번 건드린 뒤에야 난다. 어느 손짓이든 첫 번째에 건다.
-  function bgmArm() {
-    if (bgmArmed) return;
-    // 여는 영상에도 소리가 있다. 건너뛰려고 누른 손짓에 음악까지 같이
-    // 올라오면 둘이 겹쳐 울린다. 영상이 걷힌 뒤에 건다.
-    if (document.querySelector(".opening")) return;
-    bgmArmed = 1; bgmGo();
-  }
-  document.addEventListener("pointerdown", function () { bgmArm(); });
-  // 다른 일을 보러 나가셨는데 음악만 흐르면 안 된다.
-  document.addEventListener("visibilitychange", function () {
-    if (!bgmEl) return;
-    if (document.visibilityState === "hidden") { try { bgmEl.pause(); } catch (e) {} }
-    else { try { bgmEl.play()["catch"](function () {}); } catch (e) {} }
-  });
-
-  function drawBgm() {
-    if (!el.bgmPick) return;
-    var want = bgmWant();
-    var html = '<button data-m="">소리 없음</button>';
-    BGM.forEach(function (x) {
-      html += '<button data-m="' + x.f + '"' + (bgmGone[x.f] ? ' class="none"' : '')
-            + '>' + x.t + (bgmGone[x.f] ? '<br><small>아직 없음</small>' : '') + '</button>';
-    });
-    el.bgmPick.innerHTML = html;
-    [].forEach.call(el.bgmPick.children, function (b) {
-      b.classList.toggle("on", b.dataset.m === want);
-    });
-    if (el.bgmNote) {
-      var gone = BGM.filter(function (x) { return bgmGone[x.f]; }).length;
-      el.bgmNote.textContent = !want ? "치는 동안 조용합니다."
-        : gone ? "고르신 곡이 아직 안 들어와 있으면 조용히 넘어갑니다."
-        : "치는 내내 낮게 깔립니다. 효과음은 따로입니다.";
-    }
-  }
-  if (el.bgmPick) el.bgmPick.addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-m]");
-    if (!b) return;
-    try { localStorage.setItem(BGM_KEY, b.dataset.m); } catch (e2) {}
-    bgmArmed = 1;
-    if (b.dataset.m) { bgmGone[b.dataset.m] = 0; bgmGo(); } else bgmStop();
-    drawBgm();
-    toast(b.dataset.m ? "음악을 바꿨습니다" : "음악을 껐습니다");
-  });
-  drawBgm();
 
   // ── 글씨 크기 ─────────────────────────────────────────
   // 돋보기를 꺼내는 대신 한 번 고르면 다음부터 그대로다.
