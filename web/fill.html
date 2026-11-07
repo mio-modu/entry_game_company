@@ -767,6 +767,13 @@ body.quake { animation: shake .42s ease-out; }
 /* 폰은 세로라 채워도 거의 안 잘린다. 넓은 화면에서 채우면 양옆이
    크게 잘려 나가 무슨 장면인지 알 수 없게 된다 — 거기서는 전부 보인다. */
 @media (min-aspect-ratio: 3/4) { .opening video { object-fit: contain; } }
+.opening .osnd {
+  position: absolute; left: 16px; bottom: calc(22px + var(--sa-b));
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
+  color: var(--fg); font-family: inherit; font-size: 13px; letter-spacing: .5px;
+  padding: 9px 14px 9px 12px; border-radius: 999px; cursor: pointer;
+}
 .opening .oskip {
   position: absolute; right: 16px; bottom: calc(22px + var(--sa-b));
   background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
@@ -2329,7 +2336,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-07-b";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6036,6 +6043,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     v.addEventListener("error", go);
     var skip = document.createElement("button"); skip.className = "oskip";
     skip.textContent = "건너뛰기";
+    // 웹에서는 소리 있는 자동재생이 막힌다. 막혔을 때만 이 단추가 선다.
+    // 깔아 쓰는 앱에서는 소리가 바로 나므로 보이지 않는다.
+    var snd = document.createElement("button"); snd.className = "osnd";
+    snd.setAttribute("aria-label", "소리 켜기");
+    snd.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">'
+      + '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a4.5 4.5 0 010 7" '
+      + 'stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>소리';
+    snd.addEventListener("click", function (e) {
+      e.stopPropagation();                       // 이 단추는 건너뛰지 않는다
+      v.muted = false; v.removeAttribute("muted");
+      v.play()["catch"](function () {});
+      snd.remove();
+    });
     // 구석의 단추만 눌리면 급한 사람이 그걸 찾느라 더 붙잡힌다.
     // 화면 아무 데나 누르면 넘어간다.
     ov.addEventListener("click", go);
@@ -6062,6 +6082,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     }
     var pr = run(false);
     if (pr && pr["catch"]) pr["catch"](function () {
+      ov.appendChild(snd);                       // 조용히 가는 중 — 켤 길을 준다
       var p2 = run(true);
       if (p2 && p2["catch"]) p2["catch"](function () { go(); });
     });
@@ -8241,12 +8262,13 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   function afterGate() {
     if (!tut.seen) setTimeout(function () { showIntro(false); }, 260);
   }
-  // 처음 깐 사람은 4.4초 전체를, 그 뒤로는 1.9초짜리를 본다.
+  // 처음 깐 사람은 5.5초 전체를, 그 뒤로는 3.6초짜리를 본다.
   // 매번 보이되 매번 기다리게 하지는 않는다 — 둘은 같은 말이 아니다.
   var first = !tut.opened;
-  // 새로고침을 연달아 눌렀을 때만 막는다. 90초로 두었더니 앱을 껐다
-  // 다시 켜는 보통의 걸음에서도 영상이 안 떴다. 15초면 되풀이만 걸린다.
-  if (Date.now() - (tut.openAt || 0) < 15000) {
+  // 한 번 켜는데 두 번 불리는 경우(되감기·이중 로딩)만 막는다.
+  // 90초 → 15초로 줄였는데도 "새로고침하면 안 나온다"는 말을 들었다.
+  // 켤 때마다 보여 주기로 한 것이니, 막는 쪽이 아니라 보여 주는 쪽이 옳다.
+  if (Date.now() - (tut.openAt || 0) < 3000) {
     showGate(afterGate);
   } else {
     if (first) tut.opened = 1;
