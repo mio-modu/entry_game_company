@@ -123,6 +123,14 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
 }
 .muted { color: var(--fg-dim); font-size: 12.5px; }
 .nb { white-space: nowrap; }
+/* 진 자리의 이정표. 설명 띠와 섞이면 또 글이 되므로 따로 세운다. */
+.nextmove { margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--surface-2); border: 1px solid var(--edge); text-align: left; }
+.nextmove p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--fg-dim); }
+.nextmove p b { color: var(--gold); }
+.nextmove .sub { display: block; margin-top: 3px; font-family: var(--font-mono);
+  font-size: 11px; color: var(--fg-faint); }
+.nextmove .btn { margin-top: 10px; width: 100%; }
 .gemline { margin-top: 10px; padding: 10px 12px; border-radius: 11px;
   background: #13241F; border: 1px solid #2C5E55; color: #BFE6DA; font-size: 13px; }
 .gemline b { color: var(--jade); font-size: 15px; }
@@ -143,6 +151,10 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font-body);
   margin-bottom: 13px;
 }
 .exambar b { display: block; font-size: 13.5px; color: #D9BFE6; }
+/* 「오늘 표 · 끝말 ✓ · 나눔 —」이 네 줄로 흩어졌다. 위의 .exambar b 가
+   display:block 이라 <b> 를 만날 때마다 줄이 꺾인 것이다. 이 줄만 되돌린다. */
+.exambar .extk { white-space: nowrap; }
+.exambar .extk b { display: inline; }
 .exambar small { display: block; font-size: 11px; color: #9A85A6; margin-top: 2px; }
 .exambar button {
   flex: none; background: #7E57A0; color: #FFF6FF; border-radius: 10px;
@@ -671,6 +683,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   transition: transform .09s ease; }
 .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .portrait.hit { transform: translateX(-6px) scale(.95); }
+/* 산의 끝에 선 수호신. 더 크고, 가장자리에 금빛이 돈다. */
+.portrait.boss { width: 96px; height: 128px;
+  box-shadow: 0 0 0 2px var(--gold), 0 6px 20px -6px rgba(0,0,0,.6); }
 
 /* ---- 쓰러지는 연출 ----
    이기는 순간을 숫자로만 알려주면 아무 느낌이 없다. 수호신이 휘청하다가
@@ -1056,6 +1071,13 @@ body.ready .grid::after {
 .bonusbar button {
   flex: none; background: var(--gold); color: #1A1206; border-radius: 9px;
   padding: 9px 13px; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+/* 기름이 없을 때. 그 자리에 그런 수가 있다는 것은 보이되, 못 누른다는
+   것도 한눈에 보여야 한다 — 금빛 그대로 두면 눌러 보고 아무 일도
+   없는 쪽이 더 나쁘다. */
+.bonusbar button:disabled {
+  background: transparent; color: var(--fg-faint); font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 /* ---- 끝말잇기 ---- */
 .lives { display: flex; gap: 5px; justify-content: center; margin-bottom: 9px; }
@@ -1559,10 +1581,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 }
 .card.sheet .shut {
   flex: none; margin: 0; border-radius: 0; border: 0; border-top: 1px solid var(--line);
-  background: var(--surface-2); font-size: 15px;
-  /* 아래쪽은 폰 단추줄만큼 더 놓는다. 삼성 폰에서
-     「닫기」 글자를 ○ 단추가 밟고 서 있었다. */
-  padding: 14px 8px calc(14px + var(--sa-b));
+  background: var(--surface-2); font-size: 15.5px; font-weight: 600;
+  /* 아래쪽은 폰 단추줄만큼 더 놓는다. 삼성 폰에서 「닫기」 글자를
+     ○ 단추가 밟고 서 있었다. 그런데 그렇게 놓고 나니 글씨는 위에
+     머물고 아래 절반이 빈 채로 남아, 띠만 두꺼워 보였다.
+     띠를 낮추는 대신 글씨를 키우고 '보이는 자리'의 한가운데에 세운다 —
+     안전영역은 padding 으로 빼 두었으므로 가운데는 ○ 단추 위의
+     한가운데가 된다. */
+  display: flex; align-items: center; justify-content: center;
+  min-height: calc(42px + var(--sa-b));
+  padding: 0 8px var(--sa-b);
 }
 /* 지갑.
    값을 치르는 자리에서 가진 것이 안 보이면, 살 수 있는지 없는지를
@@ -2057,6 +2085,30 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       <p>생각이 안 나면 <b>「여기서 마무리」</b>로 바로 끝내도 됩니다.</p>
     </div>
 
+    <!-- 셋 다 보물함에서 나오고 상점에서도 파는데, 쓰는 자리가 숨어
+         있었다. 반딧불은 힌트 단추 안에, 기름은 마무리 때만, 숫돌은
+         성공률이 100% 아래일 때만 나타난다. 가진 사람은 쓴 줄을 모르고,
+         안 가진 사람은 그런 수가 있는 줄을 몰랐다. 한곳에 적어 둔다. -->
+    <p class="subh">소모품 — 반딧불 · 기름 · 숫돌</p>
+    <div class="lines">
+      <p><b>반딧불</b>은 판에서 <b>「힌트」</b>를 누를 때 <b>옥 대신</b> 나갑니다.
+         가지고 계시면 단추에 「반딧불 ○개」라고 적히고, 떨어지면 그때부터
+         옥을 씁니다.</p>
+      <p class="pivot">힌트는 같은 낱말에 <b>세 걸음</b>까지입니다 —
+         <b>뜻 → 첫 글자 → 실루엣</b>. 한 번 누를 때마다 한 걸음입니다.</p>
+      <p><b>기름 한 병</b>은 수호신을 <b>쓰러뜨린 뒤</b> 「마무리」에서 씁니다.
+         남은 시간에 <b>15초</b>를 더합니다 — 낱말 하나를 더 채울 시간입니다.
+         가지고 계실 때만 그 자리에 단추가 나타납니다.</p>
+      <p><b>숫돌</b>은 <b>수련</b>에서 단계를 올릴 때 한 번 씁니다 —
+         <b>성공률 +20%p</b>입니다.</p>
+      <p class="pivot">수련은 <b>앞 네 칸까지 반드시</b> 오릅니다. 다섯째 칸부터
+         실패가 있고, 숫돌 단추도 그때부터 나타납니다. 실패하셔도
+         <b>단계는 그대로</b>이고 다음 성공률에 <b>+10%p</b>가 붙습니다.</p>
+      <p>셋 다 <b>보물함</b>에서 나오고 <b>상점</b>에서 냥으로도 사십니다 —
+         하루에 사실 수 있는 수가 정해져 있습니다.</p>
+      <p>가지고 계신 수는 <b>내 정보 → 소모품</b>에서 보십니다.</p>
+    </div>
+
     <p class="subh">끝말잇기</p>
     <div class="lines">
       <p>하루 <b>세 판</b>입니다. 그리고 갈수록 어려워집니다 —
@@ -2479,6 +2531,19 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 올라가고, 강화 상한이 아홉 단계씩 열린다. 두 번째 산길의 북한산은
   // 첫 번째 산길의 소백산쯤 된다.
   var CYC_HP = 0.35;                       // 회차마다 기세 +35%
+
+  // 산의 끝.
+  //
+  // 재어 보니 수호신이 바로 앞 단계보다 쉬웠다. 20단계는 19단계와
+  // 요구량이 똑같은데 시간만 8초를 더 받았고, 50단계는 49단계보다
+  // 기세가 낮기까지 했다. 열 단계를 올라와 만나는 자리가 그 전 판보다
+  // 쉬우면 「넘었다」가 남지 않는다.
+  //
+  // 산의 끝은 거의 다 채워야 넘어간다. 빈칸 하나쯤 남기는 자리다.
+  // 시간 +8초는 그대로 둔다 — 요구를 올리면서 시간까지 줄이면
+  // 어려운 것이 아니라 못 하는 것이 된다.
+  var BOSS_NEED = 1;     // 채워야 할 낱말 +1
+  var BOSS_HP = 1.18;    // 그 위에 기세 한 겹 더
   function cycle() { return Math.floor(stage / 100); }
 
   // ── 호 ──────────────────────────────────────────────────────────
@@ -2510,14 +2575,22 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 0~2단계는 확정. 거기서 규칙을 배우고 그 뒤부터 확률이 걸린다.
   // 실패해도 단계는 내려가지 않는다. 내려가는 순간 과금 압박이 되고
   // 리뷰가 무너진다. 대신 연속 실패를 보정으로 갚는다.
+  // 앞 아홉 칸이 모두 확정이었다. 그래서 수련은 「냥만 모으면 되는 일」이
+  // 되었고, 올리는 맛이 없었다. 게다가 숫돌 단추는 성공률이 100% 아래로
+  // 내려가야만 뜨므로 아홉 칸을 넘기기 전에는 한 번도 나타나지 않았다 —
+  // 보물함에서는 계속 나오는데 쓸 자리가 없는 물건이었다.
+  //
+  // 확정을 넷으로 줄이고 기울기를 눕힌다. 꼭대기(26칸)는 35%로 그대로
+  // 두어 끝의 무게는 건드리지 않는다. 한 회차 기대 시도가 37.3회에서
+  // 39.5회로 1.06배 — 값은 거의 그대로이고 긴장만 생긴다.
   function successRate(lvl, f) {
     var k = lvl % CAP_PER_CYCLE;
-    if (k < 9) return 1;                 // 앞 아홉 칸은 반드시 된다
-    return Math.min(1, Math.max(0.20, 0.92 - (k - 8) * 0.0317) + f * 0.10);
+    if (k < 4) return 1;                 // 앞 네 칸은 반드시 된다
+    return Math.min(1, Math.max(0.20, 0.92 - (k - 4) * 0.0259) + f * 0.10);
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-07-q";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-08-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -2675,7 +2748,34 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 광고를 붙이는 날 함께 연다. 그날 값과 기간을 같이 정해야 한다 —
   // 한 번 내고 영영 받는 꼴로는 어떤 값을 매겨도 맞지 않는다.
-  var ADS_LIVE = 0;
+  // 손으로 적지 않는다.
+  //
+  // 전에는 var ADS_LIVE = 0 이라고 적어 두었다. 그러면 코드와 말이 따로
+  // 놀 수 있다. 단위 ID 를 넣고 이 줄을 안 고치면 광고가 나오는데
+  // 「선물」이라 적히고, 이 줄만 올리면 광고가 없는데 「광고 보기」라고
+  // 적힌다. 뒤쪽은 심사에서 걸리고, Play 의 「광고 없음」 선언과도
+  // 어긋나 거짓 선언이 된다.
+  //
+  // 그래서 native.js 의 AD_UNIT 에 매단다. 단위 ID 가 차 있으면 1,
+  // 비어 있으면 0이다. 고칠 곳이 한 군데로 줄고, 둘이 어긋날 길이 없다.
+  // 웹에는 native.js 가 없으므로 웹은 늘 0이다.
+  var ADS_LIVE = !!(window.NativeAds && window.NativeAds.available
+                    && window.NativeAds.available());
+
+  // 「광고 없애기」는 광고와 함께 열지 않는다.
+  //
+  // 그 상품은 광고를 없애는 데서 그치지 않고 「광고로 받던 옥을 하루
+  // 세 알씩」 영영 대신 준다(noAdsDaily). 한 해면 1,095알이고, 옥 한
+  // 자루(55알)가 5,500원이니 109,500원어치다. 한 번 치르고 해마다
+  // 그만큼을 내주면 어떤 값을 매겨도 맞지 않는다.
+  //
+  // 게다가 사면 걸음표가 통째로 숨는다(drawAd 의 adBox.hidden). 그러면
+  // 일곱 걸음째의 보물함도 못 받는다 — 돈을 내고 받는 것이 줄어드는
+  // 꼴이라, 그 자체로 앞뒤가 안 맞는다.
+  //
+  // 그래서 ADS_LIVE 와 따로 둔다. 광고를 붙이는 날 값과 기간을 다시
+  // 정하고, 걸음표를 숨기는 줄도 함께 고친 뒤에 이것을 1로 올린다.
+  var NOADS_SKU = 0;
 
   // 광고가 붙기 전까지 이 자리를 뭐라 부를 것인가.
   //
@@ -2890,8 +2990,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       mod: M.mod || null, mod2: M.mod2 || null,
       spec: { t: M.t, lo: M.lo, hi: lerp(M.h0, M.h1, sub), lg: M.lg || 0,
               w: lerp(M.w0, M.w1, sub), k: lerp(M.k0, M.k1, sub) },
-      need: lerp(M.k0, M.k1, sub),
-      step: stepBonus(k), hpMul: 1 + cyc * CYC_HP,
+      need: lerp(M.k0, M.k1, sub) + (boss ? BOSS_NEED : 0),
+      step: stepBonus(k), hpMul: (1 + cyc * CYC_HP) * (boss ? BOSS_HP : 1),
       // 수호신은 가장 많이 요구하는 자리라 숨 쉴 틈을 조금 돌려준다
       t: (function (base) { return base + timeBonus(base) + stepBonus(k); })(
            lerp(M.s0, M.s1, sub) + (boss ? 8 : 0))
@@ -2966,7 +3066,31 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     // 까닭이 없다 — 아까 못 푼 그 낱말을 다시 노려보게 해야 한다.
     var p = (keep && keep.tiles) ? { tiles: keep.tiles, ans: keep.ans }
                                  : makePuzzle(b.spec);
+    // 수호신은 요구를 하나 더 받는다. 다만 글자판에 그만큼이 없으면
+    // 못 깨는 판이 되므로, 판을 본 뒤에 깎는다.
+    if (b.boss) b.need = Math.min(p.ans.length, b.need);
     var hp = Math.round(hpFor(p.ans, b.need, hasMod(b, "weak") ? WEAK_MUL : 1) * b.hpMul);
+
+    // 다 채우면 반드시 눕는다.
+    //
+    // 수호신의 기세를 올리고 나서 보니, 강화가 적은 분은 빈칸을 하나도
+    // 안 남기고 다 채워도 기세가 남을 수 있었다. 기세는 강화^0.78 로
+    // 세는데 피해는 강화 그대로라, 강화가 1에 가까우면 얹은 1.18 이
+    // 고스란히 남는 것이다. 그것은 어려운 것이 아니라 고장이다 —
+    // 화면이 「다 채우면 완전 격파」라고 적어 두고 그 판이 안 끝난다.
+    //
+    // 그래서 천장을 씌운다. 지금 강화로 '가장 나쁜 차례'로 다 채웠을 때
+    // 들어가는 피해를 세고, 기세가 그보다 크면 거기까지 깎는다. 가장
+    // 나쁜 차례는 긴 낱말을 연속이 낮을 때 먼저 쓰는 쪽이다 — 연속은
+    // 뒤로 갈수록 세지므로, 큰 것을 앞에 쓰면 합이 가장 작다.
+    //
+    // 헛손질 한 번(최대 기세의 4%)만큼은 남겨 둔다. 한 번 잘못 짚었다고
+    // 다 채우고도 못 눕히면 그 판은 억울하다.
+    var fullOrder = p.ans.slice().sort(function (a, c) { return c.length - a.length; });
+    var fullDmg = 0;
+    for (var fi = 0; fi < fullOrder.length; fi++) fullDmg += dmgOf(fullOrder[fi].length, fi);
+    var hpCap = Math.floor(fullDmg * (1 - MISS_BACK));
+    if (hpCap > 0 && hp > hpCap) hp = hpCap;
     if (boost.hp) hp = Math.round(hp * (1 - boost.hp));
     run = { b: b, hp: hp, max: hp, left: b.t + (boost.sec || 0), combo: 0, phase: "ready",
             bonus: [], cleared: 0, perfect: 0, found: 0, slots: 0, extra: 0,
@@ -2984,6 +3108,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     LOG.best = Math.max(LOG.best, b.no);
     logEv("S", b.no);
     drawLog();
+    // 열 단계 만에 만나는 자리다. 숫자만 다르면 모른다 — 더 크게 선다.
+    el.portrait.classList.toggle("boss", !!b.boss);
     el.pimg.src = "art/" + b.art + ".jpg";
     el.bossName.textContent = b.n;
     var rn = ruleName(b);
@@ -5018,8 +5144,14 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     el.hpNow.textContent = Math.max(0, run.hp);
     if (run.phase === "bonus") {
       el.bLeft.textContent = remaining().length;
-      el.btnOil.hidden = (bag.ink || 0) < 1;
-      el.btnOil.textContent = "기름 +15초 (" + (bag.ink || 0) + ")";
+      // 가진 분께만 보이던 단추였다. 그래서 기름을 한 번도 못 본 분은
+      // 「남은 시간을 늘릴 수 있다」는 것 자체를 모른 채 지나갔다.
+      // 늘 보이되, 없으면 못 누르는 모습으로 둔다 — 그 자리에 그런 수가
+      // 있다는 것만 알면 다음에 상점에서 알아본다.
+      var ink = bag.ink || 0;
+      el.btnOil.hidden = false;
+      el.btnOil.disabled = ink < 1;
+      el.btnOil.textContent = "기름 +15초 (" + ink + ")";
       el.bossHint.textContent = run.b.m + " \u00b7 쓰러뜨렸습니다 \u00b7 남은 시간 "
         + Math.max(0, run.left) + "냥";
       run.sealed = -1; run.weak = -1;
@@ -5588,6 +5720,20 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
   function adSave(v) { try { localStorage.setItem(adKey(), JSON.stringify(v)); } catch (e) {} }
   function adsLeft() { return Math.max(0, AD_DAY - adState().n); }
+
+  // 광고는 걸음표와 다른 주머니다.
+  //
+  // 걸음표 열 칸은 「완전 격파로 받는 상」이다. 광고로 그 칸을 채우면
+  // 상이 아니라 품삯이 된다. 그리고 광고를 보고도 몫이 같이 깎이면
+  // 두 번 내는 꼴이다.
+  //
+  // 그래서 「이 판 다시」의 값은, 광고가 붙은 날에는 몫이 아니라
+  // 광고 편수로만 받는다. 하루 여섯 편까지 — 그 위로는 게임이 아니라
+  // 광고 보는 일이 된다.
+  var AD_WATCH_DAY = 6;
+  function adWatchKey() { return "nm.adw." + todayKey(); }
+  function adWatched() { return kGet(adWatchKey(), 0); }
+  function adWatchLeft() { return Math.max(0, AD_WATCH_DAY - adWatched()); }
   // 진 자리에서 본 광고도 사다리에 한 칸 얹힌다. 안 그러면 "광고를 봤는데
   // 아무 데도 안 쌓인다"가 되고, 그러면 두 번째부터 안 본다.
   // ── 오늘의 선물 ────────────────────────────────────────────────
@@ -5670,12 +5816,31 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 도우미가 도움을 받는 값보다 비싸면 장터는 구경거리가 된다.
   //
   // 그래서 값은 내리고, 대신 하루에 살 수 있는 수를 묶는다. 값으로 막으면
-  // 억울하고, 수로 막으면 납득한다. 옥이 값을 잃지 않는 것도 여기서다 —
-  // 냥이 아무리 쌓여도 반딧불을 하루 다섯 개 넘게는 못 산다.
+  // 억울하고, 수로 막으면 납득한다.
+  //
+  // 반딧불만은 다시 올린다.
+  //
+  // 기름과 숫돌은 옥으로 살 수 없는 일을 한다. 그래서 냥으로 파는 것이
+  // 옥을 건드리지 않는다. 그런데 반딧불은 힌트 한 걸음 — 옥 한 알이
+  // 하는 바로 그 일이다. 둘이 같은 일을 하면 사람은 싼 쪽만 쓴다.
+  //
+  // 재어 보니 260냥(22산)에 다섯 개였다. 하루 1,300냥으로 옥 다섯 알,
+  // 곧 오백 원어치를 받아 가는 셈이다. 하루에 들어오는 옥이 열다섯에서
+  // 스물이니 그 가운데 사분의 일이 여기서 샜다. 장터가 환전소였다.
+  //
+  // 하루 둘로 묶고 값을 아홉 배 넘게 올린다. 다만 한 값으로 고정하지
+  // 않는다 — 초반에는 한 판 벌이가 적어 2,500냥이 너무 멀다. 산을
+  // 오를수록 벌이가 느는 만큼 값도 따라 오르게 둔다.
+  //
+  //     0산 1,300냥  ·  10산 1,900  ·  20산 2,500  ·  40산 3,700
+  //
+  // 이러면 하루에 반딧불로 받아 가는 것은 옥 두 알어치다. 거들기는 하되
+  // 새지는 않는다. 보물함에서는 여전히 공짜로 나온다(한 판에 10.1%) —
+  // 사서 쓰는 것이 아니라 얻어서 쓰는 물건으로 자리를 옮기는 것이다.
   var SHOP = [
-    { id: "brush", t: "반딧불",     d: "빈칸 한 자리를 한 걸음 더 밝힌다", a: "fly",  base: 150, per: 5,  cap: 5 },
-    { id: "ink",   t: "기름 한 병", d: "쓰러뜨린 뒤 마무리 시간 +15초",   a: "oil",  base: 230, per: 7,  cap: 3 },
-    { id: "charm", t: "숫돌",       d: "수련 한 번의 성공률 +20%p",       a: "hone", base: 320, per: 11, cap: 3 }
+    { id: "brush", t: "반딧불",     d: "판에서 「힌트」를 누를 때 옥 대신 · 한 걸음", a: "fly",  base: 1300, per: 60, cap: 2 },
+    { id: "ink",   t: "기름 한 병", d: "쓰러뜨린 뒤 「마무리」에서 +15초",  a: "oil",  base: 230, per: 7,  cap: 3 },
+    { id: "charm", t: "숫돌",       d: "「수련」에서 단계를 올릴 때 +20%p", a: "hone", base: 320, per: 11, cap: 3 }
   ];
   function shopCost(it) {
     return Math.round((it.base + stage * it.per) * (1 + cycle() * 0.6));
@@ -5690,9 +5855,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     { p: 30, k: "냥", t: "냥 꾸러미", x: 2, a: "coin",   // x는 바닥 냥을 몇 곱절 더 얹는가
       go: function () { return "곱절로 들어 있었습니다"; } },
     { p: 22, k: "옥", t: "옥 두 알",   a: "gem",     go: function () { gem += 2;    return "힌트 두 번"; } },
-    { p: 12, k: "반", t: "반딧불",     a: "fly",       go: function () { bag.brush++; return "빈칸 하나를 비춰 준다"; } },
-    { p:  8, k: "기", t: "기름 한 병", a: "oil",   go: function () { bag.ink++;   return "마무리 시간 +15초"; } },
-    { p:  5, k: "숫", t: "숫돌",       a: "hone",         go: function () { bag.charm++; return "강화 성공률 +20%p"; } }
+    { p: 12, k: "반", t: "반딧불",     a: "fly",       go: function () { bag.brush++; return "힌트 한 걸음 · 옥 대신 쓴다"; } },
+    { p:  8, k: "기", t: "기름 한 병", a: "oil",   go: function () { bag.ink++;   return "쓰러뜨린 뒤 마무리에서 +15초"; } },
+    { p:  5, k: "숫", t: "숫돌",       a: "hone",         go: function () { bag.charm++; return "수련 성공률 +20%p"; } }
   ];
   // 소모품 그림. 수묵으로 받아 올 때까지 붓자국을 흉내 내 직접 친다.
   // 종이색·테두리는 장비 칸과 같은 것을 쓰므로 나란히 놓아도 어긋나지 않는다.
@@ -6409,7 +6574,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     el.gemShop.appendChild(packs);
     SKUS.forEach(function (x) {
       if (!x.once || noAds) return;        // 이미 산 것은 안 보인다
-      if (x.id === "no_ads" && !ADS_LIVE) return;
+      if (x.id === "no_ads" && !NOADS_SKU) return;   // 값을 다시 매긴 뒤에 연다
       var row = document.createElement("div"); row.className = "shoprow";
       row.style.marginTop = "11px";
       var L = document.createElement("div");
@@ -6447,7 +6612,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     drawHo();
     drawTray();
     var n = adState().n, left = adsLeft(), cap = adCap();
-    el.adHead.textContent = "오늘의 선물";
+    el.adHead.textContent = AD_T.btn;   // 광고가 붙으면 「광고 보기」로 돌아온다
     el.adTitle.textContent = "완전 격파 일곱 번에 보물함 하나";
     el.adLines.innerHTML =
         "<p><b>완전 격파</b> — 빈칸을 하나도 안 남기고 다 채운 판입니다. "
@@ -6573,6 +6738,13 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
           r2.textContent = "성공률 " + Math.round(Math.min(1, pr + (useHone ? 0.2 : 0)) * 100) + "%";
         });
         left.appendChild(hb);
+      } else if (!maxed && pr < 1) {
+        // 숫돌을 안 가진 분께는 단추가 아예 안 뜬다. 그러면 성공률을
+        // 올릴 수가 있다는 것조차 모른 채로 지나간다. 조용히 한 줄만.
+        var hz = document.createElement("div");
+        hz.className = "d"; hz.style.opacity = ".55";
+        hz.textContent = "숫돌이 있으면 성공률 +20%p";
+        left.appendChild(hz);
       }
       b.addEventListener("click", function () {
         if (maxed || gold < cost) return;
@@ -6704,7 +6876,11 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       el.holds.appendChild(c);
     });
     if (el.statLine) {
-      el.statLine.innerHTML = "소모품은 <b>상점</b>에서 냥으로 사거나 보물함에서 나옵니다.";
+      el.statLine.innerHTML =
+          "<b>반딧불</b>은 판에서 <b>힌트</b>를 누를 때 옥보다 먼저 나가고, "
+        + "<b>기름</b>은 수호신을 쓰러뜨린 뒤 <b>마무리</b>에서, "
+        + "<b>숫돌</b>은 <b>수련</b>에서 단계를 올릴 때 씁니다.<br>"
+        + "소모품은 <b>상점</b>에서 냥으로 사거나 보물함에서 나옵니다.";
     }
   }
 
@@ -6761,6 +6937,26 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   // 무한도전이라 "다시 보기"로 목숨을 사게 할 수는 없다. 그래서 광고는
   // 다시 하게 해 주는 것이 아니라 '조금 수월하게' 해 주는 쪽으로 둔다 —
   // 막혀서 답답한 그 순간이 광고를 볼 마음이 드는 유일한 자리다.
+  // 광고 N편을 이어서 틀고, 다 본 뒤에만 돌려준다.
+  //
+  // 중간에 닫으면 아무 일도 없다. 본 만큼만 쳐 주면 「두 편짜리를 한 편만
+  // 보고 받는」 길이 생기고, 그러면 아무도 둘째 편을 안 본다.
+  function watchAds(n, done) {
+    var seen = 0;
+    function one() {
+      if (seen >= n) return done(true);
+      if (!window.NativeAds || !window.NativeAds.rewarded) return done(false);
+      window.NativeAds.rewarded().then(function (got) {
+        if (!got) { toast("광고를 끝까지 보셔야 합니다"); return done(false); }
+        seen++;
+        if (seen < n) toast("광고 " + (seen + 1) + " / " + n);
+        one();
+      }, function () { toast("광고를 불러오지 못했습니다"); done(false); });
+    }
+    if (n > 1) toast("광고 " + n + "편을 이어서 틉니다");
+    one();
+  }
+
   var boost = { hp: 0, sec: 0 };
   function retryCost() {
     return Math.round((260 + stage * 22) * (1 + cycle() * 0.6));
@@ -6791,6 +6987,40 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   var lastBoard = null;          // 진 판 — 광고로 같은 판을 다시 칠 때 쓴다
+  // 막힌 사람에게 다음 수를 알려 준다.
+  //
+  // 고리는 이미 닫혀 있다. 진 판에서도 빈칸을 채울 때마다 글자당 15냥이
+  // 들어오고, 그 돈으로 수련을 올리면 다음 판이 쉬워진다. 재어 보니
+  // 10단계에 막힌 분이 세 판만 져도 검을 상한(8단)까지 올릴 수 있고,
+  // 그러면 빈칸 피해가 1.48배가 된다.
+  //
+  // 그런데 그 길이 화면 어디에도 없었다. 진 사람은 같은 벽에 다시 부딪힐
+  // 뿐이고, 지금 가진 돈으로 무엇을 얼마나 올릴 수 있는지 알 길이 없다.
+  // 길은 있는데 이정표가 없었던 것이다.
+  //
+  // 전 단계로 돌아가는 길은 만들지 않는다. 냥은 글자당이라 단계가 높을수록
+  // 많이 들어온다 — 1단계가 90냥일 때 10단계는 180냥, 50단계는 315냥이다.
+  // 막힌 판을 다시 치는 것이 지금도 가장 벌이가 좋으므로, 아래로 가는
+  // 길을 열면 아무도 안 쓰거나 쓰는 사람만 손해를 본다.
+  function nextMove() {
+    var cap = upCap(), best = null;
+    UPGRADES.forEach(function (u) {
+      var lvl = up[u.id], k = 0, spend = 0;
+      while (lvl + k < cap) {
+        var c = Math.round(u.base * Math.pow(u.r, lvl + k));
+        if (spend + c > gold) break;
+        spend += c; k++;
+      }
+      if (!k) return;
+      // 막힌 사람에게 제일 먼저 필요한 것은 피해다. 비슷하면 검을 민다.
+      var w = u.id === "atk" ? 3 : u.id === "time" ? 2 : 1;
+      if (!best || k * w > best.score) {
+        best = { u: u, k: k, spend: spend, score: k * w };
+      }
+    });
+    return best;
+  }
+
   function result(r, won, silent) {
     if (!r || r.carded) return;
     r.carded = 1;
@@ -6894,7 +7124,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       // 왜 옥이 안 들어왔는지는 적어 준다. 말없이 빠지면 버그로 읽힌다.
       if (won && r.perfect) {
         var nt = document.createElement("p"); nt.className = "lead";
-        nt.innerHTML = "완전 격파 — <b>오늘의 선물</b>이 한 걸음 찼습니다";
+        nt.innerHTML = "완전 격파 — <b>" + AD_T.btn + "</b>이 한 걸음 찼습니다";
         card.appendChild(nt);
       }
       // 옥은 냥과 셈이 다르다. 합계에 섞지 않고 따로 적는다.
@@ -6964,6 +7194,37 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       fp.innerHTML = say.join(" \u00b7 ")
         + (canRetry ? '<span class="sub">못 채운 낱말은 한 번 더 치신 뒤에 보여 드립니다</span>' : "");
       card.appendChild(fp);
+
+      // 이정표. 글이 아니라 다음에 누를 자리를 보여 준다.
+      var mv = nextMove();
+      var nm = document.createElement("div"); nm.className = "nextmove";
+      if (mv) {
+        var gain = mv.u.id === "atk"
+            ? "빈칸 피해 <b>" + Math.pow(ATK_STEP, mv.k).toFixed(2) + "배</b>"
+          : mv.u.id === "time"
+            ? "제한시간 <b>+" + Math.round(mv.k * TIME_STEP) + "초</b>"
+            : "연속 <b>+" + Math.round(mv.k * COMBO_STEP * 100) + "%p</b>";
+        var ln = document.createElement("p");
+        ln.innerHTML = "지금 냥으로 <b>" + mv.u.t + "</b>을 <b>" + mv.k
+          + "단</b> 더 올리실 수 있습니다 · " + gain
+          + '<span class="sub">냥 ' + mv.spend.toLocaleString()
+          + " 듭니다 · 가진 냥 " + gold.toLocaleString() + "</span>";
+        nm.appendChild(ln);
+        var gb = document.createElement("button"); gb.className = "btn";
+        gb.textContent = "수련으로 가기";
+        gb.addEventListener("click", function () {
+          ov.remove(); drawTrain(); openPanel(el.pTrain);
+        });
+        nm.appendChild(gb);
+      } else {
+        var ln2 = document.createElement("p");
+        ln2.innerHTML = "빈칸을 채울 때마다 <b>글자당 15냥</b>이 들어옵니다 — "
+          + "<b>진 판에서도</b> 들어옵니다. 모아서 <b>수련</b>을 올리시면 "
+          + "같은 판이 쉬워집니다."
+          + '<span class="sub">가진 냥 ' + gold.toLocaleString() + "</span>";
+        nm.appendChild(ln2);
+      }
+      card.appendChild(nm);
     }
     if (firstWin) {
       var fw = document.createElement("p"); fw.className = "lead foot";
@@ -7013,13 +7274,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
         var b = document.createElement("button");
         b.className = T.ads === 1 ? "btn go" : "btn";
         b.innerHTML = T.t + "<small>" + tierCost(T) + "</small>";
-        // 오늘 남은 몫으로 못 채우는 단은 잠근다
-        b.disabled = adsLeft() < T.ads;
-        if (b.disabled) b.innerHTML = T.t + "<small>오늘 " + AD_T.w
-          + josaI(AD_T.w) + " " + T.ads + AD_T.u + " 더 있어야 합니다</small>";
-        b.addEventListener("click", function () {
-          if (adsLeft() < T.ads) return;
-          var st = adState(); st.n += T.ads; adSave(st);
+        // 오늘 남은 것으로 못 채우는 단은 잠근다
+        b.disabled = ADS_LIVE ? (adWatchLeft() < T.ads) : (adsLeft() < T.ads);
+        if (b.disabled) b.innerHTML = T.t + "<small>"
+          + (ADS_LIVE ? "오늘 광고는 여기까지입니다"
+                      : "오늘 " + AD_T.w + josaI(AD_T.w) + " " + T.ads + AD_T.u + " 더 있어야 합니다")
+          + "</small>";
+        function enter() {
+          // 광고가 붙은 날에는 광고가 값이다. 걸음표는 건드리지 않는다.
+          if (ADS_LIVE) kSet(adWatchKey(), adWatched() + T.ads);
+          else { var st = adState(); st.n += T.ads; adSave(st); }
           logEv("T", "adretry" + T.ads);
           boost.sec = T.sec; boost.hp = T.hp;
           var kb = lastBoard; lastBoard = null;
@@ -7030,6 +7294,14 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
             + (T.sec ? " · 시간 +" + T.sec + "초" : "")
             + (T.hp ? " · 기세 -" + Math.round(T.hp * 100) + "%" : ""));
           start(true, kb);
+        }
+        b.addEventListener("click", function () {
+          if (ADS_LIVE ? (adWatchLeft() < T.ads) : (adsLeft() < T.ads)) return;
+          // 광고가 붙은 날에는 적힌 대로 튼다. 다 본 뒤에야 들어간다 —
+          // 「광고 1편」이라 적어 놓고 그냥 들여보내면 적힌 것과 하는
+          // 일이 다시 달라진다.
+          if (ADS_LIVE) { watchAds(T.ads, function (seen) { if (seen) enter(); }); return; }
+          enter();
         });
         card.appendChild(b);
       });
@@ -7238,7 +7510,12 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       if (!canShare) return fallbackCopy(t);
       // 글 안에 이미 링크가 있다. url 을 따로 주면 기기에 따라 링크만
       // 보내고 글을 버리는 수가 있어서, 글 한 덩이로만 넘긴다.
-      if (NS) return NS.send(t, "오늘의 낱말").then(shrPay, function () { fallbackCopy(t); });
+      if (NS) return NS.send(t, "오늘의 낱말").then(function (r) {
+        // 시트를 열었다가 닫은 것은 실패가 아니다. 거기서 복사로
+        // 내려앉으면 「안 보냈는데 복사됐다」가 되어 더 헷갈린다.
+        if (r && r.canceled) return;
+        shrPay();
+      }, function () { fallbackCopy(t); });
       navigator.share({ text: t }).then(shrPay, function (e) {
         // 사람이 공유 시트를 닫은 것은 실패가 아니다. 그때는 가만히 둔다.
         if (e && e.name === "AbortError") return;
@@ -7257,6 +7534,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     cp.addEventListener("click", function () {
       logEv("C");
       why.hidden = true;
+      // 앱에서는 카카오 카드가 설 자리가 없다. 앱 속 주소가
+      // https://localhost 라 카카오가 받아 주지 않고, 받아 준다 해도
+      // WebView 가 카톡으로 넘겨줄 길이 없다 — 새 창이 막히고,
+      // 매니페스트에 카톡을 볼 수 있는 자리(queries)도 없다.
+      // 그래서 「카톡으로 보내기」를 눌러도 두 번 미끄러진 끝에
+      // 「복사됨 · 붙여넣으세요」가 되었다. 보내기가 아니라 복사였다.
+      //
+      // 그런데 보내는 글 안에 이미 주소가 들어 있고, 그 주소에는 og 표가
+      // 다 붙어 있다(제목·설명·1200x630 그림). 카톡은 링크를 받으면
+      // 제 손으로 카드를 그린다. 그러니 앱에서는 곧장 공유 시트로 간다 —
+      // 한 번 더 고르는 쪽이 붙여넣기보다 훨씬 낫다.
+      if (inApp()) { sheet(); return; }
       kakaoReady().then(function (K) {
         // 도메인이 안 맞으면 여기서 바로 틀어진다. 그 말을 그대로 받아 적는다.
         kkSend(K).sendDefault(kakaoCard());
@@ -7270,7 +7559,9 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     var other = document.createElement("button"); other.className = "btn ghost";
     other.textContent = canShare ? "다른 곳으로 보내기" : "결과 복사하기";
     other.addEventListener("click", function () { logEv("C"); sheet(); });
-    card.appendChild(other);
+    // 앱에서는 위의 빨간 단추가 이미 이 길로 간다. 같은 일을 하는 단추가
+    // 둘이면 무엇이 다른지 알 수 없어 둘 다 못 누르게 된다.
+    if (!inApp()) card.appendChild(other);
     card.appendChild(why);
 
     var back = document.createElement("button"); back.className = "btn";
@@ -7646,12 +7937,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  // 반딧불이 있으면 옥보다 먼저 나간다. 그런데 단추에는 늘 「옥 1개」라고
+  // 적혀 있어서, 가진 줄도 쓴 줄도 모르고 지나갔다. 무엇이 나가는지는
+  // 누르기 전에 보여야 한다.
   function hintLabel() {
     if (!run || run.daily) return run.exam ? "맨몸" : "옥 1개";
+    var cost = (bag.brush || 0) > 0 ? "반딧불 " + bag.brush + "개" : "옥 1개";
     var w = hintTarget();
-    if (!w) return "옥 1개";
+    if (!w) return cost;
     var nx = (run.hint[w] || 0) + 1;
-    return "옥 1개 · " + HINT_STEP[nx];
+    return cost + " · " + HINT_STEP[nx];
   }
 
   function giveHint(w, lv) {
@@ -8046,6 +8341,27 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 
     put(cloudOn(), "설정값 " + (cloudOn() ? "있음" : "비어 있음 — cloud-config.js"));
     out.push("  이 주소 " + location.origin);
+    // 공유가 복사로 내려앉는 까닭은 늘 여기였다. 길마다 열렸는지를
+    // 적는다 — 올려 보고 기다릴 것 없이 폰에서 바로 안다.
+    (function () {
+      var NS = window.NativeShare;
+      var ways = (NS && NS.ways) ? NS.ways()
+               : [{ k: "브라우저", v: !!navigator.share }];
+      var live = ways.filter(function (w) { return w.v; });
+      put(live.length > 0, "공유 길 · "
+        + (live.length ? live[0].k + "로 간다" : "없음 — 복사로 내려앉습니다"));
+      ways.forEach(function (w) {
+        out.push("    " + (w.v ? "\u2713" : "\u2717") + " " + w.k);
+      });
+      var N = window.NatmalNative;
+      if (N && N.build) {
+        try { out.push("    앱 " + N.build()); } catch (e) {}
+      }
+      if (window.Capacitor) {
+        var ks = Object.keys(window.Capacitor.Plugins || {});
+        out.push("    Plugins " + (ks.length ? ks.join(",") : "(비어 있음)"));
+      }
+    })();
     if (!cloudOn()) { el.diagBox.innerHTML = out.join("\n"); return; }
 
     fetch(NM_CLOUD.url + "/auth/v1/settings", { headers: { apikey: NM_CLOUD.key } })
