@@ -2590,7 +2590,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-08-i";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-08-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6245,7 +6245,8 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     if (el.mChain) el.mChain.classList.toggle("wait", kDead() && kCanRetry());
     el.tTrain.classList.toggle("lit", can);
     var left = adsLeft();
-    el.tChestSub.textContent = left ? (AD_DAY - left) + " / " + AD_DAY + "편" : "내일";
+    // 「편」은 광고를 세는 말이다. 여기서 세는 것은 걸음이다.
+    el.tChestSub.textContent = left ? (AD_DAY - left) + " / " + AD_DAY + "걸음" : "내일";
     el.tChest.classList.toggle("lit", left > 0);
   }
 
@@ -6612,7 +6613,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     drawHo();
     drawTray();
     var n = adState().n, left = adsLeft(), cap = adCap();
-    el.adHead.textContent = AD_T.btn;   // 광고가 붙으면 「광고 보기」로 돌아온다
+    // 이 칸은 광고와 상관이 없다.
+    //
+    // 걸음표 열 칸은 완전 격파로만 찬다 — 광고를 아무리 봐도 한 걸음도
+    // 안 찬다. 그런데 AD_T 를 여기까지 끌어다 써서, 광고를 붙인 날
+    // 이름만 「광고 보기」로 바뀌었다. 열어 보면 속은 처음부터 끝까지
+    // 완전 격파 이야기라, 누른 사람은 광고를 보러 왔다가 엉뚱한 데
+    // 들어온 것이 된다.
+    //
+    // 광고가 값으로 쓰이는 자리는 진 판의 「이 판 다시」 하나뿐이다.
+    // 주머니를 갈라 둔 까닭이 바로 이것이니(docs/ads.html), 이름도
+    // 갈라 둔다.
+    el.adHead.textContent = "오늘의 선물";
     el.adTitle.textContent = "완전 격파 일곱 번에 보물함 하나";
     el.adLines.innerHTML =
         "<p><b>완전 격파</b> — 빈칸을 하나도 안 남기고 다 채운 판입니다. "
@@ -7124,7 +7136,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       // 왜 옥이 안 들어왔는지는 적어 준다. 말없이 빠지면 버그로 읽힌다.
       if (won && r.perfect) {
         var nt = document.createElement("p"); nt.className = "lead";
-        nt.innerHTML = "완전 격파 — <b>" + AD_T.btn + "</b>이 한 걸음 찼습니다";
+        nt.innerHTML = "완전 격파 — <b>오늘의 선물</b>이 한 걸음 찼습니다";
         card.appendChild(nt);
       }
       // 옥은 냥과 셈이 다르다. 합계에 섞지 않고 따로 적는다.
@@ -8664,7 +8676,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   function inviteUrl() { return SITE + "?r=" + myCode; }
   function inviteText() {
     return "낱말산 — 빈칸에 들어갈 낱말을 찾는 게임입니다.\n"
-         + "이 줄로 들어가 한 판 하시면 두 분 모두 옥 열 알을 받습니다.\n"
+         + "이 초대장으로 들어가 한 판 하시면 두 분 모두 옥 열 알을 받습니다.\n"
          + inviteUrl();
   }
 
