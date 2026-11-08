@@ -1582,15 +1582,22 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
 .card.sheet .shut {
   flex: none; margin: 0; border-radius: 0; border: 0; border-top: 1px solid var(--line);
   background: var(--surface-2); font-size: 15.5px; font-weight: 600;
-  /* 아래쪽은 폰 단추줄만큼 더 놓는다. 삼성 폰에서 「닫기」 글자를
-     ○ 단추가 밟고 서 있었다. 그런데 그렇게 놓고 나니 글씨는 위에
-     머물고 아래 절반이 빈 채로 남아, 띠만 두꺼워 보였다.
-     띠를 낮추는 대신 글씨를 키우고 '보이는 자리'의 한가운데에 세운다 —
-     안전영역은 padding 으로 빼 두었으므로 가운데는 ○ 단추 위의
-     한가운데가 된다. */
+  /* 안전영역을 여기서 또 빼지 않는다.
+   *
+   * 「닫기」 아래가 한 뼘 비어 보이고 글자가 위에만 붙어 있었다. 세 판에
+   * 걸쳐 못 잡았는데, 까닭은 같은 자리를 두 번 비워 둔 것이었다 —
+   * 덮개(.ov)가 이미 padding-bottom 에 calc(16px + --sa-b) 를 주어
+   * 카드를 폰 단추줄 위로 올려놓는다. 그런데 그 안의 이 띠가 단추줄
+   * 자리를 한 번 더 비웠다.
+   *
+   * 그래서 띠가 42+48=90px 이 되고, 글씨는 위쪽 42px 한가운데에 서고,
+   * 아래 48px 은 가릴 것이 없어 그냥 빈 채로 보였다. 「단추줄 뒤에
+   * 깔린다」고 보았던 것이 틀렸다 — 깔릴 자리가 애초에 없다.
+   *
+   * 한 번만 뺀다. 띠는 제 키만 갖고, 글씨는 그 한가운데에 선다. */
   display: flex; align-items: center; justify-content: center;
-  min-height: calc(42px + var(--sa-b));
-  padding: 0 8px var(--sa-b);
+  min-height: 48px;
+  padding: 0 8px;
 }
 /* 지갑.
    값을 치르는 자리에서 가진 것이 안 보이면, 살 수 있는지 없는지를
@@ -2590,7 +2597,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-08-k";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-08-n";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
