@@ -369,7 +369,7 @@ h1, h2, h3, .subh, .win, .seal, .modes .mode, .btn, .tbtn b { text-wrap: balance
   border: 1px solid var(--line); color: var(--fg-dim); font: inherit;
 }
 .sizer button.on { border-color: var(--gold); color: var(--gold); font-weight: 700; }
-/* 소리 크기. 단추만 있는 설정 안에서 돌출리지 않게 같은 결로 둔다. */
+/* 음악 크기. 단추만 있는 설정 안에서 돌출리지 않게 같은 결로 둔다. */
 .volrow { display: flex; align-items: center; gap: 10px; margin: 0 0 13px;
   font-size: 12px; color: var(--fg-faint); }
 .volrow input[type=range] {
@@ -867,6 +867,13 @@ body.quake { animation: shake .42s ease-out; }
 /* 폰은 세로라 채워도 거의 안 잘린다. 넓은 화면에서 채우면 양옆이
    크게 잘려 나가 무슨 장면인지 알 수 없게 된다 — 거기서는 전부 보인다. */
 @media (min-aspect-ratio: 3/4) { .opening video { object-fit: contain; } }
+.opening .osnd {
+  position: absolute; left: 16px; bottom: calc(22px + var(--sa-b));
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
+  color: var(--fg); font-family: inherit; font-size: 13px; letter-spacing: .5px;
+  padding: 9px 14px 9px 12px; border-radius: 999px; cursor: pointer;
+}
 .opening .oskip {
   position: absolute; right: 16px; bottom: calc(22px + var(--sa-b));
   background: rgba(18, 20, 28, .62); border: 1px solid rgba(236, 234, 227, .22);
@@ -1915,6 +1922,18 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     </div>
     <button class="btn ghost" id="btnBuzzTest" style="margin-top:6px">진동 시험</button>
     <p class="cite" id="buzzNote" style="margin-top:6px"></p>
+    <p class="muted" style="margin:11px 0 6px">음악</p>
+    <div class="sizer" id="musPick">
+      <button data-mus="1">켜기</button>
+      <button data-mus="0">끄기</button>
+    </div>
+    <div class="volrow" id="musVolRow">
+      <span>작게</span>
+      <input type="range" id="musVol" min="0" max="100" step="5" aria-label="음악 크기">
+      <span>크게</span>
+    </div>
+    <p class="cite" style="margin-top:6px">산을 올라가시면 곡이 바뀝니다.</p>
+
     <p class="muted" style="margin:11px 0 6px">효과음 <span style="opacity:.7">— 글자를 누를 때 나는 소리</span></p>
     <div class="volrow" id="sfxVolRow">
       <span>작게</span>
@@ -2377,7 +2396,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
    "btnGo","goLabel","goSub","bonus","bonusBar","bLeft","btnEnd","btnOil","hpTail",
    "logSum","btnLog","btnLogClear","buildTag",
    "fbKinds","fbBody","btnFbSend","btnFbShow","fbNote","fbWhat","mQuest","mDaily","stageUnit","gem","lv","ups",
-   "invNote","invAct","btnInvShare","btnInvCopy","invBox","sfxVol","sfxVolRow",
+   "invNote","invAct","btnInvShare","btnInvCopy","invBox","musPick","musVol","musVolRow","sfxVol","sfxVolRow",
    "btnBuzzTest","trainSub","shop","examBar","examHead","examSub","examTk","btnExam","btnExamX","mChain","kwrap","kLives","kChain","kHead","kWord","kGo","kNote",
    "kHint","kPass"].forEach(function (id) { el[id] = document.getElementById(id); });
 
@@ -2578,7 +2597,7 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   }
 
   try { document.documentElement.lang = "ko"; } catch (e) {}
-  var BUILD = "2026-11-10-a";   // 폰에 어느 판이 깔려 있는지 확인하는 표
+  var BUILD = "2026-11-10-m";   // 폰에 어느 판이 깔려 있는지 확인하는 표
   var SKEY = "nathero-fill-save";
 
   // ── 기록을 한 군데에만 두지 않는다 ─────────────────────────────
@@ -6376,12 +6395,25 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
     v.src = src;
     v.poster = "media/opening-poster.jpg";
     v.preload = "auto";
-    v.playsInline = true;
+    v.playsInline = true; v.volume = 0.9;
     v.setAttribute("playsinline", ""); v.setAttribute("webkit-playsinline", "");
     v.addEventListener("ended", go);
     v.addEventListener("error", go);
     var skip = document.createElement("button"); skip.className = "oskip";
     skip.textContent = "건너뛰기";
+    // 웹에서는 소리 있는 자동재생이 막힌다. 막혔을 때만 이 단추가 선다.
+    // 깔아 쓰는 앱에서는 소리가 바로 나므로 보이지 않는다.
+    var snd = document.createElement("button"); snd.className = "osnd";
+    snd.setAttribute("aria-label", "소리 켜기");
+    snd.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">'
+      + '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a4.5 4.5 0 010 7" '
+      + 'stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>소리';
+    snd.addEventListener("click", function (e) {
+      e.stopPropagation();                       // 이 단추는 건너뛰지 않는다
+      v.muted = false; v.removeAttribute("muted");
+      v.play()["catch"](function () {});
+      snd.remove();
+    });
     // 구석의 단추만 눌리면 급한 사람이 그걸 찾느라 더 붙잡힌다.
     // 화면 아무 데나 누르면 넘어간다.
     ov.addEventListener("click", go);
@@ -6398,12 +6430,20 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       var d = (isFinite(v.duration) && v.duration > 0) ? v.duration : 8;
       hard = setTimeout(go, (d - v.currentTime) * 1000 + 1500);
     });
-    // 여는 영상에는 소리가 없다 — 소리줄째 들어냈다. 브라우저가 막는
-    // 것은 「소리 있는 자동재생」뿐이므로, 늘 조용히 틀면 막힐 일이 없다.
-    // 소리를 켜는 단추도 함께 없앴다. 켤 소리가 없다.
-    v.muted = true; v.defaultMuted = true; v.setAttribute("muted", "");
-    var pr = v.play();
-    if (pr && pr["catch"]) pr["catch"](function () { go(); });
+    // 여는 소리. 홈 화면에 더해 깔린 앱에서는 브라우저가 소리째 틀어 주지만,
+    // 웹에 처음 온 사람에게는 막는다. 막히면 조용히 다시 튼다 —
+    // 소리를 얻자고 영상을 잃는 것이 가장 나쁘다.
+    function run(silent) {
+      v.muted = silent; v.defaultMuted = silent;
+      if (silent) v.setAttribute("muted", ""); else v.removeAttribute("muted");
+      return v.play();
+    }
+    var pr = run(false);
+    if (pr && pr["catch"]) pr["catch"](function () {
+      ov.appendChild(snd);                       // 조용히 가는 중 — 켤 길을 준다
+      var p2 = run(true);
+      if (p2 && p2["catch"]) p2["catch"](function () { go(); });
+    });
   }
 
   // 타이틀. 켤 때마다 선다 — 아이콘과 글자판을 잇는 자리이기도 하고,
@@ -8391,8 +8431,151 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       });
   }
 
-  // 배경음악은 들어냈다. 바탕 소리는 sfx.js 가 그때그때 지어낸다 —
-  // 음원 파일이 하나도 없으므로 남의 저작물이 섞일 자리가 없다.
+  /* ── 배경음악 ────────────────────────────────────────────────────
+   *
+   * 산을 오르면 곡이 바뀐다. 화면이 아니라 「올라감」에 묶여 있다 —
+   * 상점과 설정을 오가도 안 끊기고, 며칠에 한 번만 바뀐다.
+   * 바뀜을 아껴야 바뀌는 순간이 뜻을 가진다. 백두산에 올라선 그 한 번이
+   * 숫자로 알려 주는 것보다 세다.
+   *
+   *   1·2산  m1    7·8산  m4
+   *   3·4산  m2    9산    m5
+   *   5·6산  m3    10산   m6     승단 시험  mx
+   *
+   * 오늘의 낱말과 끝말잇기는 제 곡을 따로 두지 않는다. 지금 오른 산의
+   * 곡이 그대로 흐른다 — 모드마다 다른 곡을 두면 메뉴를 옮길 때마다
+   * 바뀌고, 그러면 바뀜이 아무 뜻도 없어진다.
+   *
+   * 브라우저는 사람이 한 번 건드리기 전에는 소리를 안 내준다. 첫 손짓을
+   * 기다렸다가 켜고, 켤 때는 2.5초에 걸쳐 올라온다 — 버스에서 앱을 열었는데
+   * 소리가 턱 터지면 설정을 찾기 전에 지운다.
+   */
+  var BGM = (function () {
+    var K_ON = "nm.bgm", K_VOL = "nm.bgmvol";
+    var on = true, vol = 0.35, armed = false, away = false;
+    var cur = null, now = "";
+    try {
+      var v = localStorage.getItem(K_ON); if (v != null) on = v !== "0";
+      var w = parseFloat(localStorage.getItem(K_VOL)); if (w >= 0 && w <= 1) vol = w;
+    } catch (e) {}
+
+    // 승단 시험은 여러 곡을 돌린다.
+    //
+    // 산은 한 번 넘으면 다시 안 넘지만 시험은 계속 본다. 매번 같은
+    // 곡이면 그 자리가 지루해진다. 판이 열릴 때 한 곡을 골라 그 판 내내
+    // 가져가고, 다음 판에서 다시 고른다 — 치는 중에 바뀜면 그것은
+    // 거슬림이지 새로움이 아니다.
+    var MX = 4, exNow = "", exLast = "";
+    function exPick() {
+      if (exNow) return exNow;
+      var n = "mx" + (1 + Math.floor(Math.random() * MX));
+      if (n === exLast && MX > 1) n = "mx" + (1 + ((+n.slice(2)) % MX));  // 바로 또 같은 곡은 피한다
+      exNow = n; exLast = n;
+      return n;
+    }
+    function which() {
+      if (typeof run !== "undefined" && run && run.exam) return exPick();
+      exNow = "";
+      var mt = Math.floor((typeof stage === "number" ? stage : 0) / 10) % 10;
+      return "m" + (mt + 1);                    // 산 하나에 곡 하나
+    }
+    // 서로 사라지고 나타나게 한다. 뚝 끊으면 바뀐 것이 아니라 끊긴 것으로 들린다.
+    function fade(a, to, ms, done) {
+      if (!a) return;
+      var from = a.volume, t0 = Date.now();
+      if (a._t) { clearInterval(a._t); a._t = 0; }
+      a._t = setInterval(function () {
+        var k = Math.min(1, (Date.now() - t0) / ms);
+        try { a.volume = Math.max(0, Math.min(1, from + (to - from) * k)); } catch (e) {}
+        if (k >= 1) { clearInterval(a._t); a._t = 0; if (done) done(); }
+      }, 40);
+    }
+    // 곡 하나가 없을 때.
+    //
+    // 처음에는 없으면 조용히 둬 두었는데, 그러면 1.5초마다 다시 받으려
+    // 들어 영원히 두드린다. 한 번 없던 것은 적어 두고 다시 안 찾는다.
+    //
+    // 그리고 조용한 쪽보다 옆에 있는 곡이 낫다. 어느 산의 곡이 아직
+    // 없으면 그 옆 산의 곡이라도 흐르는 편이, 거기서만 소리가 뚝
+    // 끊기는 것보다 낫다.
+    var BAD = {}, FALL = { m1:"m2", m2:"m3", m3:"m4", m4:"m5", m5:"m6",
+                           m6:"m7", m7:"m8", m8:"m9", m9:"m10", m10:"m9",
+                           mx1:"mx2", mx2:"mx3", mx3:"mx4", mx4:"mx1" };
+    function pick(name) {
+      for (var i = 0; i < 12 && name; i++) {
+        if (!BAD[name]) return name;
+        name = FALL[name];
+      }
+      return "";
+    }
+    function go(want, ms) {
+      var name = pick(want);
+      if (!name || name === now) return;
+      var nx = document.createElement("audio");
+      nx.loop = true; nx.preload = "auto"; nx.volume = 0;
+      nx.style.display = "none";
+      nx.src = "media/bgm/" + name + ".m4a";
+      nx.addEventListener("error", function () {
+        BAD[name] = 1;
+        // 못 쓰게 된 것은 그 자리에서 치운다. 남겨 두면 죽은 요소가
+        // 쌓이고, 소리를 찾는 쪽에서도 죽은 것을 먼저 집는다.
+        try { nx.removeAttribute("src"); nx.load();
+              if (nx.parentNode) nx.parentNode.removeChild(nx); } catch (e) {}
+        if (cur === nx) { cur = null; now = ""; go(want, ms); }   // 옆엣것으로
+      });
+      document.body.appendChild(nx);
+      var p = nx.play(); if (p && p["catch"]) p["catch"](function () {});
+      var old = cur; cur = nx; now = name;
+      fade(nx, (on && !away) ? vol : 0, ms);
+      if (old) fade(old, 0, ms, function () {
+        try { old.pause(); old.removeAttribute("src"); old.load();
+              if (old.parentNode) old.parentNode.removeChild(old); } catch (e) {}
+      });
+    }
+    // 산이 바뀌었는지 이따금 들여다본다. 바뀌는 자리가 여럿이라
+    // 그 자리마다 부르는 것보다 한 곳에서 보는 쪽이 안 빠뜨린다.
+    function tick() {
+      if (!armed || !on) return;
+      var w = pick(which());
+      if (w && w !== now) go(w, 2500);
+    }
+    function arm() { if (armed) return; armed = true; if (on) tick(); }
+
+    document.addEventListener("visibilitychange", function () {
+      away = document.visibilityState === "hidden";
+      if (!cur) return;
+      if (away) fade(cur, 0, 400, function () { try { cur.pause(); } catch (e) {} });
+      else if (on) { try { cur.play(); } catch (e) {} fade(cur, vol, 800); }
+    });
+    ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+      document.addEventListener(ev, arm, { once: true, passive: true });
+    });
+    setInterval(tick, 1500);
+
+    return {
+      tick: tick,
+      now: function () { return now; },
+      at: function () { return cur ? cur.currentTime : 0; },
+      on: function () { return on; },
+      vol: function () { return vol; },
+      setOn: function (v) {
+        on = !!v;
+        try { localStorage.setItem(K_ON, on ? "1" : "0"); } catch (e) {}
+        if (!on) {
+          if (cur) fade(cur, 0, 500, function () {
+            try { cur.pause(); cur.removeAttribute("src"); cur.load(); } catch (e) {}
+            cur = null; now = "";
+          });
+        } else { armed = true; tick(); if (cur) fade(cur, vol, 500); }
+      },
+      setVol: function (v) {
+        vol = Math.max(0, Math.min(1, v));
+        try { localStorage.setItem(K_VOL, String(vol)); } catch (e) {}
+        if (cur && on && !away) { if (cur._t) { clearInterval(cur._t); cur._t = 0; }
+          try { cur.volume = vol; } catch (e) {} }
+      }
+    };
+  })();
 
   // ── 친구 부르기 ──────────────────────────────────────────────────
   //
@@ -8579,8 +8762,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
   //
   // 미닫이는 0~100 으로 두고 안에서 셈으로 바꾼다. 사람에게 0.28 을
   // 보여 줄 까닭이 없고, 꼭대기를 1.0 으로 두면 둘 다 너무 크다.
-  var SFX_TOP = 0.60, SFX_KEY = "nm.sfxvol";
+  var MUS_TOP = 0.70, SFX_TOP = 0.60, SFX_KEY = "nm.sfxvol";
   function drawSound() {
+    if (!el.musPick) return;
+    var on = BGM.on();
+    [].forEach.call(el.musPick.children, function (b) {
+      b.classList.toggle("on", (b.dataset.mus === "1") === on);
+    });
+    el.musVolRow.style.opacity = on ? "" : ".4";
+    el.musVol.disabled = !on;
+    el.musVol.value = Math.round(BGM.vol() / MUS_TOP * 100);
     if (el.sfxVol && window.SFX && SFX.level) {
       el.sfxVol.value = Math.round(SFX.level() / SFX_TOP * 100);
     }
@@ -8591,6 +8782,16 @@ table.odds td.num{text-align:right;font-variant-numeric:tabular-nums;white-space
       var sv = parseFloat(localStorage.getItem(SFX_KEY));
       if (sv >= 0 && sv <= 100 && window.SFX && SFX.vol) SFX.vol(sv / 100 * SFX_TOP);
     } catch (e) {}
+    if (!el.musPick) return;
+    el.musPick.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-mus]");
+      if (!b) return;
+      BGM.setOn(b.dataset.mus === "1");
+      drawSound();
+    });
+    el.musVol.addEventListener("input", function () {
+      BGM.setVol(this.value / 100 * MUS_TOP);
+    });
     if (el.sfxVol) {
       // 손을 떼는 자리에서 한 번 들려준다. 안 들려주면 어디까지 줄였는지 모른다.
       el.sfxVol.addEventListener("input", function () {
